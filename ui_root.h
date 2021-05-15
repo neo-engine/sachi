@@ -16,7 +16,6 @@
 #include <gtkmm/window.h>
 
 #include "data_maprender.h"
-#include "ui_blockSet.h"
 #include "ui_mapBank.h"
 
 namespace UI {
@@ -31,7 +30,7 @@ namespace UI {
         };
 
         struct blockSetInfo {
-            blockSet *m_bs1widget = nullptr, *m_bs2widget = nullptr;
+            //            blockSet *m_bs1widget = nullptr, *m_bs2widget = nullptr;
 
             DATA::blockSet<1> m_blockSet;
             DATA::tileSet<1>  m_tileSet;
