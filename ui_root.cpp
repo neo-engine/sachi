@@ -1,6 +1,8 @@
 #include <cstring>
 #include <filesystem>
 
+#include <gtkmm/actionbar.h>
+#include <gtkmm/centerbox.h>
 #include <gtkmm/cssprovider.h>
 #include <gtkmm/frame.h>
 #include <gtkmm/grid.h>
@@ -16,7 +18,6 @@
 
 #include "data_fs.h"
 #include "defines.h"
-#include "ui_block.h"
 #include "ui_root.h"
 
 namespace UI {
@@ -24,15 +25,18 @@ namespace UI {
 
     auto root::createButton( const std::string& p_iconName, const std::string& p_labelText,
                              std::function<void( )> p_callback ) {
-        auto icon = Gtk::Image( );
-        icon.set_from_icon_name( p_iconName );
-        auto label = Gtk::Label( p_labelText );
-        label.set_expand( true );
-        label.set_use_underline( );
-
         auto hbox = Gtk::Box( Gtk::Orientation::HORIZONTAL, 5 );
-        hbox.append( icon );
-        hbox.append( label );
+        if( p_iconName != "" ) {
+            auto icon = Gtk::Image( );
+            hbox.append( icon );
+            icon.set_from_icon_name( p_iconName );
+        }
+        if( p_labelText != "" ) {
+            auto label = Gtk::Label( p_labelText );
+            label.set_expand( true );
+            label.set_use_underline( );
+            hbox.append( label );
+        }
 
         // auto resultButton = Gtk::make_managed<Gtk::Button>( );
         auto resultButton = std::make_shared<Gtk::Button>( );
@@ -50,21 +54,31 @@ namespace UI {
         Gtk::StyleContext::add_provider_for_display( Gdk::Display::get_default( ), provider,
                                                      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION );
 
+        // Header bar
+
         auto headerBar = Gtk::HeaderBar( );
         set_titlebar( headerBar );
 
-        _openButton = createButton( "document-open", "_Load FSROOT",
-                                    [ & ]( ) { this->onFsRootOpenClick( ); } );
-        _saveButton = createButton( "document-save", "_Save Changes",
-                                    [ & ]( ) { this->onFsRootSaveClick( ); } );
+        _openButton = createButton( "", "_Load FSROOT", [ & ]( ) { this->onFsRootOpenClick( ); } );
+        _saveButton = createButton( "", "_Save Changes", [ & ]( ) { this->onFsRootSaveClick( ); } );
+        _collapseMapBanksButton
+            = createButton( "view-restore-symbolic", "_Collapse Map Banks",
+                            [ & ]( ) { this->collapseMapBankBar( !_mapBankBarCollapsed ); } );
+        _collapseMapBanksButton->set_expand( true );
+        _collapseMapBanksButton->set_margin( MARGIN );
+        _collapseMapBanksButton->set_has_frame( false );
 
         headerBar.pack_start( *_openButton );
         headerBar.pack_start( *_saveButton );
 
         _saveButton->hide( );
 
+        // Main window
+
         _mainBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
         set_child( _mainBox );
+
+        // map bank box
 
         auto lFrame = Gtk::Frame( );
         lFrame.set_margin( MARGIN );
@@ -72,7 +86,8 @@ namespace UI {
 
         auto lScrolledWindow = Gtk::ScrolledWindow( );
         lFrame.set_child( lScrolledWindow );
-        // _mainBox.set_shrink_start_child( false );
+        lFrame.set_label_widget( *_collapseMapBanksButton );
+        lFrame.set_label_align( Gtk::Align::CENTER );
         lScrolledWindow.set_policy( Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC );
 
         _mapBankBox = Gtk::Box( Gtk::Orientation::VERTICAL, MARGIN );
@@ -91,6 +106,8 @@ namespace UI {
         _mapBanks.clear( );
         _selectedBank = -1;
 
+        // Map editor
+
         _loadMapLabel = Gtk::Label( );
         _loadMapLabel.set_markup( "<span size=\"x-large\">Add or load a map bank!</span>" );
         _loadMapLabel.set_expand( );
@@ -99,26 +116,41 @@ namespace UI {
         _mapNotebook.set_margin( MARGIN );
         _mapNotebook.set_expand( );
         _mapNotebook.hide( );
-        auto mapEditorPaned = Gtk::Paned( Gtk::Orientation::HORIZONTAL );
-        mapEditorPaned.set_margin( MARGIN );
+        auto mapEditorMainBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        mapEditorMainBox.set_margin( MARGIN );
 
-        _mapNotebook.append_page( mapEditorPaned, "Map _Editor", true );
+        _mapNotebook.append_page( mapEditorMainBox, "Map _Editor", true );
         _mapNotebook.append_page( _mapOverviewBox, "Bank _Overview", true );
         _mainBox.append( _mapNotebook );
         _mainBox.hide( );
 
-        mapEditorPaned.set_start_child( _mapEditorMapBox );
-        mapEditorPaned.set_shrink_start_child( false );
+        mapEditorMainBox.append( _mapEditorMapBox );
         _mapEditorMapBox.set_expand( );
-        mapEditorPaned.set_end_child( _mapEditorBlockSetBox );
+
+        // Blocksets
+        // +-----------+
+        // | Blocksets |
+        // | [ 0 | 7 ] |
+        // |+---------+|
+        // ||         ||
+        // ||         ||
+        // ||         ||
+        // |+---------+|
+        // ||         ||
+        // ||         ||
+        // ||         ||
+        // |+---------+|
+        // +-----------+
 
         auto bsselbox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
         bsselbox.set_margin( MARGIN );
         bsselbox.set_halign( Gtk::Align::CENTER );
 
-        auto bsself = Gtk::Label( "Blocksets" );
+        auto bsself = Gtk::Frame( "Blocksets" );
         bsself.set_margin( MARGIN );
-        _mapEditorBlockSetBox.append( bsself );
+        bsself.set_label_align( Gtk::Align::CENTER );
+        mapEditorMainBox.append( bsself );
+        bsself.set_child( _mapEditorBlockSetBox );
 
         auto emptystr   = std::vector<Glib::ustring>( );
         _mapBankStrList = Gtk::StringList::create( emptystr );
@@ -130,31 +162,250 @@ namespace UI {
         bsselbox.get_style_context( )->add_class( "linked" );
         _mapEditorBlockSetBox.append( bsselbox );
 
+        auto meScrolledWindow1 = Gtk::ScrolledWindow( );
+        meScrolledWindow1.set_child( _ts1widget );
+        meScrolledWindow1.set_margin( MARGIN );
+        meScrolledWindow1.set_vexpand( );
+        meScrolledWindow1.set_halign( Gtk::Align::CENTER );
+        meScrolledWindow1.set_policy( Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC );
+        _mapEditorBlockSetBox.append( meScrolledWindow1 );
+
+        auto meScrolledWindow2 = Gtk::ScrolledWindow( );
+        meScrolledWindow2.set_child( _ts2widget );
+        meScrolledWindow2.set_margin( MARGIN );
+        meScrolledWindow2.set_vexpand( );
+        meScrolledWindow2.set_halign( Gtk::Align::CENTER );
+        meScrolledWindow2.set_policy( Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC );
+        _mapEditorBlockSetBox.append( meScrolledWindow2 );
+
+        // Map window
+        // +--------------+
+        // |              |
+        // |     Map      |
+        // |              |
+        // | ------------ |
+        // |  Action Bar  |
+        // +--------------+
+
         auto rScrolledWindow = Gtk::ScrolledWindow( );
+        rScrolledWindow.set_child( _mapGrid );
+        _mapGrid.set_halign( Gtk::Align::CENTER );
+        _mapGrid.set_valign( Gtk::Align::CENTER );
 
-        _currentMap    = Gio::ListStore<Gtk::Image>::create( );
-        auto selection = Gtk::MultiSelection::create( );
-        selection->set_model( _currentMap );
-        _mapFactory = Gtk::SignalListItemFactory::create( );
+        for( u8 x = 0; x < 3; ++x ) {
+            _currentMap.push_back( std::vector<mapSlice>( 3 ) );
+            for( u8 y = 0; y < 3; ++y ) { _mapGrid.attach( _currentMap[ x ][ y ], x, y ); }
+        }
 
-        _mapFactory->signal_setup( ).connect( []( const std::shared_ptr<Gtk::ListItem>& p_item ) {
-            fprintf( stderr, "signal_create\n" );
-        } );
-        _mapFactory->signal_bind( ).connect( []( const std::shared_ptr<Gtk::ListItem>& p_item ) {
-            fprintf( stderr, "signal_bind\n" );
-        } );
+        _mapGrid.set_row_spacing( _neighborSpacing );
+        _mapGrid.set_column_spacing( _neighborSpacing );
 
-        _mapView = Gtk::GridView( selection, _mapFactory );
-        _mapView.set_max_columns( MAP_SIZE );
-        _mapView.set_min_columns( MAP_SIZE );
-        _mapView.set_enable_rubberband( );
-        rScrolledWindow.set_child( _mapView );
-        _mapView.set_expand( );
+        rScrolledWindow.set_expand( );
         _mapEditorMapBox.append( rScrolledWindow );
+
+        // map editor action box
+        // +--------------------+-----+----------------------------+
+        // | Map Grid [ 0 |+|-] | Map | Blockset width   [ 8 |+|-] |
+        // | Scale    [ 1 |+|-] | Nav | Neigh map blocks [ 8 |+|-] |
+        // | Day Time [Day (2)] |     | Neigh distance   [ 9 |+|-] |
+        // +--------------------+-----+----------------------------+
+        auto actionBar        = Gtk::ActionBar( );
+        auto abScrolledWindow = Gtk::ScrolledWindow( );
+        _mapEditorMapBox.append( abScrolledWindow );
+        abScrolledWindow.set_child( actionBar );
+        abScrolledWindow.set_policy( Gtk::PolicyType::AUTOMATIC, Gtk::PolicyType::NEVER );
+
+        // action bar start
+        auto abStartBox = Gtk::Box( Gtk::Orientation::VERTICAL );
+        abStartBox.set_valign( Gtk::Align::CENTER );
+        actionBar.pack_start( abStartBox );
+        auto abSb1 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        auto abSb2 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        auto abSb3 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        abStartBox.append( abSb1 );
+        abStartBox.append( abSb2 );
+        abStartBox.append( abSb3 );
+
+        auto abSAdj1 = Gtk::Adjustment::create( _blockSpacing, 0.0, 9.0, 1.0, 1.0, 0.0 );
+        auto abSAdj2 = Gtk::Adjustment::create( _blockScale, 1.0, 8.0, 1.0, 1.0, 0.0 );
+        auto abSAdj3 = Gtk::Adjustment::create( _currentDayTime, 0.0, 4.0, 1.0, 1.0, 0.0 );
+
+        _mapEditorSettings1 = Gtk::SpinButton( abSAdj1 );
+        _mapEditorSettings1.signal_value_changed( ).connect( [ & ]( ) {
+            auto value = _mapEditorSettings1.get_value_as_int( );
+            // Set spacing of everything map-py
+
+            for( u8 x = 0; x < 3; ++x ) {
+                for( u8 y = 0; y < 3; ++y ) {
+                    _currentMap[ x ][ y ].setSpacing( value );
+                    _currentMap[ x ][ y ].queue_resize( );
+                }
+            }
+            _ts1widget.setSpacing( value );
+            _ts1widget.queue_resize( );
+            _ts2widget.setSpacing( value );
+            _ts2widget.queue_resize( );
+            _blockSpacing = value;
+        } );
+        _mapEditorSettings1.set_margin_start( MARGIN );
+        _mapEditorSettings1.set_width_chars( 1 );
+        _mapEditorSettings1.set_max_width_chars( 1 );
+
+        _mapEditorSettings2 = Gtk::SpinButton( abSAdj2 );
+        _mapEditorSettings2.set_margin_start( MARGIN );
+        _mapEditorSettings2.set_width_chars( 1 );
+        _mapEditorSettings2.set_max_width_chars( 1 );
+        _mapEditorSettings2.signal_value_changed( ).connect( [ & ]( ) {
+            auto value = _mapEditorSettings2.get_value_as_int( );
+            // Set scale of everything map-py
+
+            for( u8 x = 0; x < 3; ++x ) {
+                for( u8 y = 0; y < 3; ++y ) {
+                    _currentMap[ x ][ y ].setScale( value );
+                    _currentMap[ x ][ y ].queue_resize( );
+                }
+            }
+            _ts1widget.setScale( value );
+            _ts1widget.queue_resize( );
+            _ts2widget.setScale( value );
+            _ts2widget.queue_resize( );
+            _blockScale = value;
+        } );
+
+        _mapEditorSettings3 = Gtk::SpinButton( abSAdj3 );
+        _mapEditorSettings3.set_margin_start( MARGIN );
+        _mapEditorSettings3.set_wrap( );
+        _mapEditorSettings3.set_width_chars( 1 );
+        _mapEditorSettings3.set_max_width_chars( 1 );
+        _mapEditorSettings3.signal_value_changed( ).connect( [ & ]( ) {
+            auto value = _mapEditorSettings3.get_value_as_int( );
+            // Change daytime of everything map-py
+
+            for( u8 x = 0; x < 3; ++x ) {
+                for( u8 y = 0; y < 3; ++y ) { _currentMap[ x ][ y ].redraw( value ); }
+            }
+            _ts1widget.redraw( value );
+            _ts2widget.redraw( value );
+
+            _currentDayTime = value;
+        } );
+
+        auto abSl1 = Gtk::Image( );
+        abSl1.set_from_icon_name( "view-grid-symbolic" );
+        auto abSl2 = Gtk::Image( );
+        abSl2.set_from_icon_name( "edit-find-symbolic" );
+        auto abSl3 = Gtk::Image( );
+        abSl3.set_from_icon_name( "weather-clear-symbolic" );
+        abSb1.append( abSl1 );
+        abSb1.append( _mapEditorSettings1 );
+        abSb2.append( abSl2 );
+        abSb2.append( _mapEditorSettings2 );
+        abSb3.append( abSl3 );
+        abSb3.append( _mapEditorSettings3 );
+
+        // action bar center
+        auto mapNavGrid = Gtk::Grid( );
+        for( u8 x = 0; x < 3; ++x ) {
+            for( u8 y = 0; y < 3; ++y ) {
+                if( x == 1 && y == 1 ) {
+                    auto im = Gtk::Image( );
+                    im.set_from_icon_name( "image-x-generic-symbolic" );
+                    mapNavGrid.attach( im, x, y );
+                    continue;
+                }
+                _mapNavButton[ x ][ y ] = createButton(
+                    "", "", [ this, y, x ]( ) { moveToMap( s8( y ) - 1, s8( x ) - 1 ); } );
+                _mapNavButton[ x ][ y ]->set_has_frame( false );
+                if( x == 1 && y == 2 ) {
+                    _mapNavButton[ x ][ y ]->set_icon_name( "pan-down-symbolic" );
+                } else if( x == 1 && y == 0 ) {
+                    _mapNavButton[ x ][ y ]->set_icon_name( "pan-up-symbolic" );
+                } else if( x == 0 && y == 1 ) {
+                    _mapNavButton[ x ][ y ]->set_icon_name( "pan-start-symbolic" );
+                } else if( x == 2 && y == 1 ) {
+                    _mapNavButton[ x ][ y ]->set_icon_name( "pan-end-symbolic" );
+                }
+                mapNavGrid.attach( *_mapNavButton[ x ][ y ], x, y );
+            }
+        }
+        actionBar.set_center_widget( mapNavGrid );
+
+        // action bar end
+
+        auto abEndBox = Gtk::Box( Gtk::Orientation::VERTICAL );
+        abEndBox.set_valign( Gtk::Align::CENTER );
+        actionBar.pack_end( abEndBox );
+        auto abEb1 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        auto abEb2 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        auto abEb3 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        abEndBox.append( abEb1 );
+        abEndBox.append( abEb2 );
+        abEndBox.append( abEb3 );
+
+        auto abEAdj1 = Gtk::Adjustment::create( _blockSetWidth, 1.0, 32.0, 1.0, 1.0, 0.0 );
+        auto abEAdj2 = Gtk::Adjustment::create( _adjacentBlocks, 0.0, 32.0, 1.0, 1.0, 0.0 );
+        auto abEAdj3 = Gtk::Adjustment::create( _neighborSpacing, 0.0, 50.0, 1.0, 1.0, 0.0 );
+
+        _mapEditorSettings4 = Gtk::SpinButton( abEAdj1 );
+        _mapEditorSettings4.set_margin_start( MARGIN );
+        _mapEditorSettings4.set_width_chars( 1 );
+        _mapEditorSettings4.set_max_width_chars( 1 );
+        _mapEditorSettings4.signal_value_changed( ).connect( [ & ]( ) {
+            _blockSetWidth = _mapEditorSettings4.get_value_as_int( );
+            auto mp
+                = _mapBanks[ _selectedBank ].m_bank->m_mapData[ _selectedMapY ][ _selectedMapX ];
+            auto ts = DATA::tileSet<2>( );
+            buildTileSet( &ts );
+            DATA::palette pals[ 16 * 5 ] = { 0 };
+            buildPalette( pals );
+
+            _ts1widget.set(
+                DATA::mapBlockAtom::computeBlockSet( &_blockSets[ mp.m_tIdx1 ].m_blockSet, &ts ),
+                pals, _blockSetWidth );
+            _ts1widget.redraw( _currentDayTime );
+
+            _ts2widget.set(
+                DATA::mapBlockAtom::computeBlockSet( &_blockSets[ mp.m_tIdx2 ].m_blockSet, &ts ),
+                pals, _blockSetWidth );
+            _ts2widget.redraw( _currentDayTime );
+        } );
+
+        _mapEditorSettings5 = Gtk::SpinButton( abEAdj2 );
+        _mapEditorSettings5.set_margin_start( MARGIN );
+        _mapEditorSettings5.set_width_chars( 1 );
+        _mapEditorSettings5.set_max_width_chars( 1 );
+        _mapEditorSettings5.signal_value_changed( ).connect( [ & ]( ) {
+            _adjacentBlocks = _mapEditorSettings5.get_value_as_int( );
+            redrawMap( _selectedMapY, _selectedMapX );
+        } );
+
+        _mapEditorSettings6 = Gtk::SpinButton( abEAdj3 );
+        _mapEditorSettings6.set_margin_start( MARGIN );
+        _mapEditorSettings6.set_width_chars( 1 );
+        _mapEditorSettings6.set_max_width_chars( 1 );
+
+        _mapEditorSettings6.signal_value_changed( ).connect( [ & ]( ) {
+            _neighborSpacing = _mapEditorSettings6.get_value_as_int( );
+            _mapGrid.set_row_spacing( _neighborSpacing );
+            _mapGrid.set_column_spacing( _neighborSpacing );
+        } );
+
+        auto abEl1 = Gtk::Image( );
+        abEl1.set_from_icon_name( "window-restore-symbolic" );
+        auto abEl2 = Gtk::Image( );
+        abEl2.set_from_icon_name( "process-stop-symbolic" );
+        auto abEl3 = Gtk::Image( );
+        abEl3.set_from_icon_name( "application-x-appliance-symbolic" );
+        abEb1.append( abEl1 );
+        abEb1.append( _mapEditorSettings4 );
+        abEb2.append( abEl2 );
+        abEb2.append( _mapEditorSettings5 );
+        abEb3.append( abEl3 );
+        abEb3.append( _mapEditorSettings6 );
 
         // テスト用
 
-        //        loadNewFsRoot( "/home/philip/Repos/FSROOT" );
+        loadNewFsRoot( "/home/philip/Repos/FSROOT" );
     }
 
     root::~root( ) {
@@ -417,6 +668,30 @@ namespace UI {
         loadMap( p_bank, 0, 0 );
     }
 
+    void root::collapseMapBankBar( bool p_collapse ) {
+        for( auto i : _mapBanks ) {
+            if( i.second.m_widget ) { i.second.m_widget->collapse( p_collapse ); }
+        }
+        _addMapBank->collapse( p_collapse );
+        if( p_collapse ) {
+            auto icon = Gtk::Image( );
+            icon.set_from_icon_name( "view-fullscreen-symbolic" );
+            _collapseMapBanksButton->set_child( icon );
+        } else {
+            auto icon = Gtk::Image( );
+            icon.set_from_icon_name( "view-restore-symbolic" );
+            auto label = Gtk::Label( "_Collapse Map Banks" );
+            label.set_expand( true );
+            label.set_use_underline( );
+
+            auto hbox = Gtk::Box( Gtk::Orientation::HORIZONTAL, 5 );
+            hbox.append( icon );
+            hbox.append( label );
+            _collapseMapBanksButton->set_child( hbox );
+        }
+        _mapBankBarCollapsed = p_collapse;
+    }
+
     void root::loadMapBank( u16 p_bank ) {
         if( p_bank == _selectedBank ) { return; }
 
@@ -455,66 +730,184 @@ namespace UI {
         }
     }
 
+    void root::markBankChanged( u16 p_bank, mapBank::status p_newStatus ) {
+        if( !_mapBanks.count( p_bank ) ) { return; }
+        if( _mapBanks[ p_bank ].m_widget ) {
+            _mapBanks[ p_bank ].m_widget->setStatus( p_newStatus );
+        }
+    }
+
+    void root::currentMapUpdateTS1( u8 p_newTS ) {
+        if( _selectedBank == -1 || _selectedMapY == -1 || _selectedMapX == -1 ) { return; }
+        auto& mp = _mapBanks[ _selectedBank ].m_bank->m_mapData[ _selectedMapY ][ _selectedMapX ];
+
+        if( p_newTS != mp.m_tIdx1 ) {
+            mp.m_tIdx1 = p_newTS;
+            markBankChanged( _selectedBank );
+            redrawMap( _selectedMapY, _selectedMapX );
+        }
+
+        // although it shouldn't, bs1 can use tiles or palettes from ts2
+        auto ts = DATA::tileSet<2>( );
+        buildTileSet( &ts );
+        DATA::palette pals[ 16 * 5 ] = { 0 };
+        buildPalette( pals );
+
+        _ts1widget.set(
+            DATA::mapBlockAtom::computeBlockSet( &_blockSets[ mp.m_tIdx1 ].m_blockSet, &ts ), pals,
+            _blockSetWidth );
+        _ts1widget.redraw( _currentDayTime );
+    }
+
+    void root::currentMapUpdateTS2( u8 p_newTS ) {
+        if( _selectedBank == -1 || _selectedMapY == -1 || _selectedMapX == -1 ) { return; }
+        auto& mp = _mapBanks[ _selectedBank ].m_bank->m_mapData[ _selectedMapY ][ _selectedMapX ];
+
+        if( p_newTS != mp.m_tIdx2 ) {
+            mp.m_tIdx2 = p_newTS;
+            markBankChanged( _selectedBank );
+            redrawMap( _selectedMapY, _selectedMapX );
+        }
+
+        auto ts = DATA::tileSet<2>( );
+        buildTileSet( &ts );
+        DATA::palette pals[ 16 * 5 ] = { 0 };
+        buildPalette( pals );
+
+        _ts2widget.set(
+            DATA::mapBlockAtom::computeBlockSet( &_blockSets[ mp.m_tIdx2 ].m_blockSet, &ts ), pals,
+            _blockSetWidth );
+        _ts2widget.redraw( _currentDayTime );
+    }
+
+    void root::buildBlockSet( DATA::blockSet<2>* p_out ) {
+        auto mp  = _mapBanks[ _selectedBank ].m_bank->m_mapData[ _selectedMapY ][ _selectedMapX ];
+        u8   ts1 = mp.m_tIdx1;
+        u8   ts2 = mp.m_tIdx2;
+        std::memcpy( p_out->m_blocks, _blockSets[ ts1 ].m_blockSet.m_blocks,
+                     sizeof( DATA::block ) * DATA::MAX_BLOCKS_PER_TILE_SET );
+        std::memcpy( &p_out->m_blocks[ DATA::MAX_BLOCKS_PER_TILE_SET ],
+                     _blockSets[ ts2 ].m_blockSet.m_blocks,
+                     sizeof( DATA::block ) * DATA::MAX_BLOCKS_PER_TILE_SET );
+    }
+
+    void root::buildTileSet( DATA::tileSet<2>* p_out ) {
+        auto mp  = _mapBanks[ _selectedBank ].m_bank->m_mapData[ _selectedMapY ][ _selectedMapX ];
+        u8   ts1 = mp.m_tIdx1;
+        u8   ts2 = mp.m_tIdx2;
+        std::memcpy( p_out->m_tiles, _blockSets[ ts1 ].m_tileSet.m_tiles,
+                     sizeof( DATA::tile ) * DATA::MAX_TILES_PER_TILE_SET );
+        std::memcpy( &p_out->m_tiles[ DATA::MAX_TILES_PER_TILE_SET ],
+                     _blockSets[ ts2 ].m_tileSet.m_tiles,
+                     sizeof( DATA::tile ) * DATA::MAX_TILES_PER_TILE_SET );
+    }
+
+    void root::buildPalette( DATA::palette p_out[ 5 * 16 ] ) {
+        auto mp  = _mapBanks[ _selectedBank ].m_bank->m_mapData[ _selectedMapY ][ _selectedMapX ];
+        u8   ts1 = mp.m_tIdx1;
+        u8   ts2 = mp.m_tIdx2;
+        for( u8 dt = 0; dt < 5; ++dt ) {
+            std::memcpy( &p_out[ 16 * dt ], &_blockSets[ ts1 ].m_pals[ 8 * dt ],
+                         sizeof( DATA::palette ) * 8 );
+            std::memcpy( &p_out[ 16 * dt + 6 ], &_blockSets[ ts2 ].m_pals[ 8 * dt ],
+                         sizeof( DATA::palette ) * 8 );
+        }
+    }
+
     void root::redrawMap( u8 p_mapY, u8 p_mapX ) {
-        auto map = _mapBanks[ _selectedBank ].m_bank->m_mapData[ p_mapY ][ p_mapX ];
-        u8   ts1 = map.m_tIdx1;
-        u8   ts2 = map.m_tIdx2;
-
-        fprintf( stderr, "TS %hhu %hhu %lu %lu\n", ts1, ts2, _blockSets.count( ts1 ),
-                 _blockSets.count( ts2 ) );
-
-        // update drop downs
-        _mapEditorBS1CB.set_selected( _blockSets[ ts1 ].m_stringListItem );
-        _mapEditorBS2CB.set_selected( _blockSets[ ts2 ].m_stringListItem );
+        auto mp       = _mapBanks[ _selectedBank ].m_bank->m_mapData[ p_mapY ][ p_mapX ];
+        _selectedMapX = p_mapX;
+        _selectedMapY = p_mapY;
 
         // compute tileset and blockset
         auto bs = DATA::blockSet<2>( );
-        std::memcpy( bs.m_blocks, _blockSets[ ts1 ].m_blockSet.m_blocks,
-                     sizeof( DATA::block ) * DATA::MAX_BLOCKS_PER_TILE_SET );
-        std::memcpy( &bs.m_blocks[ DATA::MAX_BLOCKS_PER_TILE_SET ],
-                     _blockSets[ ts2 ].m_blockSet.m_blocks,
-                     sizeof( DATA::block ) * DATA::MAX_BLOCKS_PER_TILE_SET );
-
+        buildBlockSet( &bs );
         auto ts = DATA::tileSet<2>( );
-        std::memcpy( ts.m_tiles, _blockSets[ ts1 ].m_tileSet.m_tiles,
-                     sizeof( DATA::tile ) * DATA::MAX_TILES_PER_TILE_SET );
-        std::memcpy( &ts.m_tiles[ DATA::MAX_TILES_PER_TILE_SET ],
-                     _blockSets[ ts2 ].m_tileSet.m_tiles,
-                     sizeof( DATA::tile ) * DATA::MAX_TILES_PER_TILE_SET );
+        buildTileSet( &ts );
+        DATA::palette pals[ 16 * 5 ];
+        buildPalette( pals );
 
-        auto computedMap = map.compute( &bs, &ts );
+        for( s8 x = -1; x <= 1; ++x ) {
+            for( s8 y = -1; y <= 1; ++y ) {
+                if( p_mapY + y >= 0 && p_mapY + y <= _mapBanks[ _selectedBank ].m_sizeY
+                    && p_mapX + x >= 0 && p_mapX + x <= _mapBanks[ _selectedBank ].m_sizeX ) {
+                    mp = _mapBanks[ _selectedBank ].m_bank->m_mapData[ p_mapY + y ][ p_mapX + x ];
+                } else {
+                    mp = DATA::mapSlice( );
+                }
 
-        // render each block
-        auto renderedMap = std::vector<std::shared_ptr<Gtk::Image>>( );
+                u8 mapwd = DATA::SIZE, maphg = DATA::SIZE;
+                if( x ) { mapwd = _adjacentBlocks; }
+                if( y ) { maphg = _adjacentBlocks; }
 
-        DATA::palette pals[ 16 * 5 ] = { 0 };
-        for( u8 dt = 0; dt < 5; ++dt ) {
-            std::memcpy( &pals[ 16 * dt ], &_blockSets[ ts1 ].m_pals[ 8 * dt ],
-                         sizeof( DATA::palette ) * 8 );
-            std::memcpy( &pals[ 16 * dt + 6 ], &_blockSets[ ts2 ].m_pals[ 8 * dt ],
-                         sizeof( DATA::palette ) * 8 );
-        }
+                if( !mapwd || !maphg ) {
+                    _currentMap[ x + 1 ][ y + 1 ].hide( );
+                    continue;
+                } else {
+                    _currentMap[ x + 1 ][ y + 1 ].show( );
+                }
 
-        /*
-        auto sb   = Gtk::ScrolledWindow( );
-        auto grid = Gtk::Grid( );
-        sb.set_child( grid );
-        grid.set_column_homogeneous( );
-        grid.set_row_homogeneous( );
-        _mapEditorMapBox.append( sb );
-        sb.set_vexpand( true );
-        for( u8 y = 0; y < DATA::SIZE; ++y ) {
-            for( u8 x = 0; x < DATA::SIZE; ++x ) {
-                auto im = UI::block::createImage( computedMap[ DATA::SIZE * y + x ], pals,
-                                                  _currentDayTime );
-                im->set_size_request( DATA::BLOCK_SIZE * _blockScale,
-                                      DATA::BLOCK_SIZE * _blockScale );
-                grid.attach( *im, x, y );
+                auto computed = mp.compute( &bs, &ts );
+                auto filtered = std::vector<DATA::computedBlock>( );
+                for( u8 y2 = 0; y2 < DATA::SIZE; ++y2 ) {
+                    for( u8 x2 = 0; x2 < DATA::SIZE; ++x2 ) {
+                        bool addx = false, addy = false;
+                        if( x2 < mapwd && x >= 0 ) {
+                            addx = true;
+                        } else if( x2 >= DATA::SIZE - mapwd && x <= 0 ) {
+                            addx = true;
+                        } else if( x == 0 ) {
+                            addx = true;
+                        }
+                        if( y2 < maphg && y >= 0 ) {
+                            addy = true;
+                        } else if( y2 >= DATA::SIZE - maphg && y <= 0 ) {
+                            addy = true;
+                        } else if( y == 0 ) {
+                            addy = true;
+                        }
+
+                        if( addx && addy ) {
+                            filtered.push_back( computed[ DATA::SIZE * y2 + x2 ] );
+                        }
+                    }
+                }
+
+                _currentMap[ x + 1 ][ y + 1 ].set( filtered, pals, mapwd );
+                _currentMap[ x + 1 ][ y + 1 ].redraw( _currentDayTime );
             }
         }
-        */
-        _currentMap->splice( 0, _currentMap->get_n_items( ), renderedMap );
     }
+
+    void root::moveToMap( s8 p_dy, s8 p_dx ) {
+        if( !_selectedMapX && p_dx < 0 ) { return; }
+        if( !_selectedMapY && p_dy < 0 ) { return; }
+
+        if( int( _selectedMapY + p_dy ) > int( MAX_MAPY ) ) { return; }
+        if( int( _selectedMapX + p_dx ) > int( MAX_MAPY ) ) { return; }
+
+        _selectedMapX += p_dx;
+        _selectedMapY += p_dy;
+
+        if( _selectedMapY > _mapBanks[ _selectedBank ].m_sizeY ) {
+            _mapBanks[ _selectedBank ].m_sizeY = _selectedMapY;
+            _mapBanks[ _selectedBank ].m_widget->setSizeY( _selectedMapY );
+            _mapBanks[ _selectedBank ].m_bank->m_mapData.push_back(
+                std::vector<DATA::mapSlice>( _mapBanks[ _selectedBank ].m_sizeX ) );
+            markBankChanged( _selectedBank );
+        }
+        if( _selectedMapX > _mapBanks[ _selectedBank ].m_sizeX ) {
+            _mapBanks[ _selectedBank ].m_sizeX = _selectedMapX;
+            _mapBanks[ _selectedBank ].m_widget->setSizeX( _selectedMapX );
+            for( u8 y = 0; y < _mapBanks[ _selectedBank ].m_sizeY; ++y ) {
+                _mapBanks[ _selectedBank ].m_bank->m_mapData[ y ].push_back( DATA::mapSlice( ) );
+            }
+            markBankChanged( _selectedBank );
+        }
+
+        loadMap( _selectedBank, _selectedMapY, _selectedMapX );
+    }
+
     void root::loadMap( u16 p_bank, u8 p_mapY, u8 p_mapX ) {
         if( _selectedBank == -1 ) {
             _loadMapLabel.hide( );
@@ -527,6 +920,15 @@ namespace UI {
         }
 
         redrawMap( p_mapY, p_mapX );
+
+        // update drop downs
+        auto& mp  = _mapBanks[ _selectedBank ].m_bank->m_mapData[ p_mapY ][ p_mapX ];
+        u8    ts1 = mp.m_tIdx1;
+        u8    ts2 = mp.m_tIdx2;
+        _mapEditorBS1CB.set_selected( _blockSets[ ts1 ].m_stringListItem );
+        _mapEditorBS2CB.set_selected( _blockSets[ ts2 ].m_stringListItem );
+        currentMapUpdateTS1( ts1 );
+        currentMapUpdateTS2( ts2 );
         fprintf( stderr, "[LOG] Loading map %hu/%hhu_%hhu.\n", p_bank, p_mapY, p_mapX );
     }
 } // namespace UI

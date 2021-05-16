@@ -96,15 +96,24 @@ namespace DATA {
     };
 
     struct mapBlockAtom {
-        u16 m_blockidx : 10;
-        u8  m_movedata : 6;
+        u16 m_blockidx : 10 = 0;
+        u8  m_movedata : 6  = 1;
+
+        static inline std::vector<computedBlock> computeBlockSet( const blockSet<1>* p_blocks,
+                                                                  const tileSet<2>*  p_tiles ) {
+            auto res = std::vector<computedBlock>( );
+            for( auto b = 0; b < MAX_BLOCKS_PER_TILE_SET; ++b ) {
+                res.push_back( p_blocks->m_blocks[ b ].compute( p_tiles ) );
+            }
+            return res;
+        }
     };
 
     struct mapSlice {
-        mapBlockAtom m_blocks[ SIZE ][ SIZE ]; // [ y ][ x ]
-        u8           m_map;
-        u16          m_x, m_y;
-        u8           m_tIdx1, m_tIdx2;
+        mapBlockAtom m_blocks[ SIZE ][ SIZE ] = { { mapBlockAtom( ) } }; // [ y ][ x ]
+        u8           m_map                    = 0;
+        u16          m_x = 0, m_y = 0;
+        u8           m_tIdx1 = 0, m_tIdx2 = 0;
 
         inline std::vector<computedBlock> compute( const blockSet<2>* p_blocks,
                                                    const tileSet<2>*  p_tiles ) {

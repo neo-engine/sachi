@@ -66,7 +66,8 @@ namespace UI {
     }
 
     addMapBank::addMapBank( )
-        : mapBank( "go-bottom", "go-last" ),
+        //: mapBank( "go-bottom", "go-last" ),
+        : mapBank( "object-flip-vertical-symbolic", "object-flip-horizontal-symbolic" ),
           _nameAdj( Gtk::Adjustment::create( 10.0, 10.0, MAX_MAPBANK_NAME, 1.0, 10.0, 0.0 ) ),
           _nameEntry( _nameAdj ) {
         _nameLabel.set_markup( "<span size=\"xx-large\" weight=\"bold\">+</span>" );
@@ -75,7 +76,7 @@ namespace UI {
         auto box1 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
         auto NI   = Gtk::Image( );
         auto NL   = Gtk::Label( );
-        NI.set_from_icon_name( "address-book-new" );
+        NI.set_from_icon_name( "document-new-symbolic" );
         NI.set_margin( MARGIN );
         box1.append( NI );
         box1.append( _nameEntry );

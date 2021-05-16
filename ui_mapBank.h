@@ -24,6 +24,7 @@ namespace UI {
         u8     _sizeX = 0, _sizeY = 0;
         bool   _selected      = false;
         status _currentStatus = STATUS_UNTOUCHED;
+        bool   _collapsed     = false;
 
         Gtk::Frame _outerFrame;
         Gtk::Box _nameBox{ Gtk::Orientation::HORIZONTAL }, _entryBox{ Gtk::Orientation::VERTICAL };
@@ -33,13 +34,26 @@ namespace UI {
         Gtk::Button                      _loadMapButton{ "Load" };
 
       protected:
-        mapBank( const std::string& p_yicon = "go-down", const std::string& p_xicon = "go-next" );
+        // mapBank( const std::string& p_yicon = "go-down", const std::string& p_xicon = "go-next"
+        // );
+        mapBank( const std::string& p_yicon = "view-more-symbolic",
+                 const std::string& p_xicon = "content-loading-symbolic" );
 
       public:
         mapBank( u16 p_bankname, u8 p_sizeX = 0, u8 p_sizeY = 0,
                  status p_initialStatus = STATUS_UNTOUCHED );
 
         virtual inline ~mapBank( ) {
+        }
+
+        virtual inline void collapse( bool p_collapsed = true ) {
+            if( p_collapsed ) {
+                _entryBox.hide( );
+                _loadMapButton.hide( );
+            } else {
+                _entryBox.show( );
+                _loadMapButton.show( );
+            }
         }
 
         inline bool getSelected( ) const {

@@ -11,7 +11,8 @@ VERSION				?= \"0.01\"
 
 CC=g++
 export LD	:=	$(CC)
-LDFLAGS	=-fsanitize=leak
+#LDFLAGS	=-fsanitize=leak
+LDFLAGS	=
 LIBS	=-lpng $(shell pkg-config --libs gtkmm-4.0)
 CFLAGS	=-std=c++20 -g3 -ggdb -Wall $(shell pkg-config --cflags gtkmm-4.0) \
 		 -DNUM_LANGUAGES=$(NUM_LANGUAGES) -DMAX_ITEMS_PER_DIR=$(MAX_ITEMS_PER_DIR) \
