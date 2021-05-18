@@ -156,7 +156,30 @@ namespace UI {
         _mapBankStrList = Gtk::StringList::create( emptystr );
 
         _mapEditorBS1CB.set_model( _mapBankStrList );
+        _mapEditorBS1CB.property_selected_item( ).signal_changed( ).connect( [ this ]( ) {
+            if( _disableRedraw || _mapEditorBS1CB.get_selected( ) == GTK_INVALID_LIST_POSITION
+                || !_fsRootLoaded ) {
+                return;
+            }
+            try {
+                u16 newTS1
+                    = std::stoi( _mapBankStrList->get_string( _mapEditorBS1CB.get_selected( ) ) );
+                currentMapUpdateTS1( newTS1 );
+            } catch( ... ) { return; }
+        } );
         _mapEditorBS2CB.set_model( _mapBankStrList );
+        _mapEditorBS2CB.property_selected_item( ).signal_changed( ).connect( [ this ]( ) {
+            if( _disableRedraw || _mapEditorBS2CB.get_selected( ) == GTK_INVALID_LIST_POSITION
+                || !_fsRootLoaded ) {
+                return;
+            }
+            try {
+                u16 newTS2
+                    = std::stoi( _mapBankStrList->get_string( _mapEditorBS2CB.get_selected( ) ) );
+                currentMapUpdateTS2( newTS2 );
+            } catch( ... ) { return; }
+        } );
+
         bsselbox.append( _mapEditorBS1CB );
         bsselbox.append( _mapEditorBS2CB );
         bsselbox.get_style_context( )->add_class( "linked" );
@@ -617,13 +640,15 @@ namespace UI {
             _blockSetNames.insert( bsname );
         }
 
-        auto bsnames = std::vector<Glib::ustring>( );
+        _disableRedraw = true;
+        auto bsnames   = std::vector<Glib::ustring>( );
 
         for( auto bsname : _blockSetNames ) {
             bsnames.push_back( std::to_string( bsname ) );
             _blockSets[ bsname ].m_stringListItem = bsnames.size( ) - 1;
         }
         _mapBankStrList->splice( 0, _mapBankStrList->get_n_items( ), bsnames );
+        _disableRedraw = false;
     }
 
     void root::addNewMapBank( u16 p_bank, u8 p_sizeY, u8 p_sizeX, bool p_scattered,
@@ -922,11 +947,13 @@ namespace UI {
         redrawMap( p_mapY, p_mapX );
 
         // update drop downs
-        auto& mp  = _mapBanks[ _selectedBank ].m_bank->m_mapData[ p_mapY ][ p_mapX ];
-        u8    ts1 = mp.m_tIdx1;
-        u8    ts2 = mp.m_tIdx2;
+        auto& mp       = _mapBanks[ _selectedBank ].m_bank->m_mapData[ p_mapY ][ p_mapX ];
+        u8    ts1      = mp.m_tIdx1;
+        u8    ts2      = mp.m_tIdx2;
+        _disableRedraw = true;
         _mapEditorBS1CB.set_selected( _blockSets[ ts1 ].m_stringListItem );
         _mapEditorBS2CB.set_selected( _blockSets[ ts2 ].m_stringListItem );
+        _disableRedraw = false;
         currentMapUpdateTS1( ts1 );
         currentMapUpdateTS2( ts2 );
         fprintf( stderr, "[LOG] Loading map %hu/%hhu_%hhu.\n", p_bank, p_mapY, p_mapX );

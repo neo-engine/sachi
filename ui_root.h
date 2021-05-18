@@ -85,6 +85,7 @@ namespace UI {
         u8   _adjacentBlocks  = 8;
 
         bool _mapBankBarCollapsed = false;
+        bool _disableRedraw       = true;
 
         std::map<u8, blockSetInfo> _blockSets;
         std::set<u8>               _blockSetNames;

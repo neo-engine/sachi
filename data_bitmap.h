@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 #include <vector>
 #include <gtkmm/image.h>
 
