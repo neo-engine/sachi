@@ -265,6 +265,11 @@ namespace UI {
         meScrolledWindow1.set_policy( Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC );
         _mapEditorBlockSetBox.append( meScrolledWindow1 );
 
+        _ts1widget.connectClick(
+            [ this ]( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY ) {
+                onTSClicked( p_button, p_blockX, p_blockY, 0 );
+            } );
+
         auto meScrolledWindow2 = Gtk::ScrolledWindow( );
         meScrolledWindow2.set_child( _ts2widget );
         meScrolledWindow2.set_margin( MARGIN );
@@ -272,6 +277,11 @@ namespace UI {
         meScrolledWindow2.set_halign( Gtk::Align::CENTER );
         meScrolledWindow2.set_policy( Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC );
         _mapEditorBlockSetBox.append( meScrolledWindow2 );
+
+        _ts2widget.connectClick(
+            [ this ]( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY ) {
+                onTSClicked( p_button, p_blockX, p_blockY, 1 );
+            } );
 
         // Map window
         // +--------------+
@@ -616,11 +626,15 @@ namespace UI {
         if( _currentlySelectedBlock.m_blockidx < DATA::MAX_BLOCKS_PER_TILE_SET ) {
             _currentlySelectedComputedBlock
                 = _currentBlockset1[ _currentlySelectedBlock.m_blockidx ];
+            _ts1widget.selectBlock( _currentlySelectedBlock.m_blockidx );
+            _ts2widget.selectBlock( -1 );
         } else {
             _currentlySelectedComputedBlock = _currentBlockset2[ _currentlySelectedBlock.m_blockidx
                                                                  - DATA::MAX_BLOCKS_PER_TILE_SET ];
+            _ts1widget.selectBlock( -1 );
+            _ts2widget.selectBlock( _currentlySelectedBlock.m_blockidx
+                                    - DATA::MAX_BLOCKS_PER_TILE_SET );
         }
-        // TODO:        markBlockInTS( _currentlySelectedBlock.m_blockidx );
     }
 
     void root::onMapDragStart( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY,
@@ -724,6 +738,12 @@ namespace UI {
             break;
         default: break;
         }
+    }
+
+    void root::onTSClicked( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY,
+                            u8 p_ts ) {
+        u16 block = p_blockY * _blockSetWidth + p_blockX;
+        updateSelectedBlock( { block + p_ts * DATA::MAX_BLOCKS_PER_TILE_SET, 0 } );
     }
 
     bool root::checkOrCreatePath( const std::string& p_path ) {
@@ -1222,5 +1242,7 @@ namespace UI {
         currentMapUpdateTS1( ts1 );
         currentMapUpdateTS2( ts2 );
         fprintf( stderr, "[LOG] Loading map %hu/%hhu_%hhu.\n", p_bank, p_mapY, p_mapX );
+
+        updateSelectedBlock( _currentlySelectedBlock );
     }
 } // namespace UI

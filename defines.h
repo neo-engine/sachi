@@ -42,4 +42,5 @@ const std::string EXTRA_CSS
     = ".mapbank-saved { background-color: rgb( 180, 240, 180 ); color: #2e3436; }\n"
       ".mapbank-created { background-color: rgb( 180, 240, 240 ); color: #2e3436; }\n"
       ".mapbank-modified { background-color: rgb( 240, 240, 180 ); color: #2e3436; }\n"
-      ".mapbank-selected { border-color: @theme_selected_bg_color; color: @theme_selected_bg_color; background-color: @theme_selected_fg_color; }";
+      ".mapbank-selected { border-color: @theme_selected_bg_color; color: @theme_selected_bg_color; background-color: @theme_selected_fg_color; }\n"
+      ".mapblock-selected { border-style: solid; border-width: 2px; border-color: red; color: @theme_selected_bg_color; }\n";

@@ -159,6 +159,8 @@ namespace UI {
         void onMapClicked( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY, s8 p_mapX,
                            s8 p_mapY, bool p_allowEdit = true );
 
+        void onTSClicked( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY, u8 p_ts );
+
         void onMapDragStart( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY,
                              s8 p_mapX, s8 p_mapY, bool p_allowEdit = true );
         void onMapDragUpdate( UI::mapSlice::clickType p_button, s16 p_dX, s16 p_dY, s8 p_mapX,

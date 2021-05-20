@@ -8,6 +8,14 @@ namespace UI {
         for( auto& im : _images ) { im->unparent( ); }
     }
 
+    void mapSlice::selectBlock( s16 p_blockIdx ) {
+        if( _currentSelectionIndex != -1 ) {
+            _images[ _currentSelectionIndex ]->remove_overlay( _selectionBox );
+        }
+        if( p_blockIdx >= 0 ) { _images[ p_blockIdx ]->add_overlay( _selectionBox ); }
+        _currentSelectionIndex = p_blockIdx;
+    }
+
     void mapSlice::updateBlock( const DATA::computedBlock& p_block, u16 p_x, u16 p_y ) {
         auto pos       = p_x + p_y * _blocksPerRow;
         _blocks[ pos ] = p_block;

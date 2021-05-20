@@ -5,6 +5,7 @@
 #include <gtkmm/gestureclick.h>
 #include <gtkmm/gesturedrag.h>
 #include <gtkmm/image.h>
+#include <gtkmm/label.h>
 #include <gtkmm/overlay.h>
 #include <gtkmm/widget.h>
 
@@ -31,10 +32,14 @@ namespace UI {
 
         u8 _currentDaytime = 0;
 
+        s16 _currentSelectionIndex = -1;
+
         std::vector<std::shared_ptr<Gtk::Overlay>> _images;
 
         std::shared_ptr<Gtk::GestureClick> _clickEvent;
         std::shared_ptr<Gtk::GestureDrag>  _dragEvent;
+
+        Gtk::Label _selectionBox;
 
       public:
         inline mapSlice( ) {
@@ -47,8 +52,17 @@ namespace UI {
             _dragEvent->set_propagation_phase( Gtk::PropagationPhase::CAPTURE );
             _dragEvent->set_button( 0 );
             add_controller( _dragEvent );
+
+            _selectionBox = Gtk::Label( );
+            _selectionBox.set_expand( );
+            _selectionBox.get_style_context( )->add_class( "mapblock-selected" );
         }
         virtual ~mapSlice( );
+
+        virtual void        selectBlock( s16 p_blockIdx );
+        virtual inline void selectBlock( u16 p_blockX, u16 p_blockY ) {
+            selectBlock( p_blockY * _blocksPerRow + p_blockX );
+        }
 
         virtual void connectDrag( const std::function<void( clickType, u16, u16 )>& p_start,
                                   const std::function<void( clickType, s16, s16 )>& p_update,
