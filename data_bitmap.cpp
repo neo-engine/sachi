@@ -112,7 +112,7 @@ namespace DATA {
     ///////////////////////////////////////////////////////////////////////////////
 
     pixel& bitmap::operator( )( size_t p_x, size_t p_y ) {
-        if( p_x < 0 || p_x >= m_width || p_y < 0 || p_y >= m_height ) {
+        if( p_x >= m_width || p_y >= m_height ) {
             std::fprintf( stderr,
                           "[ERROR] Index out of range while trying to get pixel at ( %lu|%lu )!\n"
                           "Returning default pixel value instead.",
@@ -123,7 +123,7 @@ namespace DATA {
         return m_pixels[ p_x ][ p_y ];
     }
     pixel bitmap::operator( )( size_t p_x, size_t p_y ) const {
-        if( p_x < 0 || p_x >= m_width || p_y < 0 || p_y >= m_height ) {
+        if( p_x >= m_width || p_y >= m_height ) {
             std::fprintf( stderr,
                           "[ERROR] Index out of range while trying to get pixel at ( %lu|%lu )!\n"
                           "Returning default pixel value instead.",

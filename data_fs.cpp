@@ -14,10 +14,22 @@ namespace DATA {
         if( !p_stream ) return 0;
         return fread( p_buffer, p_size, p_count, p_stream );
     }
+    size_t write( FILE* p_stream, const void* p_buffer, size_t p_size, size_t p_count ) {
+        if( !p_stream ) return 0;
+        return fwrite( p_buffer, p_size, p_count, p_stream );
+    }
+
     bool readNop( FILE* p_file, u32 p_cnt ) {
         u8 tmp;
         for( u32 i = 0; i < p_cnt; ++i ) {
             if( !read( p_file, &tmp, sizeof( u8 ), 1 ) ) return false;
+        }
+        return true;
+    }
+    bool writeNop( FILE* p_file, u32 p_cnt ) {
+        u8 tmp = 0;
+        for( u32 i = 0; i < p_cnt; ++i ) {
+            if( !write( p_file, &tmp, sizeof( u8 ), 1 ) ) return false;
         }
         return true;
     }
@@ -94,47 +106,27 @@ namespace DATA {
         p_result->m_tIdx2 = tsidx2;
 
         return true;
+    }
 
-        /*
-        // read the first tileset
+    bool writeMapSlice( FILE* p_mapFile, const mapSlice* p_map ) {
+        if( p_mapFile == 0 ) return false;
+        write( p_mapFile, &SIZE, sizeof( u8 ), 1 );
+        writeNop( p_mapFile, 3 );
+        write( p_mapFile, &SIZE, sizeof( u8 ), 1 );
+        writeNop( p_mapFile, 3 );
 
-        FILE* f = open( TILESET_PATH.c_str( ), tsidx1, ".ts" );
-        readTiles( f, p_result->m_tileSet.m_tiles );
-        fclose( f );
+        write( p_mapFile, &p_map->m_tIdx1, sizeof( u8 ), 1 );
+        writeNop( p_mapFile, 3 );
+        write( p_mapFile, &p_map->m_tIdx2, sizeof( u8 ), 1 );
+        writeNop( p_mapFile, 3 );
 
-        f = open( BLOCKSET_PATH.c_str( ), tsidx1, ".bvd" );
-        readBlocks( f, p_result->m_blockSet.m_blocks );
-        fclose( f );
+        // border size
+        writeNop( p_mapFile, 4 );
 
-        f = open( PALETTE_PATH.c_str( ), tsidx1, ".p2l" );
-        for( u8 i = 0; i < 5; ++i ) { readPal( f, p_result->m_pals + i * 16, 8 ); }
-        fclose( f );
+        write( p_mapFile, p_map->m_blocks, sizeof( mapBlockAtom ), SIZE * SIZE );
+        fclose( p_mapFile );
 
-
-        f = open( TILESET_PATH.c_str( ), tsidx2, ".ts" );
-        if( !f ) {
-            fprintf( stderr, "Tileset %hhu does not exist!\n", tsidx2 );
-        } else {
-            readTiles( f, p_result->m_tileSet.m_tiles, 512 );
-            fclose( f );
-        }
-
-        f = open( BLOCKSET_PATH.c_str( ), tsidx2, ".bvd" );
-        if( !f ) {
-            fprintf( stderr, "Blockset %hhu does not exist!\n", tsidx2 );
-        } else {
-            readBlocks( f, p_result->m_blockSet.m_blocks, 512 );
-            fclose( f );
-        }
-
-        f = open( PALETTE_PATH.c_str( ), tsidx2, ".p2l" );
-        if( !f ) {
-            fprintf( stderr, "Palette %hhu does not exist!\n", tsidx2 );
-        } else {
-            for( u8 i = 0; i < 5; ++i ) { readPal( f, p_result->m_pals + 6 + i * 16, 8 ); }
-            fclose( f );
-        }
-*/
+        return true;
     }
 
     bool readMapData( FILE* p_file, mapData& p_result ) {

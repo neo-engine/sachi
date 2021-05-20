@@ -8,6 +8,16 @@ namespace UI {
         for( auto& im : _images ) { im->unparent( ); }
     }
 
+    void mapSlice::updateBlock( const DATA::computedBlock& p_block, u16 p_x, u16 p_y ) {
+        auto pos       = p_x + p_y * _blocksPerRow;
+        _blocks[ pos ] = p_block;
+        _images[ pos ]->unparent( );
+        _images[ pos ] = std::make_shared<Gtk::Overlay>( );
+        _images[ pos ]->set_child(
+            *UI::block::createImage( _blocks[ pos ], _pals, _currentDaytime ) );
+        _images[ pos ]->set_parent( *this );
+    }
+
     void mapSlice::set( const std::vector<DATA::computedBlock>& p_blocks,
                         DATA::palette p_pals[ 5 * 16 ], u16 p_blocksPerRow ) {
         _blocks       = p_blocks;
@@ -27,15 +37,19 @@ namespace UI {
     }
 
     void mapSlice::redraw( u8 p_daytime ) {
+        _currentDaytime = p_daytime;
         for( auto& im : _images ) { im->unparent( ); }
         _images.clear( );
 
         for( auto block : _blocks ) {
-            auto im = UI::block::createImage( block, _pals, p_daytime );
+            auto im = UI::block::createImage( block, _pals, _currentDaytime );
             im->set_size_request( DATA::BLOCK_SIZE * _currentScale,
                                   DATA::BLOCK_SIZE * _currentScale );
-            im->set_parent( *this );
-            _images.push_back( im );
+
+            auto overlay = std::make_shared<Gtk::Overlay>( );
+            overlay->set_child( *im );
+            overlay->set_parent( *this );
+            _images.push_back( overlay );
         }
     }
 

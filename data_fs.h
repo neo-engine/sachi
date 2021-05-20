@@ -314,6 +314,8 @@ namespace DATA {
 
     bool readMapSlice( FILE* p_mapFile, mapSlice* p_result, u16 p_x = 0, u16 p_y = 0 );
 
+    bool writeMapSlice( FILE* p_mapFile, const mapSlice* p_map );
+
     size_t         getLength( u8 p_c );
     char           getValue( char* p_text, size_t* p_readIdx );
     char*          fixEncoding( char* p_utf8 );

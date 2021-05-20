@@ -132,7 +132,7 @@ namespace DATA {
         }
     }
 
-    constexpr pixel tint( const pixel& p_target, const pixel& p_tint, u8 p_force ) {
+    constexpr pixel tint( const pixel& p_target, const pixel& p_tint, u8 ) {
         return p_target & p_tint;
     }
 

@@ -2,15 +2,20 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <tuple>
 
+#include <gtkmm/actionbar.h>
 #include <gtkmm/box.h>
 #include <gtkmm/button.h>
 #include <gtkmm/dropdown.h>
 #include <gtkmm/filechooserdialog.h>
 #include <gtkmm/grid.h>
+#include <gtkmm/iconview.h>
 #include <gtkmm/label.h>
+#include <gtkmm/liststore.h>
 #include <gtkmm/notebook.h>
-#include <gtkmm/signallistitemfactory.h>
+#include <gtkmm/recentmanager.h>
+#include <gtkmm/scrolledwindow.h>
 #include <gtkmm/stringlist.h>
 #include <gtkmm/window.h>
 
@@ -42,9 +47,28 @@ namespace UI {
             bool m_scattered = true;
         };
 
-        Gtk::Label _loadMapLabel;
-        Gtk::Box   _mainBox, _mapOverviewBox;
-        Gtk::Box   _mapEditorBlockSetBox{ Gtk::Orientation::VERTICAL },
+        class recentFsRootModelColumn : public Gtk::TreeModel::ColumnRecord {
+          public:
+            recentFsRootModelColumn( ) {
+                //                add( m_modified );
+                add( m_path );
+                add( m_pixbuf );
+            }
+
+            //            Gtk::TreeModelColumn<Glib::DateTime>               m_modified;
+            Gtk::TreeModelColumn<std::string>                  m_path;
+            Gtk::TreeModelColumn<std::shared_ptr<Gdk::Pixbuf>> m_pixbuf;
+        };
+
+        recentFsRootModelColumn             _recentViewColumns;
+        Gtk::IconView                       _recentFsRootIconView;
+        Glib::RefPtr<Gtk::ListStore>        _recentFsRootListModel;
+        std::shared_ptr<Gtk::RecentManager> _recentlyUsedFsRoots;
+
+        Gtk::ScrolledWindow _ivScrolledWindow;
+        Gtk::Label          _loadMapLabel;
+        Gtk::Box            _mainBox, _mapOverviewBox;
+        Gtk::Box            _mapEditorBlockSetBox{ Gtk::Orientation::VERTICAL },
             _mapEditorMapBox{ Gtk::Orientation::VERTICAL };
         Gtk::DropDown                _mapEditorBS1CB, _mapEditorBS2CB;
         Gtk::Notebook                _mapNotebook;
@@ -53,6 +77,7 @@ namespace UI {
         Gtk::Box                     _mapBankBox;
         std::shared_ptr<addMapBank>  _addMapBank;
         Gtk::Grid                    _mapGrid;
+        Gtk::ActionBar               _mapEditorActionBar;
 
         Gtk::SpinButton _mapEditorSettings1;
         Gtk::SpinButton _mapEditorSettings2;
@@ -68,6 +93,8 @@ namespace UI {
         std::shared_ptr<Gtk::StringList> _mapBankStrList;
 
         std::vector<std::vector<mapSlice>> _currentMap; // main map and parts of the adjacent maps
+        std::vector<DATA::computedBlock>   _currentBlockset1;
+        std::vector<DATA::computedBlock>   _currentBlockset2;
 
         // bank -> bankinfo
         std::map<u16, mapBankInfo> _mapBanks;
@@ -84,15 +111,25 @@ namespace UI {
         u16  _blockSetWidth   = 8;
         u8   _adjacentBlocks  = 8;
 
+        std::tuple<u16, u16, s8, s8> _dragStart;
+        std::tuple<u16, u16, s8, s8> _dragEnd;
+
         bool _mapBankBarCollapsed = false;
         bool _disableRedraw       = true;
+
+        bool _focusMode = false;
 
         std::map<u8, blockSetInfo> _blockSets;
         std::set<u8>               _blockSetNames;
 
+        DATA::mapBlockAtom  _currentlySelectedBlock = DATA::mapBlockAtom( );
+        DATA::computedBlock _currentlySelectedComputedBlock;
+
       public:
         root( );
         ~root( ) override;
+
+        void loadNewFsRoot( const std::string& p_path );
 
       private:
         void onFsRootOpenClick( );
@@ -100,13 +137,45 @@ namespace UI {
 
         void onFolderDialogResponse( int p_responseId, Gtk::FileChooserDialog* p_dialog );
 
-        void loadNewFsRoot( const std::string& p_path );
+        inline bool isInMapBounds( s16 p_blockX, s16 p_blockY, s8 p_mapX, s8 p_mapY ) {
+            if( p_blockX < 0 || p_blockY < 0 ) { return false; }
+
+            u16 wd = DATA::SIZE;
+            u16 hg = DATA::SIZE;
+            if( p_mapX ) { wd = _adjacentBlocks; }
+            if( p_mapY ) { hg = _adjacentBlocks; }
+
+            if( p_blockX >= wd || p_blockY >= hg ) { return false; }
+            return true;
+        }
+
+        /*
+         * @brief: Handles clicks on maps:
+         * Left: Change block to currently selected block (if p_allowChange)
+         * Middle: Change block and recursively all adjacent blocks that are the same as
+         * the original block (flood fill)
+         * Right: Select block
+         */
+        void onMapClicked( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY, s8 p_mapX,
+                           s8 p_mapY, bool p_allowEdit = true );
+
+        void onMapDragStart( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY,
+                             s8 p_mapX, s8 p_mapY, bool p_allowEdit = true );
+        void onMapDragUpdate( UI::mapSlice::clickType p_button, s16 p_dX, s16 p_dY, s8 p_mapX,
+                              s8 p_mapY, bool p_allowEdit = true );
+        void onMapDragEnd( UI::mapSlice::clickType p_button, s16 p_dX, s16 p_dY, s8 p_mapX,
+                           s8 p_mapY, bool p_allowEdit = true );
+
+        void onBlockSetClicked( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY,
+                                u8 p_tsIdx );
 
         void loadMapBank( u16 p_bank );
 
         void collapseMapBankBar( bool p_collapse = true );
 
         void moveToMap( s8 p_dy, s8 p_dx );
+
+        void updateSelectedBlock( DATA::mapBlockAtom p_block );
 
         /*
          * @brief: Loads the specified bank and map.
@@ -132,6 +201,12 @@ namespace UI {
         void buildBlockSet( DATA::blockSet<2>* p_out );
         void buildTileSet( DATA::tileSet<2>* p_out );
         void buildPalette( DATA::palette p_out[ 5 * 16 ] );
+
+        void addFsRootToRecent( const std::string& p_path );
+        void removeFsRootFromRecent( const std::string& p_path );
+        auto getRecentFsRoots( );
+
+        void populateRecentFsRootIconView( );
 
         static auto createButton(
             const std::string& p_iconName, const std::string& p_labelText,
