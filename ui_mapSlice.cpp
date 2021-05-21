@@ -4,6 +4,12 @@
 #include "ui_mapSlice.h"
 
 namespace UI {
+    std::string toHexString( u8 p_value ) {
+        char buffer[ 10 ];
+        snprintf( buffer, 5, "%hhX", p_value );
+        return std::string( buffer );
+    }
+
     mapSlice::~mapSlice( ) {
         for( auto& im : _images ) { im->unparent( ); }
     }
@@ -18,15 +24,26 @@ namespace UI {
 
     void mapSlice::updateBlock( const DATA::computedBlock& p_block, u16 p_x, u16 p_y ) {
         auto pos       = p_x + p_y * _blocksPerRow;
-        _blocks[ pos ] = p_block;
+        _blocks[ pos ] = { p_block, _blocks[ pos ].second };
         _images[ pos ]->unparent( );
         _images[ pos ] = std::make_shared<Gtk::Overlay>( );
         _images[ pos ]->set_child(
-            *UI::block::createImage( _blocks[ pos ], _pals, _currentDaytime ) );
+            *UI::block::createImage( _blocks[ pos ].first, _pals, _currentDaytime ) );
         _images[ pos ]->set_parent( *this );
+        _images[ pos ]->add_overlay( *_overlayMovement[ pos ] );
     }
 
-    void mapSlice::set( const std::vector<DATA::computedBlock>& p_blocks,
+    void mapSlice::updateBlockMovement( u8 p_movement, u16 p_x, u16 p_y ) {
+        auto pos = p_x + p_y * _blocksPerRow;
+        _overlayMovement[ pos ]->get_style_context( )->remove_class(
+            block::classForMovement( _blocks[ pos ].second ) );
+        _blocks[ pos ] = { _blocks[ pos ].first, p_movement };
+        _overlayMovement[ pos ]->set_text( toHexString( p_movement ) );
+        _overlayMovement[ pos ]->get_style_context( )->add_class(
+            block::classForMovement( _blocks[ pos ].second ) );
+    }
+
+    void mapSlice::set( const std::vector<std::pair<DATA::computedBlock, u8>>& p_blocks,
                         DATA::palette p_pals[ 5 * 16 ], u16 p_blocksPerRow ) {
         _blocks       = p_blocks;
         _blocksPerRow = p_blocksPerRow;
@@ -37,19 +54,33 @@ namespace UI {
     }
 
     void mapSlice::setScale( u16 p_scale ) {
-        if( p_scale ) { _currentScale = p_scale; }
+        if( p_scale ) {
+            _currentScale = p_scale;
+
+            _selectionBox.set_size_request( _currentScale * DATA::BLOCK_SIZE - 4,
+                                            _currentScale * DATA::BLOCK_SIZE - 4 );
+        }
     }
 
     void mapSlice::setSpacing( u16 p_blockSpacing ) {
         _blockSpacing = p_blockSpacing;
     }
 
-    void mapSlice::redraw( u8 p_daytime ) {
+    void mapSlice::setOverlayOpacity( double p_newValue ) {
+        _overlayOpacity = p_newValue;
+        for( auto mnt : _overlayMovement ) { mnt->set_opacity( _overlayOpacity ); }
+    }
+
+    void mapSlice::redraw( u8 p_daytime, bool p_overlay ) {
+        auto oldsel = _currentSelectionIndex;
+        selectBlock( -1 );
         _currentDaytime = p_daytime;
+        _showOverlay    = p_overlay;
         for( auto& im : _images ) { im->unparent( ); }
         _images.clear( );
+        _overlayMovement.clear( );
 
-        for( auto block : _blocks ) {
+        for( auto [ block, movement ] : _blocks ) {
             auto im = UI::block::createImage( block, _pals, _currentDaytime );
             im->set_size_request( DATA::BLOCK_SIZE * _currentScale,
                                   DATA::BLOCK_SIZE * _currentScale );
@@ -58,6 +89,29 @@ namespace UI {
             overlay->set_child( *im );
             overlay->set_parent( *this );
             _images.push_back( overlay );
+
+            auto mnt = std::make_shared<Gtk::Label>( toHexString( movement ) );
+            mnt->get_style_context( )->add_class( block::classForMovement( movement ) );
+            mnt->set_opacity( _overlayOpacity );
+            overlay->add_overlay( *mnt );
+            if( !p_overlay ) {
+                mnt->hide( );
+            } else {
+                mnt->show( );
+            }
+            _overlayMovement.push_back( mnt );
+        }
+        selectBlock( oldsel );
+    }
+
+    void mapSlice::setOverlayHidden( bool p_hidden ) {
+        _showOverlay = !p_hidden;
+        for( auto i : _overlayMovement ) {
+            if( _showOverlay ) {
+                i->show( );
+            } else {
+                i->hide( );
+            }
         }
     }
 
@@ -70,6 +124,12 @@ namespace UI {
                                   int& p_naturalBaseline ) const {
         p_minimumBaseline = -1;
         p_naturalBaseline = -1;
+
+        if( _images.empty( ) ) {
+            p_minimum = 0;
+            p_natural = 0;
+            return;
+        }
 
         if( p_orientation == Gtk::Orientation::HORIZONTAL ) {
             p_minimum = _blocksPerRow * _currentScale * DATA::BLOCK_SIZE

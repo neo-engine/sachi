@@ -4,11 +4,12 @@
 #include <set>
 #include <tuple>
 
-#include <gtkmm/actionbar.h>
 #include <gtkmm/box.h>
 #include <gtkmm/button.h>
+#include <gtkmm/centerbox.h>
 #include <gtkmm/dropdown.h>
 #include <gtkmm/filechooserdialog.h>
+#include <gtkmm/frame.h>
 #include <gtkmm/grid.h>
 #include <gtkmm/iconview.h>
 #include <gtkmm/label.h>
@@ -17,6 +18,7 @@
 #include <gtkmm/recentmanager.h>
 #include <gtkmm/scrolledwindow.h>
 #include <gtkmm/stringlist.h>
+#include <gtkmm/togglebutton.h>
 #include <gtkmm/window.h>
 
 #include "data_maprender.h"
@@ -60,14 +62,28 @@ namespace UI {
             Gtk::TreeModelColumn<std::shared_ptr<Gdk::Pixbuf>> m_pixbuf;
         };
 
+        enum mapDisplayMode : u8 {
+            MODE_EDIT_TILES,
+            MODE_EDIT_MOVEMENT,
+            MODE_EDIT_LOCATIONS,
+            MODE_EDIT_EVENTS,
+            MODE_EDIT_DATA,
+        };
+
+        mapDisplayMode _currentMapDisplayMode;
+
+        Gtk::Frame _blockSetFrame, _movementFrame;
+
         recentFsRootModelColumn             _recentViewColumns;
         Gtk::IconView                       _recentFsRootIconView;
         Glib::RefPtr<Gtk::ListStore>        _recentFsRootListModel;
         std::shared_ptr<Gtk::RecentManager> _recentlyUsedFsRoots;
 
+        Gtk::Label _mapBankBarLabel;
+
         Gtk::ScrolledWindow _ivScrolledWindow;
         Gtk::Label          _loadMapLabel;
-        Gtk::Box            _mainBox, _mapOverviewBox;
+        Gtk::Box            _mainBox, _mapOverviewBox, _abEb1;
         Gtk::Box            _mapEditorBlockSetBox{ Gtk::Orientation::VERTICAL },
             _mapEditorMapBox{ Gtk::Orientation::VERTICAL };
         Gtk::DropDown                _mapEditorBS1CB, _mapEditorBS2CB;
@@ -77,7 +93,7 @@ namespace UI {
         Gtk::Box                     _mapBankBox;
         std::shared_ptr<addMapBank>  _addMapBank;
         Gtk::Grid                    _mapGrid;
-        Gtk::ActionBar               _mapEditorActionBar;
+        Gtk::Frame                   _mapEditorActionBar;
 
         Gtk::SpinButton _mapEditorSettings1;
         Gtk::SpinButton _mapEditorSettings2;
@@ -86,15 +102,17 @@ namespace UI {
         Gtk::SpinButton _mapEditorSettings5;
         Gtk::SpinButton _mapEditorSettings6;
 
+        std::vector<std::shared_ptr<Gtk::ToggleButton>> _mapEditorModeToggles;
+
         std::shared_ptr<Gtk::Button> _mapNavButton[ 3 ][ 3 ];
 
-        mapSlice _ts1widget, _ts2widget;
+        mapSlice _ts1widget, _ts2widget, _movementWidget;
 
         std::shared_ptr<Gtk::StringList> _mapBankStrList;
 
         std::vector<std::vector<mapSlice>> _currentMap; // main map and parts of the adjacent maps
-        std::vector<DATA::computedBlock>   _currentBlockset1;
-        std::vector<DATA::computedBlock>   _currentBlockset2;
+        std::vector<std::pair<DATA::computedBlock, u8>> _currentBlockset1;
+        std::vector<std::pair<DATA::computedBlock, u8>> _currentBlockset2;
 
         // bank -> bankinfo
         std::map<u16, mapBankInfo> _mapBanks;
@@ -132,6 +150,8 @@ namespace UI {
         void loadNewFsRoot( const std::string& p_path );
 
       private:
+        void setNewMapEditMode( mapDisplayMode p_newMode );
+
         void onFsRootOpenClick( );
         void onFsRootSaveClick( );
 

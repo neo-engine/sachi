@@ -2,6 +2,7 @@
 #include <functional>
 #include <memory>
 
+#include <gtkmm/box.h>
 #include <gtkmm/gestureclick.h>
 #include <gtkmm/gesturedrag.h>
 #include <gtkmm/image.h>
@@ -22,8 +23,8 @@ namespace UI {
         };
 
       private:
-        std::vector<DATA::computedBlock> _blocks;
-        DATA::palette                    _pals[ 16 * 5 ] = { 0 };
+        std::vector<std::pair<DATA::computedBlock, u8>> _blocks;
+        DATA::palette                                   _pals[ 16 * 5 ] = { 0 };
 
         u16 _blocksPerRow;
         u16 _currentScale = 1;
@@ -34,12 +35,16 @@ namespace UI {
 
         s16 _currentSelectionIndex = -1;
 
+        double _overlayOpacity = .3;
+        bool   _showOverlay    = false;
+
         std::vector<std::shared_ptr<Gtk::Overlay>> _images;
+        std::vector<std::shared_ptr<Gtk::Label>>   _overlayMovement;
 
         std::shared_ptr<Gtk::GestureClick> _clickEvent;
         std::shared_ptr<Gtk::GestureDrag>  _dragEvent;
 
-        Gtk::Label _selectionBox;
+        Gtk::Box _selectionBox;
 
       public:
         inline mapSlice( ) {
@@ -53,9 +58,11 @@ namespace UI {
             _dragEvent->set_button( 0 );
             add_controller( _dragEvent );
 
-            _selectionBox = Gtk::Label( );
-            _selectionBox.set_expand( );
+            _selectionBox = Gtk::Box( );
             _selectionBox.get_style_context( )->add_class( "mapblock-selected" );
+            _selectionBox.set_size_request( _currentScale * DATA::BLOCK_SIZE - 4,
+                                            _currentScale * DATA::BLOCK_SIZE - 4 );
+            _currentSelectionIndex = -1;
         }
         virtual ~mapSlice( );
 
@@ -64,9 +71,11 @@ namespace UI {
             selectBlock( p_blockY * _blocksPerRow + p_blockX );
         }
 
-        virtual void connectDrag( const std::function<void( clickType, u16, u16 )>& p_start,
-                                  const std::function<void( clickType, s16, s16 )>& p_update,
-                                  const std::function<void( clickType, s16, s16 )>& p_end ) {
+        virtual void setOverlayHidden( bool p_hidden = true );
+
+        virtual inline void connectDrag( const std::function<void( clickType, u16, u16 )>& p_start,
+                                         const std::function<void( clickType, s16, s16 )>& p_update,
+                                         const std::function<void( clickType, s16, s16 )>& p_end ) {
             _dragEvent->signal_drag_begin( ).connect( [ this, p_start ]( double p_x, double p_y ) {
                 if( !_dragEvent->get_current_button( ) ) { return; }
                 auto blockwd = _currentScale * DATA::BLOCK_SIZE + _blockSpacing;
@@ -84,7 +93,8 @@ namespace UI {
             } );
         }
 
-        virtual void connectClick( const std::function<void( clickType, u16, u16 )>& p_callback ) {
+        virtual inline void
+        connectClick( const std::function<void( clickType, u16, u16 )>& p_callback ) {
             _clickEvent->signal_pressed( ).connect(
                 [ this, p_callback ]( int, double p_x, double p_y ) {
                     if( !_clickEvent->get_current_button( ) ) { return; }
@@ -100,11 +110,15 @@ namespace UI {
          */
         void updateBlock( const DATA::computedBlock& p_block, u16 p_x, u16 p_y );
 
-        void set( const std::vector<DATA::computedBlock>& p_blocks, DATA::palette p_pals[ 5 * 16 ],
-                  u16 p_blocksPerRow = DATA::SIZE );
+        void updateBlockMovement( u8 p_movement, u16 p_x, u16 p_y );
+
+        void set( const std::vector<std::pair<DATA::computedBlock, u8>>& p_blocks,
+                  DATA::palette p_pals[ 5 * 16 ], u16 p_blocksPerRow = DATA::SIZE );
         void setScale( u16 p_scale = 1 );
         void setSpacing( u16 p_blockSpacing = 0 );
-        void redraw( u8 p_daytime = 0 );
+        void redraw( u8 p_daytime = 0, bool p_overlay = false );
+
+        void setOverlayOpacity( double p_newValue = .4 );
 
       protected:
         Gtk::SizeRequestMode get_request_mode_vfunc( ) const override;
