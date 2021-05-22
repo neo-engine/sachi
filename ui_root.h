@@ -4,6 +4,9 @@
 #include <set>
 #include <tuple>
 
+#include <giomm/menu.h>
+#include <giomm/menuitem.h>
+#include <giomm/simpleactiongroup.h>
 #include <gtkmm/box.h>
 #include <gtkmm/button.h>
 #include <gtkmm/centerbox.h>
@@ -15,7 +18,9 @@
 #include <gtkmm/iconview.h>
 #include <gtkmm/label.h>
 #include <gtkmm/liststore.h>
+#include <gtkmm/menubutton.h>
 #include <gtkmm/notebook.h>
+#include <gtkmm/popovermenu.h>
 #include <gtkmm/recentmanager.h>
 #include <gtkmm/scrolledwindow.h>
 #include <gtkmm/stringlist.h>
@@ -71,85 +76,113 @@ namespace UI {
             MODE_EDIT_DATA,
         };
 
-        mapDisplayMode _currentMapDisplayMode;
+        enum context : u8 {
+            NONE,        // nothing loaded
+            FSROOT_NONE, // fsroot loaded, but nothing else
+            MAP_EDITOR,  // map bank loaded and map visible
+        };
 
+        // block stamp dialog
         std::vector<std::pair<DATA::computedBlock, DATA::mapBlockAtom>> _blockStampData;
         std::shared_ptr<Gtk::Dialog>                                    _blockStampDialog;
 
-        mapSlice _blockStampMap;
-        u16      _blockStampWidth;
-        bool     _blockStampDialogInvalid = true;
+        mapSlice                     _blockStampMap;
+        u16                          _blockStampWidth;
+        bool                         _blockStampDialogInvalid = true;
+        std::tuple<u16, u16, s8, s8> _dragStart;
+        std::tuple<s16, s16>         _dragLast;
 
-        Gtk::Frame _blockSetFrame, _movementFrame;
+        // main window
+        std::shared_ptr<Gio::SimpleActionGroup> _loadActions;
+        std::shared_ptr<Gio::SimpleAction>      _loadFsrootAction;
+        std::shared_ptr<Gio::SimpleAction>      _loadReloadmapAction;
+        std::shared_ptr<Gio::SimpleAction>      _loadReloadmapbankAction;
+        std::shared_ptr<Gio::SimpleAction>      _loadImportmapAction;
+        std::shared_ptr<Gio::SimpleActionGroup> _saveActions;
+        std::shared_ptr<Gio::SimpleAction>      _saveFsrootAction;
+        std::shared_ptr<Gio::SimpleAction>      _saveMapAction;
+        std::shared_ptr<Gio::SimpleAction>      _saveMapbankAction;
+        std::shared_ptr<Gio::SimpleAction>      _saveExportmapAction;
 
+        Gtk::Box                         _mainBox; // main box containing all other widgets
+        std::shared_ptr<Gtk::Button>     _saveButton, _openButton;
+        std::shared_ptr<Gtk::MenuButton> _openMenuButton, _saveMenuButton;
+        Gtk::PopoverMenu                 _openMenuPopover, _saveMenuPopover;
+        std::shared_ptr<Gio::Menu>       _openMenu, _saveMenu;
+
+        bool _fsRootLoaded  = false;
+        bool _focusMode     = false;
+        bool _disableRedraw = true;
+
+        // welcome screen
         recentFsRootModelColumn             _recentViewColumns;
         Gtk::IconView                       _recentFsRootIconView;
         Glib::RefPtr<Gtk::ListStore>        _recentFsRootListModel;
         std::shared_ptr<Gtk::RecentManager> _recentlyUsedFsRoots;
+        Gtk::ScrolledWindow                 _ivScrolledWindow;
 
-        Gtk::Label _mapBankBarLabel;
-
-        Gtk::ScrolledWindow _ivScrolledWindow;
-        Gtk::Label          _loadMapLabel;
-        Gtk::Box            _mainBox, _mapOverviewBox, _abEb1;
-        Gtk::Box            _mapEditorBlockSetBox{ Gtk::Orientation::VERTICAL },
-            _mapEditorMapBox{ Gtk::Orientation::VERTICAL };
-        Gtk::DropDown                _mapEditorBS1CB, _mapEditorBS2CB;
-        Gtk::Notebook                _mapNotebook;
-        std::shared_ptr<Gtk::Button> _saveButton, _openButton;
-        std::shared_ptr<Gtk::Button> _collapseMapBanksButton;
-        Gtk::Box                     _mapBankBox;
-        std::shared_ptr<addMapBank>  _addMapBank;
-        Gtk::Grid                    _mapGrid;
-        Gtk::Frame                   _mapEditorActionBar;
-
-        Gtk::SpinButton _mapEditorSettings1;
-        Gtk::SpinButton _mapEditorSettings2;
-        Gtk::SpinButton _mapEditorSettings3;
-        Gtk::SpinButton _mapEditorSettings4;
-        Gtk::SpinButton _mapEditorSettings5;
-        Gtk::SpinButton _mapEditorSettings6;
-
-        std::vector<std::shared_ptr<Gtk::ToggleButton>> _mapEditorModeToggles;
-
-        std::shared_ptr<Gtk::Button> _mapNavButton[ 3 ][ 3 ];
-
-        mapSlice _ts1widget, _ts2widget, _movementWidget;
-
-        std::shared_ptr<Gtk::StringList> _mapBankStrList;
-
-        std::vector<std::vector<mapSlice>> _currentMap; // main map and parts of the adjacent maps
-        std::vector<std::pair<DATA::computedBlock, u8>> _currentBlockset1;
-        std::vector<std::pair<DATA::computedBlock, u8>> _currentBlockset2;
-
-        // bank -> bankinfo
-        std::map<u16, mapBankInfo> _mapBanks;
-
-        int  _selectedBank = -1;
-        s16  _selectedMapX = -1, _selectedMapY = -1;
-        bool _fsRootLoaded = false;
-
-        u8   _currentDayTime  = 0;
-        u8   _blockScale      = 1;
-        u8   _blockSpacing    = 0;
-        u8   _neighborSpacing = 10;
-        bool _showAdjacent    = true;
-        u16  _blockSetWidth   = 8;
-        u8   _adjacentBlocks  = 8;
-
-        std::tuple<u16, u16, s8, s8> _dragStart;
-        std::tuple<s16, s16>         _dragLast;
+        // sidebar
+        std::shared_ptr<Gtk::Button> _collapseMapBanksButton; // collapse/show sidebar
 
         bool _mapBankBarCollapsed = false;
-        bool _disableRedraw       = true;
 
-        bool _focusMode = false;
+        // map banks
+        Gtk::Label                  _mapBankBarLabel;
+        Gtk::Box                    _mapBankBox;
+        std::shared_ptr<addMapBank> _addMapBank;
 
-        std::map<u8, blockSetInfo> _blockSets;
-        std::set<u8>               _blockSetNames;
+        std::map<u16, mapBankInfo> _mapBanks; // bank -> bankinfo
+        int                        _selectedBank = -1;
+        s16                        _selectedMapX = -1, _selectedMapY = -1;
+
+        // map editor
+        Gtk::Label     _loadMapLabel; // Message before map bank loaded
+        Gtk::Notebook  _mapNotebook;  // main container for anything map bank related
+        mapDisplayMode _currentMapDisplayMode;
+        std::vector<std::shared_ptr<Gtk::ToggleButton>> _mapEditorModeToggles;
+        Gtk::Box  _mapEditorMapBox{ Gtk::Orientation::VERTICAL };
+        Gtk::Grid _mapGrid; // contains the actual maps
+
+        Gtk::Frame                   _mapEditorActionBar;
+        std::shared_ptr<Gtk::Button> _mapNavButton[ 3 ][ 3 ];
+        Gtk::SpinButton              _mapEditorSettings1;
+        Gtk::SpinButton              _mapEditorSettings2;
+        Gtk::SpinButton              _mapEditorSettings3;
+        Gtk::SpinButton              _mapEditorSettings4;
+        Gtk::SpinButton              _mapEditorSettings5;
+        Gtk::SpinButton              _mapEditorSettings6;
+
+        std::vector<std::vector<mapSlice>> _currentMap; // main map and parts of the adjacent maps
+        u8                                 _currentDayTime  = 0;
+        u8                                 _blockScale      = 1;
+        u8                                 _blockSpacing    = 0;
+        u8                                 _neighborSpacing = 10;
+        bool                               _showAdjacent    = true;
+        u16                                _blockSetWidth   = 8;
+        u8                                 _adjacentBlocks  = 8;
 
         DATA::mapBlockAtom  _currentlySelectedBlock = DATA::mapBlockAtom( );
         DATA::computedBlock _currentlySelectedComputedBlock;
+
+        // edit blocks
+        Gtk::Frame    _blockSetFrame;
+        Gtk::Box      _mapEditorBlockSetBox{ Gtk::Orientation::VERTICAL };
+        Gtk::Box      _abEb1; // block set width settings box, contains _mapEditorSettings4
+        Gtk::DropDown _mapEditorBS1CB, _mapEditorBS2CB; // select BS1/BS2
+        mapSlice      _ts1widget, _ts2widget;
+
+        std::shared_ptr<Gtk::StringList>                _mapBankStrList; // block set names
+        std::vector<std::pair<DATA::computedBlock, u8>> _currentBlockset1;
+        std::vector<std::pair<DATA::computedBlock, u8>> _currentBlockset2;
+        std::map<u8, blockSetInfo>                      _blockSets;
+        std::set<u8>                                    _blockSetNames;
+
+        // edit movements
+        Gtk::Frame _movementFrame;
+        mapSlice   _movementWidget;
+
+        // Map bank overview
+        Gtk::Box _mapOverviewBox;
 
       public:
         root( );
@@ -158,10 +191,18 @@ namespace UI {
         void loadNewFsRoot( const std::string& p_path );
 
       private:
+        void switchContext( context p_context );
+
         void setNewMapEditMode( mapDisplayMode p_newMode );
 
         void onFsRootOpenClick( );
         void onFsRootSaveClick( );
+
+        bool writeMapSlice( u16 p_bank, u8 p_mapX, u8 p_mapY, std::string p_path = "" );
+        bool writeMapBank( u16 p_bank );
+
+        bool readMapSlice( u16 p_bank, u8 p_mapX, u8 p_mapY, std::string p_path = "" );
+        bool readMapBank( u16 p_bank, bool p_forceReread = false );
 
         void onFolderDialogResponse( int p_responseId, Gtk::FileChooserDialog* p_dialog );
 

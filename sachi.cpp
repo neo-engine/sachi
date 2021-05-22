@@ -46,5 +46,16 @@ void sachi::onHideWindow( Gtk::Window* p_window ) {
 
 int main( int p_argc, char* p_argv[] ) {
     auto app = sachi::create( );
+
+    app->set_accel_for_action( "load.fsroot", "<Primary>o" );
+    app->set_accel_for_action( "load.reloadmap", "<Primary>r" );
+    app->set_accel_for_action( "load.reloadmapbank", "<Primary><Shift>r" );
+    app->set_accel_for_action( "load.importmap", "<Primary>i" );
+
+    app->set_accel_for_action( "save.fsroot", "<Primary>s" );
+    app->set_accel_for_action( "save.map", "<Primary><Shift>s" );
+    app->set_accel_for_action( "save.mapbank", "<Primary><Alt>s" );
+    app->set_accel_for_action( "save.exportmap", "<Primary>e" );
+
     return app->run( p_argc, p_argv );
 }

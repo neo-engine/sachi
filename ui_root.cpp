@@ -102,6 +102,100 @@ namespace UI {
 
         _recentlyUsedFsRoots = Gtk::RecentManager::get_default( );
 
+        // actions
+
+        _loadActions = Gio::SimpleActionGroup::create( );
+        _saveActions = Gio::SimpleActionGroup::create( );
+        _loadFsrootAction
+            = _loadActions->add_action( "fsroot", [ & ]( ) { this->onFsRootOpenClick( ); } );
+        _loadReloadmapAction     = _loadActions->add_action( "reloadmap", [ & ]( ) {
+            readMapSlice( _selectedBank, _selectedMapX, _selectedMapY );
+            redrawMap( _selectedMapY, _selectedMapX );
+        } );
+        _loadReloadmapbankAction = _loadActions->add_action( "reloadmapbank", [ & ]( ) {
+            readMapBank( _selectedBank, true );
+            redrawMap( _selectedMapY, _selectedMapX );
+        } );
+        _loadImportmapAction     = _loadActions->add_action( "importmap", [ & ]( ) {
+            auto dialog    = new Gtk::FileChooserDialog( "Choose a map to import",
+                                                      Gtk::FileChooser::Action::OPEN, true );
+            auto mapFilter = Gtk::FileFilter::create( );
+            mapFilter->add_pattern( "*.map" );
+            mapFilter->set_name( "AdvanceMap 1.92 Map Files (32x32 blocks)" );
+            dialog->set_filter( mapFilter );
+            dialog->set_transient_for( *this );
+            dialog->set_modal( true );
+            dialog->set_default_size( 800, 600 );
+            dialog->signal_response( ).connect( [ dialog, this ]( int p_responseId ) {
+                if( dialog == nullptr ) {
+                    fprintf( stderr, "[ERROR] importMap: dialog is nullptr." );
+                    return;
+                }
+
+                // Handle the response:
+                switch( p_responseId ) {
+                case Gtk::ResponseType::OK: {
+                    readMapSlice( _selectedBank, _selectedMapX, _selectedMapY,
+                                  dialog->get_file( )->get_path( ) );
+                    redrawMap( _selectedMapY, _selectedMapX );
+                    markBankChanged( _selectedBank );
+                    break;
+                }
+                default:
+                case Gtk::ResponseType::CANCEL: break;
+                }
+                delete dialog;
+            } );
+
+            dialog->add_button( "_Cancel", Gtk::ResponseType::CANCEL );
+            dialog->add_button( "_Select", Gtk::ResponseType::OK );
+            dialog->show( );
+        } );
+
+        _saveFsrootAction
+            = _saveActions->add_action( "fsroot", [ & ]( ) { this->onFsRootSaveClick( ); } );
+        _saveMapAction = _saveActions->add_action(
+            "map", [ & ]( ) { writeMapSlice( _selectedBank, _selectedMapX, _selectedMapY ); } );
+        _saveMapbankAction
+            = _saveActions->add_action( "mapbank", [ & ]( ) { writeMapBank( _selectedBank ); } );
+        _saveExportmapAction = _saveActions->add_action( "exportmap", [ & ]( ) {
+            auto dialog    = new Gtk::FileChooserDialog( "Save the current map",
+                                                      Gtk::FileChooser::Action::SAVE, true );
+            auto mapFilter = Gtk::FileFilter::create( );
+            mapFilter->add_pattern( "*.map" );
+            mapFilter->set_name( "AdvanceMap 1.92 Map Files (32x32 blocks)" );
+            dialog->set_filter( mapFilter );
+            dialog->set_current_name( std::to_string( _selectedMapY ) + "_"
+                                      + std::to_string( _selectedMapX ) + ".map " );
+            dialog->set_transient_for( *this );
+            dialog->set_modal( true );
+            dialog->set_default_size( 800, 600 );
+            dialog->signal_response( ).connect( [ dialog, this ]( int p_responseId ) {
+                if( dialog == nullptr ) {
+                    fprintf( stderr, "[ERROR] exportMap: dialog is nullptr." );
+                    return;
+                }
+                // Handle the response:
+                switch( p_responseId ) {
+                case Gtk::ResponseType::OK: {
+                    writeMapSlice( _selectedBank, _selectedMapX, _selectedMapY,
+                                   dialog->get_file( )->get_path( ) );
+                    break;
+                }
+                default:
+                case Gtk::ResponseType::CANCEL: break;
+                }
+                delete dialog;
+            } );
+
+            dialog->add_button( "_Cancel", Gtk::ResponseType::CANCEL );
+            dialog->add_button( "_Select", Gtk::ResponseType::OK );
+            dialog->show( );
+        } );
+
+        insert_action_group( "load", _loadActions );
+        insert_action_group( "save", _saveActions );
+
         // Header bar
 
         auto headerBar = Gtk::HeaderBar( );
@@ -109,6 +203,28 @@ namespace UI {
 
         _openButton = createButton( "", "_Load FSROOT…", [ & ]( ) { this->onFsRootOpenClick( ); } );
         _saveButton = createButton( "", "_Save Changes", [ & ]( ) { this->onFsRootSaveClick( ); } );
+
+        _openMenu = Gio::Menu::create( );
+        _saveMenu = Gio::Menu::create( );
+
+        _openMenu->append( "Reload Map", "load.reloadmap" );
+        _openMenu->append( "Reload Map Bank", "load.reloadmapbank" );
+        _openMenu->append( "Import Map", "load.importmap" );
+
+        _saveMenu->append( "Save Single Map", "save.map" );
+        _saveMenu->append( "Save Single Mapbank", "save.mapbank" );
+        _saveMenu->append( "Export Map", "save.exportmap" );
+
+        _openMenuPopover = Gtk::PopoverMenu( _openMenu );
+        _openMenuPopover.set_has_arrow( false );
+        _saveMenuPopover = Gtk::PopoverMenu( _saveMenu );
+        _saveMenuPopover.set_has_arrow( false );
+
+        _openMenuButton = std::make_shared<Gtk::MenuButton>( );
+        _openMenuButton->set_popover( _openMenuPopover );
+        _saveMenuButton = std::make_shared<Gtk::MenuButton>( );
+        _saveMenuButton->set_popover( _saveMenuPopover );
+
         _collapseMapBanksButton
             = createButton( "view-restore-symbolic", "_Collapse Sidebar",
                             [ & ]( ) { this->collapseMapBankBar( !_mapBankBarCollapsed ); } );
@@ -116,10 +232,18 @@ namespace UI {
         _collapseMapBanksButton->set_margin( MARGIN );
         _collapseMapBanksButton->set_has_frame( false );
 
-        headerBar.pack_start( *_openButton );
-        headerBar.pack_start( *_saveButton );
+        auto openBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        openBox.get_style_context( )->add_class( "linked" );
+        openBox.append( *_openButton );
+        openBox.append( *_openMenuButton );
 
-        _saveButton->hide( );
+        auto saveBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        saveBox.get_style_context( )->add_class( "linked" );
+        saveBox.append( *_saveButton );
+        saveBox.append( *_saveMenuButton );
+        headerBar.pack_start( openBox );
+        headerBar.pack_start( saveBox );
+
         auto mbox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
         _mainBox  = Gtk::Box( Gtk::Orientation::HORIZONTAL );
         set_child( mbox );
@@ -204,7 +328,6 @@ namespace UI {
         _mainBox.append( _loadMapLabel );
 
         _mapNotebook.set_expand( );
-        _mapNotebook.hide( );
         auto mapEditorMainBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
         mapEditorMainBox.set_margin_top( MARGIN );
         auto mapEditorMainBox0 = Gtk::Box( Gtk::Orientation::VERTICAL );
@@ -237,7 +360,6 @@ namespace UI {
         _mapNotebook.append_page( mapEditorMainBox0, "Map _Editor", true );
         _mapNotebook.append_page( _mapOverviewBox, "Bank _Overview", true );
         _mainBox.append( _mapNotebook );
-        _mainBox.hide( );
 
         mapEditorMainBox.append( _mapEditorMapBox );
         _mapEditorMapBox.set_expand( );
@@ -641,6 +763,7 @@ namespace UI {
         add_controller( controller );
         setNewMapEditMode( MODE_EDIT_TILES );
         populateRecentFsRootIconView( );
+        switchContext( NONE );
     }
 
     root::~root( ) {
@@ -708,6 +831,40 @@ namespace UI {
         dialog->show( );
     }
 
+    bool root::writeMapSlice( u16 p_bank, u8 p_mapX, u8 p_mapY, std::string p_path ) {
+        if( !_mapBanks.count( p_bank ) ) { return false; }
+
+        auto path = fs::path( MAP_PATH ) / std::to_string( p_bank );
+        auto info = _mapBanks[ p_bank ];
+        if( info.m_scattered ) { path /= std::to_string( p_mapY ); }
+        path /= std::to_string( p_mapY ) + "_" + std::to_string( p_mapX ) + ".map";
+
+        if( p_path != "" ) { path = p_path; }
+
+        FILE* f = fopen( path.c_str( ), "w" );
+        if( !DATA::writeMapSlice( f, &info.m_bank->m_mapData[ p_mapY ][ p_mapX ] ) ) {
+            fprintf( stderr, "[ERROR] Writing map %hu/%hhu_%hhu.map to %s failed.\n", p_bank,
+                     p_mapY, p_mapX, path.c_str( ) );
+            return true;
+        }
+        return false;
+    }
+
+    bool root::writeMapBank( u16 p_bank ) {
+        if( !_mapBanks.count( p_bank ) ) { return false; }
+        auto info = _mapBanks[ p_bank ];
+
+        fprintf( stderr, "[LOG] Saving map bank %hu.\n", p_bank );
+        bool error = false;
+
+        for( u8 y = 0; y < info.m_sizeY; ++y ) {
+            for( u8 x = 0; x < info.m_sizeX; ++x ) { error |= writeMapSlice( p_bank, x, y ); }
+        }
+        if( !error ) { info.m_widget->setStatus( mapBank::STATUS_SAVED ); }
+
+        return error;
+    }
+
     void root::onFsRootSaveClick( ) {
         // Only write map banks that have been changed
 
@@ -717,25 +874,7 @@ namespace UI {
                      || info.m_widget->getStatus( ) == mapBank::STATUS_EDITED_UNSAVED ) ) {
                 // something changed here, save the maps
 
-                fprintf( stderr, "[LOG] Saving map bank %hu.\n", bank );
-                bool error = false;
-
-                for( u8 y = 0; y < info.m_sizeY; ++y ) {
-                    for( u8 x = 0; x < info.m_sizeX; ++x ) {
-                        auto path = fs::path( MAP_PATH ) / std::to_string( bank );
-                        if( info.m_scattered ) { path /= std::to_string( y ); }
-                        path /= std::to_string( y ) + "_" + std::to_string( x ) + ".map";
-
-                        FILE* f = fopen( path.c_str( ), "w" );
-                        if( !DATA::writeMapSlice( f, &info.m_bank->m_mapData[ y ][ x ] ) ) {
-                            fprintf( stderr,
-                                     "[ERROR] Writing map %hu/%hhu_%hhu.map to %s failed.\n", bank,
-                                     y, x, path.c_str( ) );
-                            error = true;
-                        }
-                    }
-                }
-                if( !error ) { info.m_widget->setStatus( mapBank::STATUS_SAVED ); }
+                writeMapBank( bank );
             }
         }
     }
@@ -1281,18 +1420,14 @@ namespace UI {
         _fsRootLoaded = true;
 
         set_title( p_path + " - " + TITLE_STRING );
-        if( _saveButton != nullptr ) { _saveButton->show( ); }
-
-        _ivScrolledWindow.hide( );
-        _mainBox.show( );
 
         // update map banks
         _mapBanks.clear( );
         _blockSets.clear( );
         _blockSetNames.clear( );
         _selectedBank = -1;
-        _mapNotebook.hide( );
-        _loadMapLabel.show( );
+
+        switchContext( FSROOT_NONE );
 
         // traverse MAP_PATH and search for all dirs that are named with a number
         // (assuming they are a map bank)
@@ -1411,7 +1546,7 @@ namespace UI {
             return;
         }
 
-        addNewMapBank( p_bank, p_sizeY, p_sizeX, true, mapBank::STATUS_NEW );
+        addNewMapBank( p_bank, p_sizeY, p_sizeX, true, mapBank::STATUS_SAVED );
         loadMap( p_bank, 0, 0 );
     }
 
@@ -1441,41 +1576,59 @@ namespace UI {
         _mapBankBarCollapsed = p_collapse;
     }
 
+    bool root::readMapSlice( u16 p_bank, u8 p_mapX, u8 p_mapY, std::string p_path ) {
+        if( !_mapBanks.count( p_bank ) ) { return false; }
+        auto& selb = _mapBanks[ p_bank ];
+        auto  sl   = DATA::mapSlice( );
+        auto  path = fs::path( MAP_PATH ) / std::to_string( p_bank );
+        if( selb.m_scattered ) { path /= std::to_string( p_mapY ); }
+        path /= ( std::to_string( p_mapY ) + "_" + std::to_string( p_mapX ) + ".map" );
+
+        if( p_path != "" ) { path = p_path; }
+
+        FILE* f = fopen( path.c_str( ), "r" );
+
+        if( !DATA::readMapSlice( f, &sl, p_mapX, p_mapY ) ) {
+            fprintf( stderr, "[LOG] Loading map %hu/%hhu_%hhu.map failed. (path %s)\n", p_bank,
+                     p_mapY, p_mapX, path.c_str( ) );
+        } else {
+            selb.m_bank->m_mapData[ p_mapY ][ p_mapX ] = sl;
+        }
+        return true;
+    }
+
+    bool root::readMapBank( u16 p_bank, bool p_forceReread ) {
+        if( !_mapBanks.count( p_bank ) ) { return false; }
+
+        auto& selb = _mapBanks[ p_bank ];
+        fprintf( stderr, "[LOG] Loading map bank %hu.\n", p_bank );
+
+        // Load all maps of the bank into mem
+        if( !selb.m_loaded || p_forceReread ) {
+            selb.m_bank = std::make_shared<DATA::mapBank>( );
+
+            selb.m_bank->m_mapData = std::vector<std::vector<DATA::mapSlice>>(
+                selb.m_sizeY + 1,
+                std::vector<DATA::mapSlice>( selb.m_sizeX + 1, DATA::mapSlice( ) ) );
+
+            for( u16 y = 0; y <= selb.m_sizeY; ++y ) {
+                for( u16 x = 0; x <= selb.m_sizeX; ++x ) { readMapSlice( p_bank, x, y ); }
+            }
+            selb.m_loaded = true;
+        }
+        return true;
+    }
+
     void root::loadMapBank( u16 p_bank ) {
         if( p_bank == _selectedBank ) { return; }
 
         if( _selectedBank != -1 ) { _mapBanks[ _selectedBank ].m_widget->unselect( ); }
         _selectedBank = p_bank;
 
-        auto& selb = _mapBanks[ _selectedBank ];
-
-        selb.m_widget->select( );
-        fprintf( stderr, "[LOG] Loading map bank %hu.\n", p_bank );
-
-        // Load all maps of the bank into mem
-        if( !selb.m_loaded ) {
-            selb.m_bank = std::make_shared<DATA::mapBank>( );
-
-            for( u16 y = 0; y <= selb.m_sizeY; ++y ) {
-                auto row = std::vector<DATA::mapSlice>( );
-                for( u16 x = 0; x <= selb.m_sizeX; ++x ) {
-                    auto sl   = DATA::mapSlice( );
-                    auto path = fs::path( MAP_PATH ) / std::to_string( p_bank );
-                    if( selb.m_scattered ) { path /= std::to_string( y ); }
-                    path /= ( std::to_string( y ) + "_" + std::to_string( x ) + ".map" );
-
-                    FILE* f = fopen( path.c_str( ), "r" );
-
-                    if( !DATA::readMapSlice( f, &sl, x, y ) ) {
-                        fprintf( stderr, "[LOG] Loading map %hu/%hhu_%hhu.map failed. (path %s)\n",
-                                 p_bank, y, x, path.c_str( ) );
-                    }
-
-                    row.push_back( sl );
-                }
-                selb.m_bank->m_mapData.push_back( row );
-            }
-            selb.m_loaded = true;
+        if( _mapBanks.count( _selectedBank ) ) {
+            auto& selb = _mapBanks[ _selectedBank ];
+            selb.m_widget->select( );
+            readMapBank( p_bank, false );
         }
     }
 
@@ -1669,10 +1822,7 @@ namespace UI {
     }
 
     void root::loadMap( u16 p_bank, u8 p_mapY, u8 p_mapX ) {
-        if( _selectedBank == -1 ) {
-            _loadMapLabel.hide( );
-            _mapNotebook.show( );
-        }
+        if( _selectedBank == -1 ) { switchContext( MAP_EDITOR ); }
 
         loadMapBank( p_bank );
         if( _mapBanks[ _selectedBank ].m_bank == nullptr || !_mapBanks[ _selectedBank ].m_loaded ) {
@@ -1693,5 +1843,49 @@ namespace UI {
         currentMapUpdateTS2( ts2 );
         fprintf( stderr, "[LOG] Loading map %hu/%hhu_%hhu.\n", p_bank, p_mapY, p_mapX );
         updateSelectedBlock( _currentlySelectedBlock );
+
+        switchContext( context::MAP_EDITOR );
+    }
+
+    void root::switchContext( root::context p_context ) {
+        _loadReloadmapAction->set_enabled( false );
+        _loadReloadmapbankAction->set_enabled( false );
+        _loadImportmapAction->set_enabled( false );
+        _saveFsrootAction->set_enabled( false );
+        _saveMapAction->set_enabled( false );
+        _saveMapbankAction->set_enabled( false );
+        _saveExportmapAction->set_enabled( false );
+        _openMenuButton->hide( );
+        _saveMenuButton->hide( );
+        _loadMapLabel.hide( );
+        _mapNotebook.hide( );
+        _ivScrolledWindow.hide( );
+        _mainBox.hide( );
+        if( _saveButton != nullptr ) { _saveButton->hide( ); }
+
+        switch( p_context ) {
+        case FSROOT_NONE:
+            _mainBox.show( );
+            _loadMapLabel.show( );
+            break;
+        case MAP_EDITOR:
+            _mainBox.show( );
+            _mapNotebook.show( );
+            if( _saveButton != nullptr ) { _saveButton->show( ); }
+
+            _loadReloadmapAction->set_enabled( true );
+            _loadReloadmapbankAction->set_enabled( true );
+            _loadImportmapAction->set_enabled( true );
+            _saveFsrootAction->set_enabled( true );
+            _saveMapAction->set_enabled( true );
+            _saveExportmapAction->set_enabled( true );
+            _saveMapbankAction->set_enabled( true );
+            // populate open menu buttons
+            _openMenuButton->show( );
+            _saveMenuButton->show( );
+            break;
+
+        default: _ivScrolledWindow.show( ); break;
+        }
     }
 } // namespace UI
