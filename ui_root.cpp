@@ -443,6 +443,8 @@ namespace UI {
             _ts2widget.queue_resize( );
             _movementWidget.setSpacing( value );
             _movementWidget.queue_resize( );
+            _blockStampMap.setSpacing( value );
+            _blockStampMap.queue_resize( );
             _blockSpacing = value;
         } );
         _mapEditorSettings1.set_margin_start( MARGIN );
@@ -469,6 +471,8 @@ namespace UI {
             _ts2widget.queue_resize( );
             _movementWidget.setScale( value > 1 ? value : 2 );
             _movementWidget.queue_resize( );
+            _blockStampMap.setScale( value );
+            _blockStampMap.queue_resize( );
             _blockScale = value;
         } );
 
@@ -489,6 +493,8 @@ namespace UI {
             }
             _ts1widget.redraw( value );
             _ts2widget.redraw( value );
+
+            _blockStampMap.redraw( value );
 
             _currentDayTime = value;
         } );
@@ -647,6 +653,7 @@ namespace UI {
         for( u8 x = 0; x < 3; ++x ) {
             for( u8 y = 0; y < 3; ++y ) { _currentMap[ x ][ y ].setOverlayHidden( true ); }
         }
+        _blockStampMap.setOverlayHidden( true );
         switch( p_newMode ) {
         case MODE_EDIT_TILES:
             // Show tileset bar
@@ -660,16 +667,23 @@ namespace UI {
             for( u8 x = 0; x < 3; ++x ) {
                 for( u8 y = 0; y < 3; ++y ) { _currentMap[ x ][ y ].setOverlayHidden( false ); }
             }
+            _blockStampMap.setOverlayHidden( false );
 
             break;
         case MODE_EDIT_LOCATIONS:
             // Show locations overlay
+            if( _blockStampDialog && !_blockStampDialogInvalid ) { _blockStampDialog->hide( ); }
+            _blockStampDialogInvalid = true;
             break;
         case MODE_EDIT_EVENTS:
             // Show events
+            if( _blockStampDialog && !_blockStampDialogInvalid ) { _blockStampDialog->hide( ); }
+            _blockStampDialogInvalid = true;
             break;
         case MODE_EDIT_DATA:
             // show map information box
+            if( _blockStampDialog && !_blockStampDialogInvalid ) { _blockStampDialog->hide( ); }
+            _blockStampDialogInvalid = true;
             break;
         default: return;
         }
@@ -768,20 +782,30 @@ namespace UI {
     }
 
     void root::onMapDragStart( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY,
-                               s8 p_mapX, s8 p_mapY, bool p_allowEdit ) {
+                               s8 p_mapX, s8 p_mapY, bool ) {
         _dragStart = { p_blockX, p_blockY, p_mapX, p_mapY };
+        _dragLast  = { p_blockX, p_blockY };
+        if( p_button == mapSlice::clickType::RIGHT ) {
+            // reset blockStamp
+            if( _blockStampDialog && !_blockStampDialogInvalid ) { _blockStampDialog->hide( ); }
+            _blockStampDialogInvalid = true;
+        }
     }
 
     void root::onMapDragUpdate( UI::mapSlice::clickType p_button, s16 p_dX, s16 p_dY, s8 p_mapX,
                                 s8 p_mapY, bool p_allowEdit ) {
 
         auto [ sx, sy, _1, _2 ] = _dragStart;
+        auto [ lx, ly ]         = _dragLast;
         (void) _1;
         (void) _2;
 
         auto blockwd = _blockScale * DATA::BLOCK_SIZE + _blockSpacing;
         auto nx      = sx + ( p_dX / blockwd );
         auto ny      = sy + ( p_dY / blockwd );
+
+        if( nx == lx && ny == ly ) { return; }
+        _dragLast = { nx, ny };
 
         //        fprintf( stderr, "DragUpdate butto %hu bx: %hu by: %hu, %hhi %hhi %hhu\n",
         //        p_button, nx, ny,
@@ -791,21 +815,262 @@ namespace UI {
             && isInMapBounds( nx, ny, p_mapX, p_mapY ) ) {
             onMapClicked( p_button, nx, ny, p_mapX, p_mapY, p_allowEdit );
         }
+        if( p_button == mapSlice::clickType::RIGHT ) {
+            if( _currentMapDisplayMode == MODE_EDIT_TILES
+                || _currentMapDisplayMode == MODE_EDIT_MOVEMENT ) {
+
+                // update and show the stamp box
+
+                if( _blockStampDialogInvalid ) { // Block stamp dialog
+                    _blockStampDialog
+                        = std::make_shared<Gtk::Dialog>( "Block Stamp", *this, false, true );
+                    _blockStampDialog->get_content_area( )->append( _blockStampMap );
+                    _blockStampDialog->signal_close_request( ).connect(
+                        [ this ]( ) -> bool {
+                            _blockStampDialogInvalid = true;
+                            return false;
+                        },
+                        false );
+                    _blockStampDialogInvalid = false;
+                }
+
+                // Check if the stamp should go across map borders
+                if( p_mapX == 1 ) {
+                    if( nx < -DATA::SIZE - _adjacentBlocks ) {
+                        // out of bounds
+                        return;
+                    } else if( nx < -DATA::SIZE ) {
+                        // crossing two borders
+                        nx = sx + ( p_dX + 2 * _neighborSpacing + 2 * _blockSpacing ) / blockwd - 1;
+                    } else if( nx < 0 ) {
+                        // crossing one border
+                        nx = sx + ( p_dX + _neighborSpacing + _blockSpacing ) / blockwd - 1;
+                    } else if( nx >= _adjacentBlocks ) {
+                        // out of bounds
+                        return;
+                    }
+                } else if( p_mapX == 0 ) {
+                    if( nx < -_adjacentBlocks ) {
+                        // out of bounds
+                        return;
+                    } else if( nx < 0 ) {
+                        // crossing one border
+                        nx = sx + ( p_dX + _neighborSpacing + _blockSpacing ) / blockwd - 1;
+                    } else if( nx >= DATA::SIZE ) {
+                        // crossing one border
+                        nx = sx + ( p_dX - _neighborSpacing + _blockSpacing ) / blockwd;
+                    } else if( nx >= DATA::SIZE + _adjacentBlocks ) {
+                        // out of bounds
+                        return;
+                    }
+                } else {
+                    if( nx < 0 ) {
+                        // out of bounds
+                        return;
+                    } else if( nx >= _adjacentBlocks ) {
+                        // crossing one border
+                        nx = sx + ( p_dX - _neighborSpacing + _blockSpacing ) / blockwd;
+                    } else if( nx >= DATA::SIZE + _adjacentBlocks ) {
+                        // crossing two borders
+                        nx = sx + ( p_dX - 2 * _neighborSpacing + 2 * _blockSpacing ) / blockwd;
+                    } else if( nx >= DATA::SIZE + 2 * _adjacentBlocks ) {
+                        // out of bounds
+                        return;
+                    }
+                }
+                if( p_mapY == 1 ) {
+                    if( ny < -DATA::SIZE - _adjacentBlocks ) {
+                        // out of bounds
+                        return;
+                    } else if( ny < -DATA::SIZE ) {
+                        // crossing two borders
+                        ny = sy + ( p_dY + 2 * _neighborSpacing - 2 * _blockSpacing ) / blockwd - 1;
+                    } else if( ny < 0 ) {
+                        // crossing one border
+                        ny = sy + ( p_dY + _neighborSpacing - _blockSpacing ) / blockwd - 1;
+                    } else if( ny >= _adjacentBlocks ) {
+                        // out of bounds
+                        return;
+                    }
+                } else if( p_mapY == 0 ) {
+                    if( ny < -_adjacentBlocks ) {
+                        // out of bounds
+                        return;
+                    } else if( ny < 0 ) {
+                        // crossing one border
+                        ny = sy + ( p_dY + _neighborSpacing + _blockSpacing ) / blockwd - 1;
+                    } else if( ny >= DATA::SIZE ) {
+                        // crossing one border
+                        ny = sy + ( p_dY - _neighborSpacing + _blockSpacing ) / blockwd;
+                    } else if( ny >= DATA::SIZE + _adjacentBlocks ) {
+                        // out of bounds
+                        return;
+                    }
+                } else {
+                    if( ny < 0 ) {
+                        // out of bounds
+                        return;
+                    } else if( ny >= _adjacentBlocks ) {
+                        // crossing one border
+                        ny = sy + ( p_dY - _neighborSpacing + _blockSpacing ) / blockwd;
+                    } else if( ny >= DATA::SIZE + _adjacentBlocks ) {
+                        // crossing two borders
+                        ny = sy + ( p_dY - 2 * _neighborSpacing + 2 * _blockSpacing ) / blockwd;
+                    } else if( ny >= DATA::SIZE + 2 * _adjacentBlocks ) {
+                        // out of bounds
+                        return;
+                    }
+                }
+
+                _dragLast = { nx, ny };
+                if( nx == lx && ny == ly ) { return; }
+
+                bool revx = nx < sx;
+                bool revy = ny < sy;
+                s16  posx = sx, posy = sy;
+
+                auto tmpMap
+                    = std::deque<std::deque<std::pair<DATA::computedBlock, DATA::mapBlockAtom>>>( );
+
+                while( 1 ) {
+                    if( revy && posy < ny ) { break; }
+                    if( !revy && posy > ny ) { break; }
+
+                    // build a new row
+                    auto row = std::deque<std::pair<DATA::computedBlock, DATA::mapBlockAtom>>( );
+                    _blockStampWidth = 0;
+                    posx             = sx;
+                    while( 1 ) {
+                        if( revx && posx < nx ) { break; }
+                        if( !revx && posx > nx ) { break; }
+
+                        s8  mx = p_mapX, my = p_mapY;
+                        s16 remx = posx, remy = posy;
+
+                        // compute block position
+
+                        while( mx >= -1 && mx <= 1 && !isInMapBounds( remx, 0, mx, my ) ) {
+                            if( mx == 1 ) {
+                                if( remx < 0 ) {
+                                    remx += DATA::SIZE;
+                                    mx--;
+                                } else [[unlikely]] {
+                                    break;
+                                }
+                            } else if( mx == 0 ) {
+                                if( remx < 0 ) {
+                                    remx += _adjacentBlocks;
+                                    mx--;
+                                } else {
+                                    remx -= DATA::SIZE;
+                                    mx++;
+                                }
+                            } else {
+                                if( remx < 0 ) [[unlikely]] {
+                                    break;
+                                } else {
+                                    remx -= _adjacentBlocks;
+                                    mx++;
+                                }
+                            }
+                        }
+                        while( my >= -1 && my <= 1 && !isInMapBounds( 0, remy, mx, my ) ) {
+                            if( my == 1 ) {
+                                if( remy < 0 ) {
+                                    remy += DATA::SIZE;
+                                    my--;
+                                } else [[unlikely]] {
+                                    break;
+                                }
+                            } else if( my == 0 ) {
+                                if( remy < 0 ) {
+                                    remy += _adjacentBlocks;
+                                    my--;
+                                } else {
+                                    remy -= DATA::SIZE;
+                                    my++;
+                                }
+                            } else {
+                                if( remy < 0 ) [[unlikely]] {
+                                    break;
+                                } else {
+                                    remy -= _adjacentBlocks;
+                                    my++;
+                                }
+                            }
+                        }
+
+                        // compute block
+
+                        u16 xcorr = 0, ycorr = 0;
+                        if( mx < 0 ) { xcorr = DATA::SIZE - _adjacentBlocks; }
+                        if( my < 0 ) { ycorr = DATA::SIZE - _adjacentBlocks; }
+
+                        DATA::mapBlockAtom currentBlock;
+                        if( _selectedMapY + mx < 0 || _selectedMapX + my < 0
+                            || _selectedMapX + mx > _mapBanks[ _selectedBank ].m_sizeX
+                            || _selectedMapY + my > _mapBanks[ _selectedBank ].m_sizeY ) {
+                            // out of map bank bounds, add a blank block
+                            currentBlock = { 0, 1 };
+                        } else {
+                            auto& mp = _mapBanks[ _selectedBank ]
+                                           .m_bank
+                                           ->m_mapData[ _selectedMapY + my ][ _selectedMapX + mx ];
+                            currentBlock = mp.m_blocks[ remy + ycorr ][ remx + xcorr ];
+                        }
+
+                        std::pair<DATA::computedBlock, DATA::mapBlockAtom> compBlock;
+
+                        if( currentBlock.m_blockidx < DATA::MAX_BLOCKS_PER_TILE_SET ) {
+                            compBlock = { _currentBlockset1[ currentBlock.m_blockidx ].first,
+                                          currentBlock };
+                        } else {
+                            compBlock = { _currentBlockset2[ currentBlock.m_blockidx
+                                                             - DATA::MAX_BLOCKS_PER_TILE_SET ]
+                                              .first,
+                                          currentBlock };
+                        }
+
+                        if( revx ) {
+                            row.push_front( compBlock );
+                            posx--;
+                        } else {
+                            row.push_back( compBlock );
+                            posx++;
+                        }
+                        _blockStampWidth++;
+                    }
+
+                    if( revy ) {
+                        tmpMap.push_front( row );
+                        posy--;
+                    } else {
+                        tmpMap.push_back( row );
+                        posy++;
+                    }
+                }
+
+                _blockStampData.clear( );
+                auto blockStamp = std::vector<std::pair<DATA::computedBlock, u8>>( );
+                for( auto row : tmpMap ) {
+                    for( auto block : row ) {
+                        _blockStampData.push_back( block );
+                        blockStamp.push_back( { block.first, u8( block.second.m_movedata ) } );
+                    }
+                }
+
+                DATA::palette pals[ 16 * 5 ] = { 0 };
+                buildPalette( pals );
+                _blockStampMap.set( blockStamp, pals, _blockStampWidth );
+                _blockStampMap.redraw( _currentDayTime,
+                                       _currentMapDisplayMode == MODE_EDIT_MOVEMENT );
+                _blockStampDialog->show( );
+            }
+        }
     }
 
-    void root::onMapDragEnd( UI::mapSlice::clickType p_button, s16 p_dX, s16 p_dY, s8 p_mapX,
-                             s8 p_mapY, bool p_allowEdit ) {
-        auto [ sx, sy, _1, _2 ] = _dragStart;
-        (void) _1;
-        (void) _2;
-
-        auto blockwd = _blockScale * DATA::BLOCK_SIZE + _blockSpacing;
-        auto nx      = sx + ( p_dX / blockwd );
-        auto ny      = sy + ( p_dY / blockwd );
-
-        //        fprintf( stderr, "DragEnd butto %hu bx: %hu by: %hu, %hhi %hhi %hhu\n", p_button,
-        //        nx, ny,
-        //                 p_mapX, p_mapY, p_allowEdit );
+    void root::onMapDragEnd( UI::mapSlice::clickType /* p_button */, s16 /* p_dX */, s16 /* p_dY */,
+                             s8 /* p_mapX */, s8 /* p_mapY */, bool /* p_allowEdit */ ) {
     }
 
     void root::onMapClicked( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY,
@@ -834,20 +1099,57 @@ namespace UI {
         case mapSlice::clickType::LEFT:
             if( p_allowEdit ) {
                 if( _currentMapDisplayMode == MODE_EDIT_TILES ) {
-                    block.m_blockidx = _currentlySelectedBlock.m_blockidx;
-                    _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlock(
-                        _currentlySelectedComputedBlock, p_blockX, p_blockY );
+                    // check if there is a valid block stamp
+                    if( !_blockStampDialogInvalid ) {
+                        // paste the block stamp
+                        auto bx = p_blockX + xcorr, by = p_blockY + ycorr, pos = 0;
+                        for( size_t y = 0; y < _blockStampData.size( ) / _blockStampWidth; ++y ) {
+                            for( size_t x = 0; x < _blockStampWidth; ++x, ++pos ) {
+                                if( bx + x < DATA::SIZE && by + y < DATA::SIZE ) {
+                                    mp.m_blocks[ by + y ][ bx + x ] = _blockStampData[ pos ].second;
+                                    _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlock(
+                                        _blockStampData[ pos ].first, bx + x, by + y );
+                                    _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlockMovement(
+                                        _blockStampData[ pos ].second.m_movedata, bx + x, by + y );
+                                }
+                            }
+                        }
+                    } else {
+                        block.m_blockidx = _currentlySelectedBlock.m_blockidx;
+                        _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlock(
+                            _currentlySelectedComputedBlock, p_blockX, p_blockY );
+                    }
                 } else if( _currentMapDisplayMode == MODE_EDIT_MOVEMENT ) {
-                    block.m_movedata = _currentlySelectedBlock.m_movedata;
-                    _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlockMovement(
-                        block.m_movedata, p_blockX, p_blockY );
+                    if( !_blockStampDialogInvalid ) {
+                        // paste the block stamp
+                        auto bx = p_blockX + xcorr, by = p_blockY + ycorr, pos = 0;
+                        for( size_t y = 0; y < _blockStampData.size( ) / _blockStampWidth; ++y ) {
+                            for( size_t x = 0; x < _blockStampWidth; ++x, ++pos ) {
+                                if( bx + x < DATA::SIZE && by + y < DATA::SIZE ) {
+                                    mp.m_blocks[ by + y ][ bx + x ].m_movedata
+                                        = _blockStampData[ pos ].second.m_movedata;
+                                    _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlockMovement(
+                                        _blockStampData[ pos ].second.m_movedata, bx + x, by + y );
+                                }
+                            }
+                        }
+                    } else {
+                        block.m_movedata = _currentlySelectedBlock.m_movedata;
+                        _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlockMovement(
+                            block.m_movedata, p_blockX, p_blockY );
+                    }
                 }
                 markBankChanged( _selectedBank );
             } else {
                 updateSelectedBlock( block );
             }
             break;
-        case mapSlice::clickType::RIGHT: updateSelectedBlock( block ); break;
+        case mapSlice::clickType::RIGHT:
+            if( _currentMapDisplayMode == MODE_EDIT_TILES
+                || _currentMapDisplayMode == MODE_EDIT_MOVEMENT ) {
+                updateSelectedBlock( block );
+            }
+            break;
         case mapSlice::clickType::MIDDLE:
             if( p_allowEdit ) {
                 DATA::mapBlockAtom oldb = block;

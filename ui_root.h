@@ -7,6 +7,7 @@
 #include <gtkmm/box.h>
 #include <gtkmm/button.h>
 #include <gtkmm/centerbox.h>
+#include <gtkmm/dialog.h>
 #include <gtkmm/dropdown.h>
 #include <gtkmm/filechooserdialog.h>
 #include <gtkmm/frame.h>
@@ -72,6 +73,13 @@ namespace UI {
 
         mapDisplayMode _currentMapDisplayMode;
 
+        std::vector<std::pair<DATA::computedBlock, DATA::mapBlockAtom>> _blockStampData;
+        std::shared_ptr<Gtk::Dialog>                                    _blockStampDialog;
+
+        mapSlice _blockStampMap;
+        u16      _blockStampWidth;
+        bool     _blockStampDialogInvalid = true;
+
         Gtk::Frame _blockSetFrame, _movementFrame;
 
         recentFsRootModelColumn             _recentViewColumns;
@@ -130,7 +138,7 @@ namespace UI {
         u8   _adjacentBlocks  = 8;
 
         std::tuple<u16, u16, s8, s8> _dragStart;
-        std::tuple<u16, u16, s8, s8> _dragEnd;
+        std::tuple<s16, s16>         _dragLast;
 
         bool _mapBankBarCollapsed = false;
         bool _disableRedraw       = true;
