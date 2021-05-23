@@ -42,8 +42,8 @@ namespace DATA {
                      bitmap* p_out, u32 p_x, u32 p_y, u16 p_scale ) {
         // a tile is a 8 by 8 pixel palette indexed image; each pixel occupies 4 bits
 
-        for( u8 x = 0; x < 8; ++x ) {
-            for( u8 y = 0; y < 8; ++y ) {
+        for( u8 x = 0; x < 8 / p_scale; x += p_scale ) {
+            for( u8 y = 0; y < 8 / p_scale; y += p_scale ) {
                 u8 px = x, py = y;
                 if( p_flipX ) { px = 7 - x; }
                 if( p_flipY ) { py = 7 - y; }
@@ -128,6 +128,23 @@ namespace DATA {
                 renderBlock( &p_blockSet->m_blocks[ p_mapSlice->m_blocks[ y ][ x ].m_blockidx ],
                              p_tileSet, p_pals, p_out, p_x + blocksize * x, p_y + blocksize * y,
                              p_scale, p_time );
+            }
+        }
+    }
+
+    /*
+     * @brief: renders the given mapSlice and outputs starting at the specified upper left
+     * corner of the given bitmap.
+     */
+    void renderMapSlice( const computedMapSlice* p_mapSlice, bitmap* p_out, u32 p_x, u32 p_y,
+                         u16 p_scale, u8 p_time ) {
+        u16 blocksize = BLOCK_SIZE / p_scale;
+        u16 pos       = 0;
+
+        for( u16 y = 0; y < SIZE; ++y ) {
+            for( u16 x = 0; x < SIZE; ++x, ++pos ) {
+                renderBlock( &p_mapSlice->m_computedBlocks[ pos ].first, p_mapSlice->m_pals, p_out,
+                             p_x + blocksize * x, p_y + blocksize * y, p_scale, p_time );
             }
         }
     }

@@ -92,7 +92,6 @@ namespace UI {
     }
 
     root::root( ) {
-        set_title( TITLE_STRING );
         set_default_size( 800, 600 );
 
         auto provider = Gtk::CssProvider::create( );
@@ -200,6 +199,15 @@ namespace UI {
 
         auto headerBar = Gtk::HeaderBar( );
         set_titlebar( headerBar );
+
+        auto headerTitleBox = Gtk::Box( Gtk::Orientation::VERTICAL );
+        headerTitleBox.append( _titleLabel );
+        headerTitleBox.append( _subtitleLabel );
+
+        _titleLabel.get_style_context( )->add_class( "title" );
+        _subtitleLabel.get_style_context( )->add_class( "subtitle" );
+        headerBar.set_title_widget( headerTitleBox );
+        headerTitleBox.set_valign( Gtk::Align::CENTER );
 
         _openButton = createButton( "", "_Load FSROOT…", [ & ]( ) { this->onFsRootOpenClick( ); } );
         _saveButton = createButton( "", "_Save Changes", [ & ]( ) { this->onFsRootSaveClick( ); } );
@@ -605,20 +613,7 @@ namespace UI {
         _mapEditorSettings3.set_max_width_chars( 1 );
         _mapEditorSettings3.signal_value_changed( ).connect( [ & ]( ) {
             auto value = _mapEditorSettings3.get_value_as_int( );
-            // Change daytime of everything map-py
-
-            for( u8 x = 0; x < 3; ++x ) {
-                for( u8 y = 0; y < 3; ++y ) {
-                    _currentMap[ x ][ y ].redraw( value,
-                                                  _currentMapDisplayMode == MODE_EDIT_MOVEMENT );
-                }
-            }
-            _ts1widget.redraw( value );
-            _ts2widget.redraw( value );
-
-            _blockStampMap.redraw( value );
-
-            _currentDayTime = value;
+            setCurrentDaytime( value );
         } );
 
         auto abSl1 = Gtk::Image( );
@@ -737,6 +732,118 @@ namespace UI {
         abEb3.append( abEl3 );
         abEb3.append( _mapEditorSettings6 );
 
+        // Map overview box
+        // +----------------------+
+        // | ( Maps | Locations ) |
+        // |+--------------------+|
+        // ||                    ||
+        // ||        Maps        ||
+        // ||                    ||
+        // |+--------------------+|
+        // |     ( Actionbar )    |
+        // +----------------------+
+
+        _mapOverviewBox.set_margin( MARGIN );
+
+        // mode change (block edit, locations) buttons
+        auto bankOverviewModeBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        bankOverviewModeBox.set_margin( MARGIN );
+        _bankOverviewModeToggles.push_back(
+            std::make_shared<Gtk::ToggleButton>( "_Blocks", true ) );
+        _bankOverviewModeToggles.push_back(
+            std::make_shared<Gtk::ToggleButton>( "Loca_tions", true ) );
+
+        bankOverviewModeBox.get_style_context( )->add_class( "linked" );
+        bankOverviewModeBox.set_halign( Gtk::Align::CENTER );
+        for( u8 i = 0; i < _bankOverviewModeToggles.size( ); ++i ) {
+            bankOverviewModeBox.append( *_bankOverviewModeToggles[ i ] );
+            _bankOverviewModeToggles[ i ]->signal_clicked( ).connect(
+                [ this, i ]( ) { setNewBankOverviewMode( bankOverviewMode( i ) ); } );
+            if( i ) { _bankOverviewModeToggles[ i ]->set_group( *_bankOverviewModeToggles[ 0 ] ); }
+        }
+        _bankOverviewModeToggles[ 0 ]->set_active( );
+
+        auto boswbox = Gtk::Box( );
+        boswbox.set_halign( Gtk::Align::CENTER );
+        boswbox.set_valign( Gtk::Align::CENTER );
+        boswbox.set_expand( true );
+
+        auto bankOverviewSW = Gtk::ScrolledWindow( );
+        bankOverviewSW.set_margin( MARGIN );
+        bankOverviewSW.set_policy( Gtk::PolicyType::AUTOMATIC, Gtk::PolicyType::AUTOMATIC );
+        bankOverviewSW.set_child( boswbox );
+        boswbox.append( _mapBankOverview );
+
+        auto abBOBox = Gtk::CenterBox( );
+        auto abSbBO1 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        auto abSbBO2 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        auto abSbBO3 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        abBOBox.set_start_widget( abSbBO1 );
+        abBOBox.set_center_widget( abSbBO2 );
+        abBOBox.set_end_widget( abSbBO3 );
+
+        auto abBOFrame = Gtk::Frame( );
+        abBOFrame.set_child( abBOBox );
+
+        auto abSAdjBO1 = Gtk::Adjustment::create( _bankOverviewSpacing, 0.0, 9.0, 1.0, 1.0, 0.0 );
+        auto abSAdjBO2 = Gtk::Adjustment::create( _bankOverviewScale, 1.0, 8.0, 1.0, 1.0, 0.0 );
+
+        _mapBankOverviewSettings1 = Gtk::SpinButton( abSAdjBO1 );
+        _mapBankOverviewSettings1.signal_value_changed( ).connect( [ & ]( ) {
+            auto value = _mapBankOverviewSettings1.get_value_as_int( );
+
+            _mapBankOverview.setSpacing( value );
+            _mapBankOverview.queue_resize( );
+
+            _bankOverviewSpacing = value;
+        } );
+        _mapBankOverviewSettings1.set_margin_start( MARGIN );
+        _mapBankOverviewSettings1.set_width_chars( 1 );
+        _mapBankOverviewSettings1.set_max_width_chars( 1 );
+
+        _mapBankOverviewSettings2 = Gtk::SpinButton( abSAdjBO2 );
+        _mapBankOverviewSettings2.set_margin_start( MARGIN );
+        _mapBankOverviewSettings2.set_width_chars( 1 );
+        _mapBankOverviewSettings2.set_max_width_chars( 1 );
+        _mapBankOverviewSettings2.signal_value_changed( ).connect( [ & ]( ) {
+            auto value = _mapBankOverviewSettings2.get_value_as_int( );
+
+            _mapBankOverview.setScale( value );
+            _mapBankOverview.queue_resize( );
+
+            _bankOverviewScale = value;
+        } );
+
+        _mapBankOverviewSettings3 = Gtk::SpinButton( abSAdj3 );
+        _mapBankOverviewSettings3.set_margin_start( MARGIN );
+        _mapBankOverviewSettings3.set_wrap( );
+        _mapBankOverviewSettings3.set_width_chars( 1 );
+        _mapBankOverviewSettings3.set_max_width_chars( 1 );
+        _mapBankOverviewSettings3.signal_value_changed( ).connect( [ & ]( ) {
+            auto value = _mapBankOverviewSettings3.get_value_as_int( );
+            setCurrentDaytime( value );
+        } );
+
+        auto abSlBO1 = Gtk::Image( );
+        abSlBO1.set_from_icon_name( "view-grid-symbolic" );
+        abSlBO1.set_margin_start( MARGIN );
+        auto abSlBO2 = Gtk::Image( );
+        abSlBO2.set_from_icon_name( "edit-find-symbolic" );
+        abSlBO2.set_margin_start( MARGIN );
+        auto abSlBO3 = Gtk::Image( );
+        abSlBO3.set_from_icon_name( "weather-clear-symbolic" );
+        abSlBO3.set_margin_start( MARGIN );
+        abSbBO1.append( abSlBO1 );
+        abSbBO1.append( _mapBankOverviewSettings1 );
+        abSbBO2.append( abSlBO2 );
+        abSbBO2.append( _mapBankOverviewSettings2 );
+        abSbBO3.append( abSlBO3 );
+        abSbBO3.append( _mapBankOverviewSettings3 );
+
+        _mapOverviewBox.append( bankOverviewModeBox );
+        _mapOverviewBox.append( bankOverviewSW );
+        _mapOverviewBox.append( abBOFrame );
+
         // Events / Button presses
 
         auto controller = Gtk::EventControllerKey::create( );
@@ -767,6 +874,29 @@ namespace UI {
     }
 
     root::~root( ) {
+    }
+
+    void root::setNewBankOverviewMode( bankOverviewMode p_newMode ) {
+        // TDOO
+    }
+
+    void root::setCurrentDaytime( u8 p_newDaytime ) {
+        // Change daytime of everything map-py
+
+        for( u8 x = 0; x < 3; ++x ) {
+            for( u8 y = 0; y < 3; ++y ) {
+                _currentMap[ x ][ y ].redraw( p_newDaytime,
+                                              _currentMapDisplayMode == MODE_EDIT_MOVEMENT );
+            }
+        }
+        _ts1widget.redraw( p_newDaytime );
+        _ts2widget.redraw( p_newDaytime );
+
+        _blockStampMap.redraw( p_newDaytime );
+
+        _mapBankOverview.redraw( p_newDaytime );
+
+        _currentDayTime = p_newDaytime;
     }
 
     void root::setNewMapEditMode( mapDisplayMode p_newMode ) {
@@ -857,8 +987,8 @@ namespace UI {
         fprintf( stderr, "[LOG] Saving map bank %hu.\n", p_bank );
         bool error = false;
 
-        for( u8 y = 0; y < info.m_sizeY; ++y ) {
-            for( u8 x = 0; x < info.m_sizeX; ++x ) { error |= writeMapSlice( p_bank, x, y ); }
+        for( u8 y = 0; y <= info.m_sizeY; ++y ) {
+            for( u8 x = 0; x <= info.m_sizeX; ++x ) { error |= writeMapSlice( p_bank, x, y ); }
         }
         if( !error ) { info.m_widget->setStatus( mapBank::STATUS_SAVED ); }
 
@@ -1405,6 +1535,32 @@ namespace UI {
         return { sx, sy, scattered };
     }
 
+    void root::setTitle( const std::string& p_windowTitle, const std::string& p_mainTitle,
+                         const std::string& p_subTitle ) {
+        if( p_windowTitle != "" ) {
+            set_title( p_windowTitle );
+        } else {
+            set_title( TITLE_STRING );
+        }
+
+        if( p_mainTitle == "" ) {
+            if( p_subTitle != "" ) {
+                _titleLabel.set_text( p_subTitle );
+            } else {
+                _titleLabel.set_text( get_title( ) );
+            }
+            _subtitleLabel.hide( );
+        } else {
+            _titleLabel.set_text( p_mainTitle );
+            if( p_subTitle != "" ) {
+                _subtitleLabel.set_text( p_subTitle );
+                _subtitleLabel.show( );
+            } else {
+                _subtitleLabel.hide( );
+            }
+        }
+    }
+
     void root::loadNewFsRoot( const std::string& p_path ) {
         if( !checkOrCreatePath( p_path ) ) { return; }
         if( !checkOrCreatePath( p_path + "/MAPS/" ) ) { return; }
@@ -1418,8 +1574,6 @@ namespace UI {
         PALETTE_PATH  = FSROOT_PATH + "/MAPS/PALETTES/";
         MAPDATA_PATH  = FSROOT_PATH + "/DATA/MAP_DATA/";
         _fsRootLoaded = true;
-
-        set_title( p_path + " - " + TITLE_STRING );
 
         // update map banks
         _mapBanks.clear( );
@@ -1522,7 +1676,7 @@ namespace UI {
 
         auto MB1 = std::make_shared<mapBank>( p_bank, p_sizeX, p_sizeY, p_status );
         MB1->connect( [ this ]( u16 p_bk, u8 p_y, u8 p_x ) { loadMap( p_bk, p_y, p_x ); } );
-        _mapBanks[ p_bank ] = { MB1, false, p_scattered, nullptr, p_sizeX, p_sizeY };
+        _mapBanks[ p_bank ] = { MB1, nullptr, false, p_scattered, p_sizeX, p_sizeY, nullptr };
 
         // keep the list sorted: insert after bank with largest id smaller than p_bank,
         // i.e., after the element before lower_bound( p_bank )
@@ -1606,13 +1760,30 @@ namespace UI {
         // Load all maps of the bank into mem
         if( !selb.m_loaded || p_forceReread ) {
             selb.m_bank = std::make_shared<DATA::mapBank>( );
-
+            selb.m_computedBank
+                = std::make_shared<std::vector<std::vector<DATA::computedMapSlice>>>(
+                    selb.m_sizeY + 1, std::vector<DATA::computedMapSlice>(
+                                          selb.m_sizeX + 1, DATA::computedMapSlice( ) ) );
             selb.m_bank->m_mapData = std::vector<std::vector<DATA::mapSlice>>(
                 selb.m_sizeY + 1,
                 std::vector<DATA::mapSlice>( selb.m_sizeX + 1, DATA::mapSlice( ) ) );
 
             for( u16 y = 0; y <= selb.m_sizeY; ++y ) {
-                for( u16 x = 0; x <= selb.m_sizeX; ++x ) { readMapSlice( p_bank, x, y ); }
+                for( u16 x = 0; x <= selb.m_sizeX; ++x ) {
+                    readMapSlice( p_bank, x, y );
+                    auto bs = DATA::blockSet<2>( );
+                    buildBlockSet( &bs, selb.m_bank->m_mapData[ y ][ x ].m_tIdx1,
+                                   selb.m_bank->m_mapData[ y ][ x ].m_tIdx2 );
+                    auto ts = DATA::tileSet<2>( );
+                    buildTileSet( &ts, selb.m_bank->m_mapData[ y ][ x ].m_tIdx1,
+                                  selb.m_bank->m_mapData[ y ][ x ].m_tIdx2 );
+
+                    buildPalette( ( *selb.m_computedBank )[ y ][ x ].m_pals,
+                                  selb.m_bank->m_mapData[ y ][ x ].m_tIdx1,
+                                  selb.m_bank->m_mapData[ y ][ x ].m_tIdx2 );
+                    ( *selb.m_computedBank )[ y ][ x ].m_computedBlocks
+                        = selb.m_bank->m_mapData[ y ][ x ].compute( &bs, &ts );
+                }
             }
             selb.m_loaded = true;
         }
@@ -1629,6 +1800,11 @@ namespace UI {
             auto& selb = _mapBanks[ _selectedBank ];
             selb.m_widget->select( );
             readMapBank( p_bank, false );
+
+            if( selb.m_computedBank != nullptr ) {
+                _mapBankOverview.set( *selb.m_computedBank );
+                _mapBankOverview.redraw( _currentDayTime );
+            }
         }
     }
 
@@ -1692,10 +1868,23 @@ namespace UI {
         _ts2widget.redraw( _currentDayTime );
     }
 
-    void root::buildBlockSet( DATA::blockSet<2>* p_out ) {
-        auto mp  = _mapBanks[ _selectedBank ].m_bank->m_mapData[ _selectedMapY ][ _selectedMapX ];
-        u8   ts1 = mp.m_tIdx1;
-        u8   ts2 = mp.m_tIdx2;
+    void root::buildBlockSet( DATA::blockSet<2>* p_out, s8 p_ts1, s8 p_ts2 ) {
+        u8 ts1 = 0;
+        u8 ts2 = 0;
+        if( p_ts1 != -1 ) {
+            ts1 = p_ts1;
+        } else {
+            ts1 = _mapBanks[ _selectedBank ]
+                      .m_bank->m_mapData[ _selectedMapY ][ _selectedMapX ]
+                      .m_tIdx1;
+        }
+        if( p_ts2 != -1 ) {
+            ts2 = p_ts2;
+        } else {
+            ts2 = _mapBanks[ _selectedBank ]
+                      .m_bank->m_mapData[ _selectedMapY ][ _selectedMapX ]
+                      .m_tIdx2;
+        }
         std::memcpy( p_out->m_blocks, _blockSets[ ts1 ].m_blockSet.m_blocks,
                      sizeof( DATA::block ) * DATA::MAX_BLOCKS_PER_TILE_SET );
         std::memcpy( &p_out->m_blocks[ DATA::MAX_BLOCKS_PER_TILE_SET ],
@@ -1703,10 +1892,23 @@ namespace UI {
                      sizeof( DATA::block ) * DATA::MAX_BLOCKS_PER_TILE_SET );
     }
 
-    void root::buildTileSet( DATA::tileSet<2>* p_out ) {
-        auto mp  = _mapBanks[ _selectedBank ].m_bank->m_mapData[ _selectedMapY ][ _selectedMapX ];
-        u8   ts1 = mp.m_tIdx1;
-        u8   ts2 = mp.m_tIdx2;
+    void root::buildTileSet( DATA::tileSet<2>* p_out, s8 p_ts1, s8 p_ts2 ) {
+        u8 ts1 = 0;
+        u8 ts2 = 0;
+        if( p_ts1 != -1 ) {
+            ts1 = p_ts1;
+        } else {
+            ts1 = _mapBanks[ _selectedBank ]
+                      .m_bank->m_mapData[ _selectedMapY ][ _selectedMapX ]
+                      .m_tIdx1;
+        }
+        if( p_ts2 != -1 ) {
+            ts2 = p_ts2;
+        } else {
+            ts2 = _mapBanks[ _selectedBank ]
+                      .m_bank->m_mapData[ _selectedMapY ][ _selectedMapX ]
+                      .m_tIdx2;
+        }
         std::memcpy( p_out->m_tiles, _blockSets[ ts1 ].m_tileSet.m_tiles,
                      sizeof( DATA::tile ) * DATA::MAX_TILES_PER_TILE_SET );
         std::memcpy( &p_out->m_tiles[ DATA::MAX_TILES_PER_TILE_SET ],
@@ -1714,10 +1916,23 @@ namespace UI {
                      sizeof( DATA::tile ) * DATA::MAX_TILES_PER_TILE_SET );
     }
 
-    void root::buildPalette( DATA::palette p_out[ 5 * 16 ] ) {
-        auto mp  = _mapBanks[ _selectedBank ].m_bank->m_mapData[ _selectedMapY ][ _selectedMapX ];
-        u8   ts1 = mp.m_tIdx1;
-        u8   ts2 = mp.m_tIdx2;
+    void root::buildPalette( DATA::palette p_out[ 5 * 16 ], s8 p_ts1, s8 p_ts2 ) {
+        u8 ts1 = 0;
+        u8 ts2 = 0;
+        if( p_ts1 != -1 ) {
+            ts1 = p_ts1;
+        } else {
+            ts1 = _mapBanks[ _selectedBank ]
+                      .m_bank->m_mapData[ _selectedMapY ][ _selectedMapX ]
+                      .m_tIdx1;
+        }
+        if( p_ts2 != -1 ) {
+            ts2 = p_ts2;
+        } else {
+            ts2 = _mapBanks[ _selectedBank ]
+                      .m_bank->m_mapData[ _selectedMapY ][ _selectedMapX ]
+                      .m_tIdx2;
+        }
         for( u8 dt = 0; dt < 5; ++dt ) {
             std::memcpy( &p_out[ 16 * dt ], &_blockSets[ ts1 ].m_pals[ 8 * dt ],
                          sizeof( DATA::palette ) * 8 );
@@ -1845,6 +2060,12 @@ namespace UI {
         updateSelectedBlock( _currentlySelectedBlock );
 
         switchContext( context::MAP_EDITOR );
+
+        setTitle( "",
+                  std::to_string( p_bank ) + "/" + std::to_string( p_mapY ) + "_"
+                      + std::to_string( p_mapX ) + ".map",
+                  FSROOT_PATH );
+        _mapBankOverview.selectMap( p_mapY, p_mapX );
     }
 
     void root::switchContext( root::context p_context ) {
@@ -1867,6 +2088,8 @@ namespace UI {
         case FSROOT_NONE:
             _mainBox.show( );
             _loadMapLabel.show( );
+            setTitle( "", FSROOT_PATH );
+
             break;
         case MAP_EDITOR:
             _mainBox.show( );
@@ -1885,7 +2108,10 @@ namespace UI {
             _saveMenuButton->show( );
             break;
 
-        default: _ivScrolledWindow.show( ); break;
+        default:
+            setTitle( );
+            _ivScrolledWindow.show( );
+            break;
         }
     }
 } // namespace UI

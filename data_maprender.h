@@ -147,6 +147,11 @@ namespace DATA {
         }
     };
 
+    struct computedMapSlice {
+        std::vector<std::pair<computedBlock, u8>> m_computedBlocks;
+        DATA::palette                             m_pals[ 5 * 16 ];
+    };
+
     struct mapBank {
         std::vector<std::vector<mapSlice>> m_mapData; // [y][x]
     };
@@ -357,6 +362,9 @@ namespace DATA {
     void renderMapSlice( const mapSlice* p_mapSlice, const blockSet<>* p_blockSet,
                          const tileSet<>* p_tileSet, const palette p_pals[ 16 * 5 ], bitmap* p_out,
                          u32 p_x = 0, u32 p_y = 0, u16 p_scale = 1, u8 p_time = 0 );
+
+    void renderMapSlice( const computedMapSlice* p_mapSlice, bitmap* p_out, u32 p_x = 0,
+                         u32 p_y = 0, u16 p_scale = 1, u8 p_time = 0 );
 
     void tintRectangle( bitmap& p_out, u32 p_tx, u32 p_ty, u32 p_bx, u32 p_by, pixel p_tint,
                         u32 p_borderStrength = 0, pixel p_border = pixel( 0, 0, 0 ),

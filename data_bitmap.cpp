@@ -135,9 +135,8 @@ namespace DATA {
     }
 
     std::shared_ptr<Gdk::Pixbuf> bitmap::pixbuf( ) const {
-        u8* linbuffer = new u8[ m_height * m_width * 3 ];
-
-        u16 cnt = 0;
+        u8* linbuffer = new u8[ m_height * m_width * 3 + 10 ];
+        u16 cnt       = 0;
         for( u16 y = 0; y < m_height; ++y ) {
             for( u16 x = 0; x < m_width; ++x ) {
                 auto px            = m_pixels[ x ][ y ];

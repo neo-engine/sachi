@@ -29,17 +29,21 @@
 
 #include "data_maprender.h"
 #include "ui_mapBank.h"
+#include "ui_mapBankOverview.h"
 #include "ui_mapSlice.h"
 
 namespace UI {
     class root : public Gtk::Window {
         struct mapBankInfo {
-            std::shared_ptr<mapBank> m_widget = nullptr;
-            bool                     m_loaded = false;
+            std::shared_ptr<mapBank>       m_widget = nullptr;
+            std::shared_ptr<DATA::mapBank> m_bank   = nullptr;
+
+            bool m_loaded    = false;
             bool m_scattered = true; // maps are scattered over subfolders according to y
-            std::shared_ptr<DATA::mapBank> m_bank  = nullptr;
-            u8                             m_sizeX = 0;
-            u8                             m_sizeY = 0;
+            u8   m_sizeX     = 0;
+            u8   m_sizeY     = 0;
+
+            std::shared_ptr<std::vector<std::vector<DATA::computedMapSlice>>> m_computedBank;
         };
 
         struct blockSetInfo {
@@ -76,13 +80,23 @@ namespace UI {
             MODE_EDIT_DATA,
         };
 
+        enum bankOverviewMode : u8 {
+            MODE_DISPLAY_MAPS,
+            MODE_DISPLAY_LOCATIONS,
+        };
+
         enum context : u8 {
             NONE,        // nothing loaded
             FSROOT_NONE, // fsroot loaded, but nothing else
             MAP_EDITOR,  // map bank loaded and map visible
         };
 
-        // block stamp dialog
+        //////////////////////////////////////////////////////////////////////////////////
+        //
+        // Block stamp dialog
+        //
+        //////////////////////////////////////////////////////////////////////////////////
+
         std::vector<std::pair<DATA::computedBlock, DATA::mapBlockAtom>> _blockStampData;
         std::shared_ptr<Gtk::Dialog>                                    _blockStampDialog;
 
@@ -92,7 +106,12 @@ namespace UI {
         std::tuple<u16, u16, s8, s8> _dragStart;
         std::tuple<s16, s16>         _dragLast;
 
+        //////////////////////////////////////////////////////////////////////////////////
+        //
         // main window
+        //
+        //////////////////////////////////////////////////////////////////////////////////
+
         std::shared_ptr<Gio::SimpleActionGroup> _loadActions;
         std::shared_ptr<Gio::SimpleAction>      _loadFsrootAction;
         std::shared_ptr<Gio::SimpleAction>      _loadReloadmapAction;
@@ -110,23 +129,40 @@ namespace UI {
         Gtk::PopoverMenu                 _openMenuPopover, _saveMenuPopover;
         std::shared_ptr<Gio::Menu>       _openMenu, _saveMenu;
 
+        Gtk::Label _titleLabel, _subtitleLabel;
+
         bool _fsRootLoaded  = false;
         bool _focusMode     = false;
         bool _disableRedraw = true;
 
+        //////////////////////////////////////////////////////////////////////////////////
+        //
         // welcome screen
+        //
+        //////////////////////////////////////////////////////////////////////////////////
+
         recentFsRootModelColumn             _recentViewColumns;
         Gtk::IconView                       _recentFsRootIconView;
         Glib::RefPtr<Gtk::ListStore>        _recentFsRootListModel;
         std::shared_ptr<Gtk::RecentManager> _recentlyUsedFsRoots;
         Gtk::ScrolledWindow                 _ivScrolledWindow;
 
+        //////////////////////////////////////////////////////////////////////////////////
+        //
         // sidebar
+        //
+        //////////////////////////////////////////////////////////////////////////////////
+
         std::shared_ptr<Gtk::Button> _collapseMapBanksButton; // collapse/show sidebar
 
         bool _mapBankBarCollapsed = false;
 
+        //////////////////////////////////////////////////////////////////////////////////
+        //
         // map banks
+        //
+        //////////////////////////////////////////////////////////////////////////////////
+
         Gtk::Label                  _mapBankBarLabel;
         Gtk::Box                    _mapBankBox;
         std::shared_ptr<addMapBank> _addMapBank;
@@ -135,7 +171,12 @@ namespace UI {
         int                        _selectedBank = -1;
         s16                        _selectedMapX = -1, _selectedMapY = -1;
 
+        //////////////////////////////////////////////////////////////////////////////////
+        //
         // map editor
+        //
+        //////////////////////////////////////////////////////////////////////////////////
+
         Gtk::Label     _loadMapLabel; // Message before map bank loaded
         Gtk::Notebook  _mapNotebook;  // main container for anything map bank related
         mapDisplayMode _currentMapDisplayMode;
@@ -161,10 +202,18 @@ namespace UI {
         u16                                _blockSetWidth   = 8;
         u8                                 _adjacentBlocks  = 8;
 
+        u8 _bankOverviewSpacing = 2;
+        u8 _bankOverviewScale   = 3;
+
         DATA::mapBlockAtom  _currentlySelectedBlock = DATA::mapBlockAtom( );
         DATA::computedBlock _currentlySelectedComputedBlock;
 
+        //////////////////////////////////////////////////////////////////////////////////
+        //
         // edit blocks
+        //
+        //////////////////////////////////////////////////////////////////////////////////
+
         Gtk::Frame    _blockSetFrame;
         Gtk::Box      _mapEditorBlockSetBox{ Gtk::Orientation::VERTICAL };
         Gtk::Box      _abEb1; // block set width settings box, contains _mapEditorSettings4
@@ -177,35 +226,205 @@ namespace UI {
         std::map<u8, blockSetInfo>                      _blockSets;
         std::set<u8>                                    _blockSetNames;
 
+        //////////////////////////////////////////////////////////////////////////////////
+        //
         // edit movements
+        //
+        //////////////////////////////////////////////////////////////////////////////////
+
         Gtk::Frame _movementFrame;
         mapSlice   _movementWidget;
 
+        //////////////////////////////////////////////////////////////////////////////////
+        //
         // Map bank overview
-        Gtk::Box _mapOverviewBox;
+        //
+        //////////////////////////////////////////////////////////////////////////////////
+
+        Gtk::Box _mapOverviewBox{ Gtk::Orientation::VERTICAL };
+        std::vector<std::shared_ptr<Gtk::ToggleButton>> _bankOverviewModeToggles;
+
+        mapBankOverview _mapBankOverview;
+        Gtk::SpinButton _mapBankOverviewSettings1;
+        Gtk::SpinButton _mapBankOverviewSettings2;
+        Gtk::SpinButton _mapBankOverviewSettings3;
 
       public:
         root( );
         ~root( ) override;
 
+        /*
+         * @brief: Sets p_path as the current working directory, checks which map banks
+         * are available and checks/creates other required FSROOT subfolders.
+         */
         void loadNewFsRoot( const std::string& p_path );
 
       private:
+        //////////////////////////////////////////////////////////////////////////////////
+        //
+        // Main window
+        //
+        //////////////////////////////////////////////////////////////////////////////////
+
+        /*
+         * @brief: Sets the current main working context, enables/disables actions and
+         * hides/shows the corresponding widgets.
+         */
         void switchContext( context p_context );
 
-        void setNewMapEditMode( mapDisplayMode p_newMode );
+        /*
+         * @brief: Sets the title displayed on the header bar.
+         */
+        void setTitle( const std::string& p_windowTitle = "", const std::string& p_mainTitle = "",
+                       const std::string& p_subTitle = "" );
 
+        /*
+         * @brief: Handler for the "Open FSROOT" button.
+         */
         void onFsRootOpenClick( );
-        void onFsRootSaveClick( );
 
-        bool writeMapSlice( u16 p_bank, u8 p_mapX, u8 p_mapY, std::string p_path = "" );
-        bool writeMapBank( u16 p_bank );
-
-        bool readMapSlice( u16 p_bank, u8 p_mapX, u8 p_mapY, std::string p_path = "" );
-        bool readMapBank( u16 p_bank, bool p_forceReread = false );
-
+        /*
+         * @brief: Handler for the "Select" button in the Open Folder Dialog of the Open
+         * FSROOT button.
+         */
         void onFolderDialogResponse( int p_responseId, Gtk::FileChooserDialog* p_dialog );
 
+        /*
+         * @brief: Handler for the "Save Changes" button.
+         */
+        void onFsRootSaveClick( );
+
+        /*
+         * @brief: Collapses/shows the sidebar.
+         */
+        void collapseMapBankBar( bool p_collapse = true );
+
+        /*
+         * @brief: Adds the specified path to the list of recently used FSROOT paths.
+         */
+        void addFsRootToRecent( const std::string& p_path );
+
+        /*
+         * @brief: Removes the specified path from the recently used FSROOT paths.
+         */
+        void removeFsRootFromRecent( const std::string& p_path );
+
+        /*
+         * @brief: Returns a list of all recently used FSROOT paths.
+         */
+        auto getRecentFsRoots( );
+
+        /*
+         * @brief: Adds the recently used FSROOT paths for quick access to the IconView on
+         * the start screen.
+         */
+        void populateRecentFsRootIconView( );
+
+        //////////////////////////////////////////////////////////////////////////////////
+        //
+        // Map editor
+        //
+        //////////////////////////////////////////////////////////////////////////////////
+
+        /*
+         * @brief: Sets the mode of the map editor (edit blocks, movements, events, etc)
+         */
+        void setNewMapEditMode( mapDisplayMode p_newMode );
+
+        /*
+         * @brief: Sets the daytime of all maps and redraws them.
+         */
+        void setCurrentDaytime( u8 p_newDaytime );
+
+        // Map IO
+
+        /*
+         * @brief: Writes the specified map slice to the FS.
+         * @param p_path: If specified, the map is stored at the specified path, otherwise
+         * it will be stored at the default location (FSROOT/MAPS/p_bank[/p_mapY]/p_mapY_p_mapX.map)
+         * in the current working directory.
+         */
+        bool writeMapSlice( u16 p_bank, u8 p_mapX, u8 p_mapY, std::string p_path = "" );
+
+        /*
+         * @brief: Writes all map slices of the specified map bank to the FS.
+         */
+        bool writeMapBank( u16 p_bank );
+
+        /*
+         * @brief: Reads the specified map slice from the FS.
+         * @param p_path: If specified, the map is read from the specified path, otherwise
+         * it will be read from the default location (FSROOT/MAPS/p_bank[/p_mapY]/p_mapY_p_mapX.map)
+         * in the current working directory.
+         */
+        bool readMapSlice( u16 p_bank, u8 p_mapX, u8 p_mapY, std::string p_path = "" );
+
+        /*
+         * @brief: Reads all map slices of the specified map bank from the FS.
+         * @param p_forceReread: If true, ignores and overwrites any previously read data.
+         */
+        bool readMapBank( u16 p_bank, bool p_forceReread = false );
+
+        /*
+         * @brief: Loads the specified map bank in the editor. Lazily reads the data from
+         * the FS, one map bank at a time.
+         */
+        void loadMapBank( u16 p_bank );
+
+        /*
+         * @brief: Loads the specified bank and map.
+         */
+        void loadMap( u16 p_bank, u8 p_mapY, u8 p_mapX );
+
+        /*
+         * @brief: Displays the specified map of the currently selected map.
+         */
+        void redrawMap( u8 p_mapY, u8 p_mapX );
+
+        /*
+         * @brief: Loads the map in the current bank that lies at the relative position
+         * (p_dx, p_dy). Does nothing if the new coordinates are (partially) negative or larger
+         * than 99; extends the map bank if the new coordinates lie outside of the current
+         * map bank bounds, otherwise.
+         */
+        void moveToMap( s8 p_dy, s8 p_dx );
+
+        /*
+         * @brief: Adds a new map bank to the FSROOT and the editor, unloading any data
+         * that may exist in the editor.
+         */
+        void addNewMapBank( u16 p_bank, u8 p_sizeY, u8 p_sizeX, bool p_scattered = false,
+                            mapBank::status p_status = mapBank::STATUS_UNTOUCHED );
+
+        /*
+         * @brief: Does nothing if p_bank is loaded, otherwise creates and loads a new
+         * bank.
+         */
+        void createMapBank( u16 p_bank, u8 p_sizeY, u8 p_sizeX );
+
+        /*
+         * @brief: Sets the status of the specified map bank to the specified status,
+         * resulting in the specified map bank being highlighted in the sidebar.
+         */
+        void markBankChanged( u16 p_bank, mapBank::status p_newStatus
+                                          = mapBank::status::STATUS_EDITED_UNSAVED );
+
+        /*
+         * @brief: Redraws the first block/tile set widget of the current map.
+         */
+        void currentMapUpdateTS1( u8 p_newTS );
+
+        /*
+         * @brief: Redraws the second block/tile set widget of the current map.
+         */
+        void currentMapUpdateTS2( u8 p_newTS );
+
+        // Map utility
+
+        /*
+         * @brief: Checks if the specified block coordinates are currently visible
+         * on-screen.
+         */
         inline bool isInMapBounds( s16 p_blockX, s16 p_blockY, s8 p_mapX, s8 p_mapY ) {
             if( p_blockX < 0 || p_blockY < 0 ) { return false; }
 
@@ -219,6 +438,31 @@ namespace UI {
         }
 
         /*
+         * @brief: Merges the two currently visible block sets into a single block set used
+         * for rendering maps.
+         */
+        void buildBlockSet( DATA::blockSet<2>* p_out, s8 p_ts1 = -1, s8 p_ts2 = -1 );
+
+        /*
+         * @brief: Merges the two currently visible tile sets into a single tile set used
+         * for rendering maps.
+         */
+        void buildTileSet( DATA::tileSet<2>* p_out, s8 p_ts1 = -1, s8 p_ts2 = -1 );
+
+        /*
+         * @brief: Merges the two currently visible palette sets into a single palette used
+         * for rendering maps.
+         */
+        void buildPalette( DATA::palette p_out[ 5 * 16 ], s8 p_ts1 = -1, s8 p_ts2 = -1 );
+
+        // Map editing
+
+        /*
+         * @brief: Sets the currently selected block / movement for drawing.
+         */
+        void updateSelectedBlock( DATA::mapBlockAtom p_block );
+
+        /*
          * @brief: Handles clicks on maps:
          * Left: Change block to currently selected block (if p_allowChange)
          * Middle: Change block and recursively all adjacent blocks that are the same as
@@ -228,6 +472,9 @@ namespace UI {
         void onMapClicked( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY, s8 p_mapX,
                            s8 p_mapY, bool p_allowEdit = true );
 
+        /*
+         * @brief: Handles clicks of blocks of the tile/block set widget.
+         */
         void onTSClicked( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY, u8 p_ts );
 
         void onMapDragStart( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY,
@@ -237,54 +484,36 @@ namespace UI {
         void onMapDragEnd( UI::mapSlice::clickType p_button, s16 p_dX, s16 p_dY, s8 p_mapX,
                            s8 p_mapY, bool p_allowEdit = true );
 
-        void onBlockSetClicked( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY,
-                                u8 p_tsIdx );
-
-        void loadMapBank( u16 p_bank );
-
-        void collapseMapBankBar( bool p_collapse = true );
-
-        void moveToMap( s8 p_dy, s8 p_dx );
-
-        void updateSelectedBlock( DATA::mapBlockAtom p_block );
+        //////////////////////////////////////////////////////////////////////////////////
+        //
+        // Map bank overview
+        //
+        //////////////////////////////////////////////////////////////////////////////////
 
         /*
-         * @brief: Loads the specified bank and map.
+         * @brief: Sets the mode of the bank overview
          */
-        void loadMap( u16 p_bank, u8 p_mapY, u8 p_mapX );
+        void setNewBankOverviewMode( bankOverviewMode p_newMode );
+
+        // Static methods
 
         /*
-         * @brief: Displays the specified map of the currently selected map.
+         * @brief: Creates a new Gtk::Button with an icon and a string and the given
+         * handler for the clicked signal.
          */
-        void redrawMap( u8 p_mapY, u8 p_mapX );
-
-        void addNewMapBank( u16 p_bank, u8 p_sizeY, u8 p_sizeX, bool p_scattered = false,
-                            mapBank::status p_status = mapBank::STATUS_UNTOUCHED );
-
-        void createMapBank( u16 p_bank, u8 p_sizeY, u8 p_sizeX );
-
-        void markBankChanged( u16 p_bank, mapBank::status p_newStatus
-                                          = mapBank::status::STATUS_EDITED_UNSAVED );
-
-        void currentMapUpdateTS1( u8 p_newTS );
-        void currentMapUpdateTS2( u8 p_newTS );
-
-        void buildBlockSet( DATA::blockSet<2>* p_out );
-        void buildTileSet( DATA::tileSet<2>* p_out );
-        void buildPalette( DATA::palette p_out[ 5 * 16 ] );
-
-        void addFsRootToRecent( const std::string& p_path );
-        void removeFsRootFromRecent( const std::string& p_path );
-        auto getRecentFsRoots( );
-
-        void populateRecentFsRootIconView( );
-
         static auto createButton(
             const std::string& p_iconName, const std::string& p_labelText,
             std::function<void( )> p_callBack = []( ) {} );
 
+        /*
+         * @brief: Walks through the specified directory and its subdirectory to explore
+         * how large a map bank is and whether its maps are distributed over subfolders.
+         */
         static mapBankData exploreMapBank( const fs::path& p_path );
 
+        /*
+         * @brief: Checks if the specified path exists or creates it if it doesn't.
+         */
         static bool checkOrCreatePath( const std::string& p_path );
     };
 } // namespace UI

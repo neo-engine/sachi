@@ -20,6 +20,8 @@ namespace UI {
         }
         if( p_blockIdx >= 0 ) { _images[ p_blockIdx ]->add_overlay( _selectionBox ); }
         _currentSelectionIndex = p_blockIdx;
+
+        _selectionBox.get_style_context( )->add_class( "mapblock-selected" );
     }
 
     void mapSlice::updateBlock( const DATA::computedBlock& p_block, u16 p_x, u16 p_y ) {
@@ -82,8 +84,7 @@ namespace UI {
 
         for( auto [ block, movement ] : _blocks ) {
             auto im = UI::block::createImage( block, _pals, _currentDaytime );
-            im->set_size_request( DATA::BLOCK_SIZE * _currentScale,
-                                  DATA::BLOCK_SIZE * _currentScale );
+            im->set_size_request( DATA::BLOCK_SIZE, DATA::BLOCK_SIZE );
 
             auto overlay = std::make_shared<Gtk::Overlay>( );
             overlay->set_child( *im );
