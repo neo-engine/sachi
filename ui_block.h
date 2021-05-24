@@ -2,7 +2,7 @@
 #include <memory>
 #include <string>
 
-#include <gtkmm/image.h>
+#include <gdkmm/pixbuf.h>
 
 #include "data_maprender.h"
 #include "defines.h"
@@ -10,9 +10,9 @@
 namespace UI {
     class block {
       public:
-        static std::shared_ptr<Gtk::Image> createImage( const DATA::computedBlock& p_block,
-                                                        const DATA::palette*       p_palette,
-                                                        u8                         p_daytime = 0 );
+        static std::shared_ptr<Gdk::Pixbuf> createImage( const DATA::computedBlock& p_block,
+                                                         const DATA::palette*       p_palette,
+                                                         u8                         p_daytime = 0 );
 
         static inline std::string classForMovement( u8 p_movement ) {
             switch( p_movement ) {

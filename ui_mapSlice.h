@@ -12,6 +12,7 @@
 
 #include "data_maprender.h"
 #include "defines.h"
+#include "ui_block.h"
 
 namespace UI {
     class mapSlice : public Gtk::Widget {
@@ -23,15 +24,8 @@ namespace UI {
         };
 
       private:
-        std::vector<std::pair<DATA::computedBlock, u8>> _blocks;
-        DATA::palette                                   _pals[ 16 * 5 ] = { 0 };
-
-        u16 _blocksPerRow;
         u16 _currentScale = 1;
-        u16 _height;
         u16 _blockSpacing = 0;
-
-        u8 _currentDaytime = 0;
 
         s16 _currentSelectionIndex = -1;
 
@@ -39,12 +33,19 @@ namespace UI {
         bool   _showOverlay    = false;
 
         std::vector<std::shared_ptr<Gtk::Overlay>> _images;
+        std::vector<std::shared_ptr<Gdk::Pixbuf>>  _imageData;
         std::vector<std::shared_ptr<Gtk::Label>>   _overlayMovement;
 
         std::shared_ptr<Gtk::GestureClick> _clickEvent;
         std::shared_ptr<Gtk::GestureDrag>  _dragEvent;
 
         Gtk::Box _selectionBox;
+
+      protected:
+        virtual void                         redrawBlock( u16 p_blockIdx );
+        virtual std::shared_ptr<Gdk::Pixbuf> computeImageData( u16 p_blockIdx )    = 0;
+        virtual u8                           computeMovementData( u16 p_blockIdx ) = 0;
+        virtual void updateBlockMovement( u8 p_oldValue, u8 p_movement, u16 p_x, u16 p_y );
 
       public:
         inline mapSlice( ) {
@@ -66,12 +67,23 @@ namespace UI {
         }
         virtual ~mapSlice( );
 
+        virtual u16 getWidth( ) const  = 0;
+        virtual u16 getHeight( ) const = 0;
+
+        virtual void draw( );
+
         virtual void        selectBlock( s16 p_blockIdx );
         virtual inline void selectBlock( u16 p_blockX, u16 p_blockY ) {
-            selectBlock( p_blockY * _blocksPerRow + p_blockX );
+            selectBlock( p_blockY * getWidth( ) + p_blockX );
         }
 
-        virtual void setOverlayHidden( bool p_hidden = true );
+        virtual inline std::shared_ptr<Gdk::Pixbuf> getImageData( u16 p_blockIdx ) {
+            if( p_blockIdx >= _imageData.size( ) ) { return nullptr; }
+            return _imageData[ p_blockIdx ];
+        }
+        virtual inline std::shared_ptr<Gdk::Pixbuf> getImageData( u16 p_blockX, u16 p_blockY ) {
+            return getImageData( p_blockY * getWidth( ) + p_blockX );
+        }
 
         virtual inline void connectDrag( const std::function<void( clickType, u16, u16 )>& p_start,
                                          const std::function<void( clickType, s16, s16 )>& p_update,
@@ -104,21 +116,11 @@ namespace UI {
                 } );
         }
 
-        /*
-         * @brief: Changes the block at the specified position to the specified block.
-         * Aims to be faster than redrawing the whole map.
-         */
-        void updateBlock( const DATA::computedBlock& p_block, u16 p_x, u16 p_y );
+        virtual void setScale( u16 p_scale = 1 );
+        virtual void setSpacing( u16 p_blockSpacing = 0 );
+        virtual void setOverlayHidden( bool p_hidden = true );
 
-        void updateBlockMovement( u8 p_movement, u16 p_x, u16 p_y );
-
-        void set( const std::vector<std::pair<DATA::computedBlock, u8>>& p_blocks,
-                  DATA::palette p_pals[ 5 * 16 ], u16 p_blocksPerRow = DATA::SIZE );
-        void setScale( u16 p_scale = 1 );
-        void setSpacing( u16 p_blockSpacing = 0 );
-        void redraw( u8 p_daytime = 0, bool p_overlay = false );
-
-        void setOverlayOpacity( double p_newValue = .4 );
+        virtual void setOverlayOpacity( double p_newValue = .4 );
 
       protected:
         Gtk::SizeRequestMode get_request_mode_vfunc( ) const override;
@@ -126,4 +128,98 @@ namespace UI {
                             int& p_minimumBaseline, int& p_naturalBaseline ) const override;
         void size_allocate_vfunc( int p_width, int p_height, int p_baseline ) override;
     };
+
+    /*
+     * @brief: A concrete mapSlice widget that gets its image data via a look-up function
+     * (with the intent that said lookup function does something smarter than just
+     * rendering the block).
+     */
+    class lookupMapSlice : public mapSlice {
+      private:
+        std::vector<DATA::mapBlockAtom>                                   _blocks;
+        std::function<std::shared_ptr<Gdk::Pixbuf>( DATA::mapBlockAtom )> _lookupFunction;
+
+        u16 _blocksPerRow;
+        u16 _height;
+
+        inline u16 getWidth( ) const override {
+            return _blocksPerRow;
+        }
+        inline u16 getHeight( ) const override {
+            return _height;
+        }
+
+        inline std::shared_ptr<Gdk::Pixbuf> computeImageData( u16 p_blockIdx ) override {
+            return _lookupFunction( _blocks[ p_blockIdx ] );
+        }
+        inline u8 computeMovementData( u16 p_blockIdx ) override {
+            return u8( _blocks[ p_blockIdx ].m_movedata );
+        }
+
+      public:
+        inline lookupMapSlice( ) : mapSlice( ) {
+        }
+        inline virtual ~lookupMapSlice( ) {
+            mapSlice::~mapSlice( );
+        }
+
+        /*
+         * @brief: Changes the block at the specified position to the specified block.
+         * Aims to be faster than redrawing the whole map.
+         */
+        void updateBlock( const DATA::mapBlockAtom& p_block, u16 p_x, u16 p_y );
+        void updateBlockMovement( u8 p_movement, u16 p_x, u16 p_y );
+
+        void set( const std::vector<DATA::mapBlockAtom>& p_blocks,
+                  const std::function<std::shared_ptr<Gdk::Pixbuf>( DATA::mapBlockAtom )>&
+                      p_lookupFunction,
+                  u16 p_blocksPerRow = DATA::SIZE );
+    };
+
+    /*
+     * @brief: A concrete mapSlice widget that renders its blocks from specified
+     * computedBlocks. Not very fast for large maps.
+     */
+    class computedMapSlice : public mapSlice {
+      private:
+        std::vector<std::pair<DATA::computedBlock, u8>> _blocks;
+        DATA::palette                                   _pals[ 16 * 5 ] = { 0 };
+
+        u16 _blocksPerRow;
+        u16 _height;
+        u8  _currentDaytime = 0;
+
+        inline u16 getWidth( ) const override {
+            return _blocksPerRow;
+        }
+        inline u16 getHeight( ) const override {
+            return _height;
+        }
+
+        inline std::shared_ptr<Gdk::Pixbuf> computeImageData( u16 p_blockIdx ) override {
+            return UI::block::createImage( _blocks[ p_blockIdx ].first, _pals, _currentDaytime );
+        }
+
+        inline u8 computeMovementData( u16 p_blockIdx ) override {
+            return _blocks[ p_blockIdx ].second;
+        }
+
+      public:
+        inline computedMapSlice( ) : mapSlice( ) {
+        }
+        inline virtual ~computedMapSlice( ) {
+            mapSlice::~mapSlice( );
+        }
+
+        inline void setDaytime( u8 p_currentDaytime ) {
+            _currentDaytime = p_currentDaytime;
+        }
+
+        void updateBlock( const DATA::computedBlock& p_block, u16 p_x, u16 p_y );
+        void updateBlockMovement( u8 p_movement, u16 p_x, u16 p_y );
+
+        void set( const std::vector<std::pair<DATA::computedBlock, u8>>& p_blocks,
+                  DATA::palette p_pals[ 5 * 16 ], u16 p_blocksPerRow = DATA::SIZE );
+    };
+
 } // namespace UI

@@ -14,6 +14,15 @@ namespace UI {
         for( auto& im : _images ) { im->unparent( ); }
     }
 
+    void mapSlice::updateBlockMovement( u8 p_oldvalue, u8 p_movement, u16 p_x, u16 p_y ) {
+        auto pos = p_x + p_y * getWidth( );
+        _overlayMovement[ pos ]->get_style_context( )->remove_class(
+            block::classForMovement( p_oldvalue ) );
+        _overlayMovement[ pos ]->set_text( toHexString( p_movement ) );
+        _overlayMovement[ pos ]->get_style_context( )->add_class(
+            block::classForMovement( p_movement ) );
+    }
+
     void mapSlice::selectBlock( s16 p_blockIdx ) {
         if( _currentSelectionIndex != -1 ) {
             _images[ _currentSelectionIndex ]->remove_overlay( _selectionBox );
@@ -22,37 +31,6 @@ namespace UI {
         _currentSelectionIndex = p_blockIdx;
 
         _selectionBox.get_style_context( )->add_class( "mapblock-selected" );
-    }
-
-    void mapSlice::updateBlock( const DATA::computedBlock& p_block, u16 p_x, u16 p_y ) {
-        auto pos       = p_x + p_y * _blocksPerRow;
-        _blocks[ pos ] = { p_block, _blocks[ pos ].second };
-        _images[ pos ]->unparent( );
-        _images[ pos ] = std::make_shared<Gtk::Overlay>( );
-        _images[ pos ]->set_child(
-            *UI::block::createImage( _blocks[ pos ].first, _pals, _currentDaytime ) );
-        _images[ pos ]->set_parent( *this );
-        _images[ pos ]->add_overlay( *_overlayMovement[ pos ] );
-    }
-
-    void mapSlice::updateBlockMovement( u8 p_movement, u16 p_x, u16 p_y ) {
-        auto pos = p_x + p_y * _blocksPerRow;
-        _overlayMovement[ pos ]->get_style_context( )->remove_class(
-            block::classForMovement( _blocks[ pos ].second ) );
-        _blocks[ pos ] = { _blocks[ pos ].first, p_movement };
-        _overlayMovement[ pos ]->set_text( toHexString( p_movement ) );
-        _overlayMovement[ pos ]->get_style_context( )->add_class(
-            block::classForMovement( _blocks[ pos ].second ) );
-    }
-
-    void mapSlice::set( const std::vector<std::pair<DATA::computedBlock, u8>>& p_blocks,
-                        DATA::palette p_pals[ 5 * 16 ], u16 p_blocksPerRow ) {
-        _blocks       = p_blocks;
-        _blocksPerRow = p_blocksPerRow;
-        std::memcpy( _pals, p_pals, sizeof( _pals ) );
-        if( !_blocksPerRow ) { _blocksPerRow = DATA::SIZE; }
-        _height = _blocks.size( ) / _blocksPerRow;
-        if( _height * _blocksPerRow < _blocks.size( ) ) { ++_height; }
     }
 
     void mapSlice::setScale( u16 p_scale ) {
@@ -73,38 +51,6 @@ namespace UI {
         for( auto mnt : _overlayMovement ) { mnt->set_opacity( _overlayOpacity ); }
     }
 
-    void mapSlice::redraw( u8 p_daytime, bool p_overlay ) {
-        auto oldsel = _currentSelectionIndex;
-        selectBlock( -1 );
-        _currentDaytime = p_daytime;
-        _showOverlay    = p_overlay;
-        for( auto& im : _images ) { im->unparent( ); }
-        _images.clear( );
-        _overlayMovement.clear( );
-
-        for( auto [ block, movement ] : _blocks ) {
-            auto im = UI::block::createImage( block, _pals, _currentDaytime );
-            im->set_size_request( DATA::BLOCK_SIZE, DATA::BLOCK_SIZE );
-
-            auto overlay = std::make_shared<Gtk::Overlay>( );
-            overlay->set_child( *im );
-            overlay->set_parent( *this );
-            _images.push_back( overlay );
-
-            auto mnt = std::make_shared<Gtk::Label>( toHexString( movement ) );
-            mnt->get_style_context( )->add_class( block::classForMovement( movement ) );
-            mnt->set_opacity( _overlayOpacity );
-            overlay->add_overlay( *mnt );
-            if( !p_overlay ) {
-                mnt->hide( );
-            } else {
-                mnt->show( );
-            }
-            _overlayMovement.push_back( mnt );
-        }
-        selectBlock( oldsel );
-    }
-
     void mapSlice::setOverlayHidden( bool p_hidden ) {
         _showOverlay = !p_hidden;
         for( auto i : _overlayMovement ) {
@@ -114,6 +60,54 @@ namespace UI {
                 i->hide( );
             }
         }
+    }
+
+    void mapSlice::redrawBlock( u16 p_blockIdx ) {
+        _images[ p_blockIdx ]->unparent( );
+        _images[ p_blockIdx ] = std::make_shared<Gtk::Overlay>( );
+
+        _imageData[ p_blockIdx ] = computeImageData( p_blockIdx );
+        auto im                  = Gtk::Image( );
+        im.set( _imageData[ p_blockIdx ] );
+        _images[ p_blockIdx ]->set_child( im );
+        _images[ p_blockIdx ]->set_parent( *this );
+        _images[ p_blockIdx ]->add_overlay( *_overlayMovement[ p_blockIdx ] );
+    }
+
+    void mapSlice::draw( ) {
+        auto oldsel = _currentSelectionIndex;
+        selectBlock( -1 );
+        for( auto& im : _images ) { im->unparent( ); }
+        _images.clear( );
+        _imageData.clear( );
+        _overlayMovement.clear( );
+
+        auto numblocks = getWidth( ) * getHeight( );
+
+        for( u16 pos = 0; pos < numblocks; ++pos ) {
+            auto pb = computeImageData( pos );
+            _imageData.push_back( pb );
+            auto im = Gtk::Image( );
+            im.set( pb );
+            im.set_size_request( DATA::BLOCK_SIZE, DATA::BLOCK_SIZE );
+            auto overlay = std::make_shared<Gtk::Overlay>( );
+            overlay->set_child( im );
+            overlay->set_parent( *this );
+            _images.push_back( overlay );
+
+            auto movement = computeMovementData( pos );
+            auto mnt      = std::make_shared<Gtk::Label>( toHexString( movement ) );
+            mnt->get_style_context( )->add_class( block::classForMovement( movement ) );
+            mnt->set_opacity( _overlayOpacity );
+            overlay->add_overlay( *mnt );
+            if( !_showOverlay ) {
+                mnt->hide( );
+            } else {
+                mnt->show( );
+            }
+            _overlayMovement.push_back( mnt );
+        }
+        selectBlock( oldsel );
     }
 
     Gtk::SizeRequestMode mapSlice::get_request_mode_vfunc( ) const {
@@ -133,15 +127,15 @@ namespace UI {
         }
 
         if( p_orientation == Gtk::Orientation::HORIZONTAL ) {
-            p_minimum = _blocksPerRow * _currentScale * DATA::BLOCK_SIZE
-                        + ( _blocksPerRow - 1 ) * _blockSpacing;
-            p_natural = _blocksPerRow * _currentScale * DATA::BLOCK_SIZE
-                        + ( _blocksPerRow - 1 ) * _blockSpacing;
+            p_minimum = getWidth( ) * _currentScale * DATA::BLOCK_SIZE
+                        + ( getWidth( ) - 1 ) * _blockSpacing;
+            p_natural = getWidth( ) * _currentScale * DATA::BLOCK_SIZE
+                        + ( getWidth( ) - 1 ) * _blockSpacing;
         } else {
-            p_minimum
-                = _height * _currentScale * DATA::BLOCK_SIZE + ( _height - 1 ) * _blockSpacing;
-            p_natural
-                = _height * _currentScale * DATA::BLOCK_SIZE + ( _height - 1 ) * _blockSpacing;
+            p_minimum = getHeight( ) * _currentScale * DATA::BLOCK_SIZE
+                        + ( getHeight( ) - 1 ) * _blockSpacing;
+            p_natural = getHeight( ) * _currentScale * DATA::BLOCK_SIZE
+                        + ( getHeight( ) - 1 ) * _blockSpacing;
         }
     }
 
@@ -157,7 +151,7 @@ namespace UI {
 
             Gtk::Allocation allo;
 
-            u16 x = i % _blocksPerRow, y = i / _blocksPerRow;
+            u16 x = i % getWidth( ), y = i / getWidth( );
             u16 sx = x * _currentScale * DATA::BLOCK_SIZE;
             u16 sy = y * _currentScale * DATA::BLOCK_SIZE;
             sx += x * _blockSpacing;
@@ -172,4 +166,51 @@ namespace UI {
             im->size_allocate( allo, p_baseline );
         }
     }
+
+    void lookupMapSlice::updateBlock( const DATA::mapBlockAtom& p_block, u16 p_x, u16 p_y ) {
+        auto pos       = p_x + p_y * _blocksPerRow;
+        _blocks[ pos ] = p_block;
+        redrawBlock( pos );
+    }
+
+    void lookupMapSlice::updateBlockMovement( u8 p_movement, u16 p_x, u16 p_y ) {
+        auto pos = p_x + p_y * _blocksPerRow;
+        mapSlice::updateBlockMovement( _blocks[ pos ].m_movedata, p_movement, p_x, p_y );
+        _blocks[ pos ].m_movedata = p_movement;
+    }
+
+    void lookupMapSlice::set(
+        const std::vector<DATA::mapBlockAtom>&                                   p_blocks,
+        const std::function<std::shared_ptr<Gdk::Pixbuf>( DATA::mapBlockAtom )>& p_lookupFunction,
+        u16                                                                      p_blocksPerRow ) {
+        _blocks         = p_blocks;
+        _blocksPerRow   = p_blocksPerRow;
+        _lookupFunction = p_lookupFunction;
+        if( !_blocksPerRow ) { _blocksPerRow = DATA::SIZE; }
+        _height = _blocks.size( ) / _blocksPerRow;
+        if( _height * _blocksPerRow < _blocks.size( ) ) { ++_height; }
+    }
+
+    void computedMapSlice::updateBlock( const DATA::computedBlock& p_block, u16 p_x, u16 p_y ) {
+        auto pos       = p_x + p_y * _blocksPerRow;
+        _blocks[ pos ] = { p_block, _blocks[ pos ].second };
+        redrawBlock( pos );
+    }
+
+    void computedMapSlice::updateBlockMovement( u8 p_movement, u16 p_x, u16 p_y ) {
+        auto pos = p_x + p_y * _blocksPerRow;
+        mapSlice::updateBlockMovement( _blocks[ pos ].second, p_movement, p_x, p_y );
+        _blocks[ pos ] = { _blocks[ pos ].first, p_movement };
+    }
+
+    void computedMapSlice::set( const std::vector<std::pair<DATA::computedBlock, u8>>& p_blocks,
+                                DATA::palette p_pals[ 5 * 16 ], u16 p_blocksPerRow ) {
+        _blocks       = p_blocks;
+        _blocksPerRow = p_blocksPerRow;
+        std::memcpy( _pals, p_pals, sizeof( _pals ) );
+        if( !_blocksPerRow ) { _blocksPerRow = DATA::SIZE; }
+        _height = _blocks.size( ) / _blocksPerRow;
+        if( _height * _blocksPerRow < _blocks.size( ) ) { ++_height; }
+    }
+
 } // namespace UI

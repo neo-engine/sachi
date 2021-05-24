@@ -97,10 +97,10 @@ namespace UI {
         //
         //////////////////////////////////////////////////////////////////////////////////
 
-        std::vector<std::pair<DATA::computedBlock, DATA::mapBlockAtom>> _blockStampData;
-        std::shared_ptr<Gtk::Dialog>                                    _blockStampDialog;
+        std::vector<DATA::mapBlockAtom> _blockStampData;
+        std::shared_ptr<Gtk::Dialog>    _blockStampDialog;
 
-        mapSlice                     _blockStampMap;
+        lookupMapSlice               _blockStampMap;
         u16                          _blockStampWidth;
         bool                         _blockStampDialogInvalid = true;
         std::tuple<u16, u16, s8, s8> _dragStart;
@@ -193,20 +193,20 @@ namespace UI {
         Gtk::SpinButton              _mapEditorSettings5;
         Gtk::SpinButton              _mapEditorSettings6;
 
-        std::vector<std::vector<mapSlice>> _currentMap; // main map and parts of the adjacent maps
-        u8                                 _currentDayTime  = 0;
-        u8                                 _blockScale      = 1;
-        u8                                 _blockSpacing    = 0;
-        u8                                 _neighborSpacing = 10;
-        bool                               _showAdjacent    = true;
-        u16                                _blockSetWidth   = 8;
-        u8                                 _adjacentBlocks  = 8;
+        std::vector<std::vector<lookupMapSlice>>
+             _currentMap; // main map and parts of the adjacent maps
+        u8   _currentDayTime  = 0;
+        u8   _blockScale      = 1;
+        u8   _blockSpacing    = 0;
+        u8   _neighborSpacing = 10;
+        bool _showAdjacent    = true;
+        u16  _blockSetWidth   = 8;
+        u8   _adjacentBlocks  = 8;
 
         u8 _bankOverviewSpacing = 2;
         u8 _bankOverviewScale   = 3;
 
-        DATA::mapBlockAtom  _currentlySelectedBlock = DATA::mapBlockAtom( );
-        DATA::computedBlock _currentlySelectedComputedBlock;
+        DATA::mapBlockAtom _currentlySelectedBlock = DATA::mapBlockAtom( );
 
         //////////////////////////////////////////////////////////////////////////////////
         //
@@ -214,11 +214,11 @@ namespace UI {
         //
         //////////////////////////////////////////////////////////////////////////////////
 
-        Gtk::Frame    _blockSetFrame;
-        Gtk::Box      _mapEditorBlockSetBox{ Gtk::Orientation::VERTICAL };
-        Gtk::Box      _abEb1; // block set width settings box, contains _mapEditorSettings4
-        Gtk::DropDown _mapEditorBS1CB, _mapEditorBS2CB; // select BS1/BS2
-        mapSlice      _ts1widget, _ts2widget;
+        Gtk::Frame       _blockSetFrame;
+        Gtk::Box         _mapEditorBlockSetBox{ Gtk::Orientation::VERTICAL };
+        Gtk::Box         _abEb1; // block set width settings box, contains _mapEditorSettings4
+        Gtk::DropDown    _mapEditorBS1CB, _mapEditorBS2CB; // select BS1/BS2
+        computedMapSlice _ts1widget, _ts2widget;
 
         std::shared_ptr<Gtk::StringList>                _mapBankStrList; // block set names
         std::vector<std::pair<DATA::computedBlock, u8>> _currentBlockset1;
@@ -232,8 +232,8 @@ namespace UI {
         //
         //////////////////////////////////////////////////////////////////////////////////
 
-        Gtk::Frame _movementFrame;
-        mapSlice   _movementWidget;
+        Gtk::Frame       _movementFrame;
+        computedMapSlice _movementWidget;
 
         //////////////////////////////////////////////////////////////////////////////////
         //
@@ -335,6 +335,18 @@ namespace UI {
          * @brief: Sets the daytime of all maps and redraws them.
          */
         void setCurrentDaytime( u8 p_newDaytime );
+
+        /*
+         * @brief: Looks up the computed image data of the block sets.
+         */
+        inline std::shared_ptr<Gdk::Pixbuf> blockSetLookup( u16 p_blockIdx ) {
+            if( p_blockIdx > DATA::MAX_BLOCKS_PER_TILE_SET ) {
+                p_blockIdx -= DATA::MAX_BLOCKS_PER_TILE_SET;
+                return _ts2widget.getImageData( p_blockIdx );
+            } else {
+                return _ts1widget.getImageData( p_blockIdx );
+            }
+        }
 
         // Map IO
 

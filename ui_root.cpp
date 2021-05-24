@@ -384,7 +384,8 @@ namespace UI {
         DATA::palette pals[ 16 * 5 ] = { 0 };
         _movementWidget.setOverlayOpacity( .9 );
         _movementWidget.set( DATA::mapBlockAtom::computeMovementSet( ), pals, 1 );
-        _movementWidget.redraw( 0, true );
+        _movementWidget.setOverlayHidden( false );
+        _movementWidget.draw( );
         _movementWidget.setScale( 2 );
         _movementWidget.queue_resize( );
         _movementWidget.connectClick( [ this ]( UI::mapSlice::clickType, u16, u16 p_blockY ) {
@@ -496,7 +497,7 @@ namespace UI {
         _mapGrid.set_valign( Gtk::Align::CENTER );
 
         for( u8 x = 0; x < 3; ++x ) {
-            _currentMap.push_back( std::vector<mapSlice>( 3 ) );
+            _currentMap.push_back( std::vector<lookupMapSlice>( 3 ) );
             for( u8 y = 0; y < 3; ++y ) {
                 _mapGrid.attach( _currentMap[ x ][ y ], x, y );
                 _currentMap[ x ][ y ].connectClick(
@@ -691,12 +692,15 @@ namespace UI {
             _ts1widget.set(
                 DATA::mapBlockAtom::computeBlockSet( &_blockSets[ mp.m_tIdx1 ].m_blockSet, &ts ),
                 pals, _blockSetWidth );
-            _ts1widget.redraw( _currentDayTime );
 
             _ts2widget.set(
                 DATA::mapBlockAtom::computeBlockSet( &_blockSets[ mp.m_tIdx2 ].m_blockSet, &ts ),
                 pals, _blockSetWidth );
-            _ts2widget.redraw( _currentDayTime );
+
+            _ts1widget.setDaytime( _currentDayTime );
+            _ts2widget.setDaytime( _currentDayTime );
+            _ts1widget.draw( );
+            _ts2widget.draw( );
         } );
 
         _mapEditorSettings5 = Gtk::SpinButton( abEAdj2 );
@@ -888,21 +892,21 @@ namespace UI {
 
     void root::setCurrentDaytime( u8 p_newDaytime ) {
         // Change daytime of everything map-py
+        _currentDayTime = p_newDaytime;
+
+        // update block sets first, their image data is used for the other maps
+        _ts1widget.setDaytime( _currentDayTime );
+        _ts2widget.setDaytime( _currentDayTime );
+        _ts1widget.draw( );
+        _ts2widget.draw( );
+
+        _blockStampMap.draw( );
 
         for( u8 x = 0; x < 3; ++x ) {
-            for( u8 y = 0; y < 3; ++y ) {
-                _currentMap[ x ][ y ].redraw( p_newDaytime,
-                                              _currentMapDisplayMode == MODE_EDIT_MOVEMENT );
-            }
+            for( u8 y = 0; y < 3; ++y ) { _currentMap[ x ][ y ].draw( ); }
         }
-        _ts1widget.redraw( p_newDaytime );
-        _ts2widget.redraw( p_newDaytime );
-
-        _blockStampMap.redraw( p_newDaytime );
 
         _mapBankOverview.redraw( p_newDaytime );
-
-        _currentDayTime = p_newDaytime;
     }
 
     void root::setNewMapEditMode( mapDisplayMode p_newMode ) {
@@ -1042,14 +1046,9 @@ namespace UI {
             }
         }
         if( _currentlySelectedBlock.m_blockidx < DATA::MAX_BLOCKS_PER_TILE_SET ) {
-            _currentlySelectedComputedBlock
-                = _currentBlockset1[ _currentlySelectedBlock.m_blockidx ].first;
             _ts1widget.selectBlock( _currentlySelectedBlock.m_blockidx );
             _ts2widget.selectBlock( -1 );
         } else {
-            _currentlySelectedComputedBlock = _currentBlockset2[ _currentlySelectedBlock.m_blockidx
-                                                                 - DATA::MAX_BLOCKS_PER_TILE_SET ]
-                                                  .first;
             _ts1widget.selectBlock( -1 );
             _ts2widget.selectBlock( _currentlySelectedBlock.m_blockidx
                                     - DATA::MAX_BLOCKS_PER_TILE_SET );
@@ -1204,15 +1203,14 @@ namespace UI {
                 bool revy = ny < sy;
                 s16  posx = sx, posy = sy;
 
-                auto tmpMap
-                    = std::deque<std::deque<std::pair<DATA::computedBlock, DATA::mapBlockAtom>>>( );
+                auto tmpMap = std::deque<std::deque<DATA::mapBlockAtom>>( );
 
                 while( 1 ) {
                     if( revy && posy < ny ) { break; }
                     if( !revy && posy > ny ) { break; }
 
                     // build a new row
-                    auto row = std::deque<std::pair<DATA::computedBlock, DATA::mapBlockAtom>>( );
+                    auto row         = std::deque<DATA::mapBlockAtom>( );
                     _blockStampWidth = 0;
                     posx             = sx;
                     while( 1 ) {
@@ -1294,23 +1292,11 @@ namespace UI {
                             currentBlock = mp.m_blocks[ remy + ycorr ][ remx + xcorr ];
                         }
 
-                        std::pair<DATA::computedBlock, DATA::mapBlockAtom> compBlock;
-
-                        if( currentBlock.m_blockidx < DATA::MAX_BLOCKS_PER_TILE_SET ) {
-                            compBlock = { _currentBlockset1[ currentBlock.m_blockidx ].first,
-                                          currentBlock };
-                        } else {
-                            compBlock = { _currentBlockset2[ currentBlock.m_blockidx
-                                                             - DATA::MAX_BLOCKS_PER_TILE_SET ]
-                                              .first,
-                                          currentBlock };
-                        }
-
                         if( revx ) {
-                            row.push_front( compBlock );
+                            row.push_front( currentBlock );
                             posx--;
                         } else {
-                            row.push_back( compBlock );
+                            row.push_back( currentBlock );
                             posx++;
                         }
                         _blockStampWidth++;
@@ -1326,19 +1312,18 @@ namespace UI {
                 }
 
                 _blockStampData.clear( );
-                auto blockStamp = std::vector<std::pair<DATA::computedBlock, u8>>( );
                 for( auto row : tmpMap ) {
-                    for( auto block : row ) {
-                        _blockStampData.push_back( block );
-                        blockStamp.push_back( { block.first, u8( block.second.m_movedata ) } );
-                    }
+                    for( auto block : row ) { _blockStampData.push_back( block ); }
                 }
 
-                DATA::palette pals[ 16 * 5 ] = { 0 };
-                buildPalette( pals );
-                _blockStampMap.set( blockStamp, pals, _blockStampWidth );
-                _blockStampMap.redraw( _currentDayTime,
-                                       _currentMapDisplayMode == MODE_EDIT_MOVEMENT );
+                _blockStampMap.set(
+                    _blockStampData,
+                    [ this ]( DATA::mapBlockAtom p_block ) {
+                        return blockSetLookup( p_block.m_blockidx );
+                    },
+                    _blockStampWidth );
+                _blockStampMap.draw( );
+                _blockStampMap.setOverlayHidden( _currentMapDisplayMode != MODE_EDIT_MOVEMENT );
                 _blockStampDialog->show( );
             }
         }
@@ -1381,18 +1366,18 @@ namespace UI {
                         for( size_t y = 0; y < _blockStampData.size( ) / _blockStampWidth; ++y ) {
                             for( size_t x = 0; x < _blockStampWidth; ++x, ++pos ) {
                                 if( bx + x < DATA::SIZE && by + y < DATA::SIZE ) {
-                                    mp.m_blocks[ by + y ][ bx + x ] = _blockStampData[ pos ].second;
+                                    mp.m_blocks[ by + y ][ bx + x ] = _blockStampData[ pos ];
                                     _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlock(
-                                        _blockStampData[ pos ].first, bx + x, by + y );
+                                        _blockStampData[ pos ], bx + x, by + y );
                                     _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlockMovement(
-                                        _blockStampData[ pos ].second.m_movedata, bx + x, by + y );
+                                        _blockStampData[ pos ].m_movedata, bx + x, by + y );
                                 }
                             }
                         }
                     } else {
                         block.m_blockidx = _currentlySelectedBlock.m_blockidx;
                         _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlock(
-                            _currentlySelectedComputedBlock, p_blockX, p_blockY );
+                            _currentlySelectedBlock, p_blockX, p_blockY );
                     }
                 } else if( _currentMapDisplayMode == MODE_EDIT_MOVEMENT ) {
                     if( !_blockStampDialogInvalid ) {
@@ -1402,9 +1387,9 @@ namespace UI {
                             for( size_t x = 0; x < _blockStampWidth; ++x, ++pos ) {
                                 if( bx + x < DATA::SIZE && by + y < DATA::SIZE ) {
                                     mp.m_blocks[ by + y ][ bx + x ].m_movedata
-                                        = _blockStampData[ pos ].second.m_movedata;
+                                        = _blockStampData[ pos ].m_movedata;
                                     _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlockMovement(
-                                        _blockStampData[ pos ].second.m_movedata, bx + x, by + y );
+                                        _blockStampData[ pos ].m_movedata, bx + x, by + y );
                                 }
                             }
                         }
@@ -1441,7 +1426,7 @@ namespace UI {
                         if( mp.m_blocks[ cy ][ cx ].m_blockidx != oldb.m_blockidx ) { continue; }
                         mp.m_blocks[ cy ][ cx ].m_blockidx = _currentlySelectedBlock.m_blockidx;
                         _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlock(
-                            _currentlySelectedComputedBlock, p_blockX, p_blockY );
+                            _currentlySelectedBlock, p_blockX, p_blockY );
                     } else if( _currentMapDisplayMode == MODE_EDIT_MOVEMENT ) {
                         if( mp.m_blocks[ cy ][ cx ].m_movedata != oldb.m_movedata ) { continue; }
                         mp.m_blocks[ cy ][ cx ].m_movedata = _currentlySelectedBlock.m_movedata;
@@ -1831,12 +1816,6 @@ namespace UI {
         if( _selectedBank == -1 || _selectedMapY == -1 || _selectedMapX == -1 ) { return; }
         auto& mp = _mapBanks[ _selectedBank ].m_bank->m_mapData[ _selectedMapY ][ _selectedMapX ];
 
-        if( p_newTS != mp.m_tIdx1 ) {
-            mp.m_tIdx1 = p_newTS;
-            markBankChanged( _selectedBank );
-            redrawMap( _selectedMapY, _selectedMapX );
-        }
-
         // although it shouldn't, bs1 can use tiles or palettes from ts2
         auto ts = DATA::tileSet<2>( );
         buildTileSet( &ts );
@@ -1850,19 +1829,21 @@ namespace UI {
 
         _ts1widget.set( _currentBlockset1, pals, _blockSetWidth );
         _ts2widget.set( _currentBlockset2, pals, _blockSetWidth );
-        _ts1widget.redraw( _currentDayTime );
-        _ts2widget.redraw( _currentDayTime );
+        _ts1widget.setDaytime( _currentDayTime );
+        _ts2widget.setDaytime( _currentDayTime );
+        _ts1widget.draw( );
+        _ts2widget.draw( );
+
+        if( p_newTS != mp.m_tIdx1 ) {
+            mp.m_tIdx1 = p_newTS;
+            markBankChanged( _selectedBank );
+            redrawMap( _selectedMapY, _selectedMapX );
+        }
     }
 
     void root::currentMapUpdateTS2( u8 p_newTS ) {
         if( _selectedBank == -1 || _selectedMapY == -1 || _selectedMapX == -1 ) { return; }
         auto& mp = _mapBanks[ _selectedBank ].m_bank->m_mapData[ _selectedMapY ][ _selectedMapX ];
-
-        if( p_newTS != mp.m_tIdx2 ) {
-            mp.m_tIdx2 = p_newTS;
-            markBankChanged( _selectedBank );
-            redrawMap( _selectedMapY, _selectedMapX );
-        }
 
         auto ts = DATA::tileSet<2>( );
         buildTileSet( &ts );
@@ -1876,8 +1857,16 @@ namespace UI {
 
         _ts1widget.set( _currentBlockset1, pals, _blockSetWidth );
         _ts2widget.set( _currentBlockset2, pals, _blockSetWidth );
-        _ts1widget.redraw( _currentDayTime );
-        _ts2widget.redraw( _currentDayTime );
+        _ts1widget.setDaytime( _currentDayTime );
+        _ts2widget.setDaytime( _currentDayTime );
+        _ts1widget.draw( );
+        _ts2widget.draw( );
+
+        if( p_newTS != mp.m_tIdx2 ) {
+            mp.m_tIdx2 = p_newTS;
+            markBankChanged( _selectedBank );
+            redrawMap( _selectedMapY, _selectedMapX );
+        }
     }
 
     void root::buildBlockSet( DATA::blockSet<2>* p_out, s8 p_ts1, s8 p_ts2 ) {
@@ -1954,25 +1943,18 @@ namespace UI {
     }
 
     void root::redrawMap( u8 p_mapY, u8 p_mapX ) {
-        auto mp       = _mapBanks[ _selectedBank ].m_bank->m_mapData[ p_mapY ][ p_mapX ];
         _selectedMapX = p_mapX;
         _selectedMapY = p_mapY;
 
-        // compute tileset and blockset
-        auto bs = DATA::blockSet<2>( );
-        buildBlockSet( &bs );
-        auto ts = DATA::tileSet<2>( );
-        buildTileSet( &ts );
-        DATA::palette pals[ 16 * 5 ];
-        buildPalette( pals );
+        const auto& mb    = _mapBanks[ _selectedBank ];
+        const auto& mbank = mb.m_bank->m_mapData;
 
         for( s8 x = -1; x <= 1; ++x ) {
             for( s8 y = -1; y <= 1; ++y ) {
-                if( p_mapY + y >= 0 && p_mapY + y <= _mapBanks[ _selectedBank ].m_sizeY
-                    && p_mapX + x >= 0 && p_mapX + x <= _mapBanks[ _selectedBank ].m_sizeX ) {
-                    mp = _mapBanks[ _selectedBank ].m_bank->m_mapData[ p_mapY + y ][ p_mapX + x ];
-                } else {
-                    mp = DATA::mapSlice( );
+                bool empty = false;
+                if( not( p_mapY + y >= 0 && p_mapY + y <= mb.m_sizeY && p_mapX + x >= 0
+                         && p_mapX + x <= mb.m_sizeX ) ) {
+                    empty = true;
                 }
 
                 u8 mapwd = DATA::SIZE, maphg = DATA::SIZE;
@@ -1986,8 +1968,7 @@ namespace UI {
                     _currentMap[ x + 1 ][ y + 1 ].show( );
                 }
 
-                auto computed = mp.compute( &bs, &ts );
-                auto filtered = std::vector<std::pair<DATA::computedBlock, u8>>( );
+                auto filtered = std::vector<DATA::mapBlockAtom>( );
                 for( u8 y2 = 0; y2 < DATA::SIZE; ++y2 ) {
                     for( u8 x2 = 0; x2 < DATA::SIZE; ++x2 ) {
                         bool addx = false, addy = false;
@@ -2007,14 +1988,25 @@ namespace UI {
                         }
 
                         if( addx && addy ) {
-                            filtered.push_back( computed[ DATA::SIZE * y2 + x2 ] );
+                            if( empty ) {
+                                filtered.push_back( { 0, 1 } );
+                            } else {
+                                filtered.push_back(
+                                    mbank[ p_mapY + y ][ p_mapX + x ].m_blocks[ y2 ][ x2 ] );
+                            }
                         }
                     }
                 }
 
-                _currentMap[ x + 1 ][ y + 1 ].set( filtered, pals, mapwd );
-                _currentMap[ x + 1 ][ y + 1 ].redraw( _currentDayTime, _currentMapDisplayMode
-                                                                           == MODE_EDIT_MOVEMENT );
+                _currentMap[ x + 1 ][ y + 1 ].set(
+                    filtered,
+                    [ this ]( DATA::mapBlockAtom p_block ) {
+                        return blockSetLookup( p_block.m_blockidx );
+                    },
+                    mapwd );
+                _currentMap[ x + 1 ][ y + 1 ].setOverlayHidden( _currentMapDisplayMode
+                                                                != MODE_EDIT_MOVEMENT );
+                _currentMap[ x + 1 ][ y + 1 ].draw( );
             }
         }
     }
@@ -2090,8 +2082,6 @@ namespace UI {
             return;
         }
 
-        redrawMap( p_mapY, p_mapX );
-
         // update drop downs
         auto& mp       = _mapBanks[ _selectedBank ].m_bank->m_mapData[ p_mapY ][ p_mapX ];
         u8    ts1      = mp.m_tIdx1;
@@ -2100,8 +2090,12 @@ namespace UI {
         _mapEditorBS1CB.set_selected( _blockSets[ ts1 ].m_stringListItem );
         _mapEditorBS2CB.set_selected( _blockSets[ ts2 ].m_stringListItem );
         _disableRedraw = false;
+
+        _selectedMapX = p_mapX;
+        _selectedMapY = p_mapY;
         currentMapUpdateTS1( ts1 );
         currentMapUpdateTS2( ts2 );
+        redrawMap( p_mapY, p_mapX );
         fprintf( stderr, "[LOG] Loading map %hu/%hhu_%hhu.\n", p_bank, p_mapY, p_mapX );
         updateSelectedBlock( _currentlySelectedBlock );
 
