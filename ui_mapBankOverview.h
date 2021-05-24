@@ -14,6 +14,11 @@
 
 namespace UI {
     class mapBankOverview : public Gtk::Widget {
+      public:
+        enum clickType {
+            LEFT_DOUBLE = GDK_BUTTON_PRIMARY,
+        };
+
       private:
         u16 _mapScale   = 3;
         u16 _mapSpacing = 2;
@@ -22,6 +27,8 @@ namespace UI {
 
         s16 _currentSelectionIndex = -1;
 
+        std::shared_ptr<Gtk::GestureClick> _clickEvent;
+
         std::vector<std::vector<DATA::computedMapSlice>> _mapBank;
         std::vector<std::shared_ptr<Gtk::Overlay>>       _images;
 
@@ -29,6 +36,11 @@ namespace UI {
 
       public:
         inline mapBankOverview( ) {
+            _clickEvent = Gtk::GestureClick::create( );
+            _clickEvent->set_propagation_phase( Gtk::PropagationPhase::CAPTURE );
+            _clickEvent->set_button( 0 );
+            add_controller( _clickEvent );
+
             _selectionBox = Gtk::Box( );
             _selectionBox.get_style_context( )->add_class( "mapblock-selected" );
             _selectionBox.set_size_request( _mapScale * DATA::BLOCK_SIZE - 4,
@@ -36,6 +48,17 @@ namespace UI {
             _currentSelectionIndex = -1;
         }
         virtual ~mapBankOverview( );
+
+        virtual inline void
+        connectClick( const std::function<void( clickType, u16, u16 )>& p_callback ) {
+            _clickEvent->signal_pressed( ).connect(
+                [ this, p_callback ]( int p_numPresses, double p_x, double p_y ) {
+                    if( !_clickEvent->get_current_button( ) || p_numPresses <= 1 ) { return; }
+                    auto blockwd = _mapScale * DATA::BLOCK_SIZE + _mapSpacing;
+                    p_callback( (clickType) _clickEvent->get_current_button( ),
+                                int( p_x / blockwd ), int( p_y / blockwd ) );
+                } );
+        }
 
         void setScale( u16 p_scale = 1 );
         void setSpacing( u16 p_blockSpacing = 0 );

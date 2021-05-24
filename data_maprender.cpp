@@ -98,6 +98,8 @@ namespace DATA {
 
     void renderBlock( const computedBlock* p_block, const palette p_pals[ 16 * 5 ], bitmap* p_out,
                       u32 p_x, u32 p_y, u16 p_scale, u8 p_time ) {
+        if( !p_block ) { return; }
+
         u16 tilesize = 8 / p_scale;
         for( u16 x = 0; x < 2; ++x ) {
             for( u16 y = 0; y < 2; ++y ) {

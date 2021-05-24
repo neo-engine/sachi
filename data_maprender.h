@@ -150,6 +150,12 @@ namespace DATA {
     struct computedMapSlice {
         std::vector<std::pair<computedBlock, u8>> m_computedBlocks;
         DATA::palette                             m_pals[ 5 * 16 ];
+
+        inline computedMapSlice( ) {
+            m_computedBlocks
+                = std::vector<std::pair<computedBlock, u8>>( SIZE * SIZE, { computedBlock( ), 1 } );
+            memset( m_pals, 0, sizeof( m_pals ) );
+        }
     };
 
     struct mapBank {

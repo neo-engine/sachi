@@ -8,9 +8,9 @@ namespace UI {
 
     std::shared_ptr<Gtk::Image> mapBankOverview::createImage( const DATA::computedMapSlice& p_slice,
                                                               u8 p_daytime ) {
-        auto btm = std::make_shared<DATA::bitmap>( DATA::BLOCK_SIZE * DATA::SIZE / DOWN_SCALE,
-                                                   DATA::BLOCK_SIZE * DATA::SIZE / DOWN_SCALE );
-        DATA::renderMapSlice( &p_slice, btm.get( ), 0, 0, DOWN_SCALE, p_daytime );
+        auto btm = new DATA::bitmap( DATA::BLOCK_SIZE * DATA::SIZE / DOWN_SCALE,
+                                     DATA::BLOCK_SIZE * DATA::SIZE / DOWN_SCALE );
+        DATA::renderMapSlice( &p_slice, btm, 0, 0, DOWN_SCALE, p_daytime );
 
         //    btm->writeToFile( ( "/tmp/" + std::to_string( cnt++ ) + ".png" ).c_str( ) );
 
@@ -19,6 +19,7 @@ namespace UI {
         auto res = std::make_shared<Gtk::Image>( );
         res->set( pixbuf );
 
+        delete btm;
         return res;
     }
 
@@ -58,9 +59,11 @@ namespace UI {
     }
 
     void mapBankOverview::replaceMap( const DATA::computedMapSlice& p_map, u8 p_mapY, u8 p_mapX ) {
-        if( _mapBank.size( ) >= p_mapY || _mapBank[ p_mapY ].size( ) >= p_mapX ) [[unlikely]] {
+        if( p_mapY >= _mapBank.size( ) || p_mapX >= _mapBank[ p_mapY ].size( ) ) [[unlikely]] {
             return;
         }
+        auto oldsel = _currentSelectionIndex;
+        selectMap( -1 );
 
         _mapBank[ p_mapY ][ p_mapX ] = p_map;
         auto imidx                   = p_mapY * _mapBank[ p_mapY ].size( ) + p_mapX;
@@ -76,6 +79,7 @@ namespace UI {
             oim->set_child( *im );
             oim->set_parent( *this );
         }
+        selectMap( oldsel );
     }
 
     void mapBankOverview::redraw( u8 p_daytime ) {

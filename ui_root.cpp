@@ -824,6 +824,12 @@ namespace UI {
             setCurrentDaytime( value );
         } );
 
+        _mapBankOverview.connectClick(
+            [ this ]( UI::mapBankOverview::clickType, u16 p_mapX, u16 p_mapY ) {
+                onUnloadMap( _selectedBank, _selectedMapY, _selectedMapX );
+                loadMap( _selectedBank, p_mapY, p_mapX );
+            } );
+
         auto abSlBO1 = Gtk::Image( );
         abSlBO1.set_from_icon_name( "view-grid-symbolic" );
         abSlBO1.set_margin_start( MARGIN );
@@ -964,8 +970,8 @@ namespace UI {
     bool root::writeMapSlice( u16 p_bank, u8 p_mapX, u8 p_mapY, std::string p_path ) {
         if( !_mapBanks.count( p_bank ) ) { return false; }
 
-        auto path = fs::path( MAP_PATH ) / std::to_string( p_bank );
-        auto info = _mapBanks[ p_bank ];
+        auto        path = fs::path( MAP_PATH ) / std::to_string( p_bank );
+        const auto& info = _mapBanks[ p_bank ];
         if( info.m_scattered ) { path /= std::to_string( p_mapY ); }
         path /= std::to_string( p_mapY ) + "_" + std::to_string( p_mapX ) + ".map";
 
@@ -982,7 +988,7 @@ namespace UI {
 
     bool root::writeMapBank( u16 p_bank ) {
         if( !_mapBanks.count( p_bank ) ) { return false; }
-        auto info = _mapBanks[ p_bank ];
+        auto& info = _mapBanks[ p_bank ];
 
         fprintf( stderr, "[LOG] Saving map bank %hu.\n", p_bank );
         bool error = false;
@@ -998,7 +1004,7 @@ namespace UI {
     void root::onFsRootSaveClick( ) {
         // Only write map banks that have been changed
 
-        for( auto [ bank, info ] : _mapBanks ) {
+        for( const auto& [ bank, info ] : _mapBanks ) {
             if( info.m_widget != nullptr && info.m_bank != nullptr
                 && ( info.m_widget->getStatus( ) == mapBank::STATUS_NEW
                      || info.m_widget->getStatus( ) == mapBank::STATUS_EDITED_UNSAVED ) ) {
@@ -1675,7 +1681,12 @@ namespace UI {
                  */
 
         auto MB1 = std::make_shared<mapBank>( p_bank, p_sizeX, p_sizeY, p_status );
-        MB1->connect( [ this ]( u16 p_bk, u8 p_y, u8 p_x ) { loadMap( p_bk, p_y, p_x ); } );
+        MB1->connect( [ this ]( u16 p_bk, u8 p_y, u8 p_x ) {
+            if( _selectedBank != -1 ) {
+                onUnloadMap( _selectedBank, _selectedMapY, _selectedMapX );
+            }
+            loadMap( p_bk, p_y, p_x );
+        } );
         _mapBanks[ p_bank ] = { MB1, nullptr, false, p_scattered, p_sizeX, p_sizeY, nullptr };
 
         // keep the list sorted: insert after bank with largest id smaller than p_bank,
@@ -1701,11 +1712,12 @@ namespace UI {
         }
 
         addNewMapBank( p_bank, p_sizeY, p_sizeX, true, mapBank::STATUS_SAVED );
+        if( _selectedBank != -1 ) { onUnloadMap( _selectedBank, _selectedMapY, _selectedMapX ); }
         loadMap( p_bank, 0, 0 );
     }
 
     void root::collapseMapBankBar( bool p_collapse ) {
-        for( auto i : _mapBanks ) {
+        for( auto& i : _mapBanks ) {
             if( i.second.m_widget ) { i.second.m_widget->collapse( p_collapse ); }
         }
         _addMapBank->collapse( p_collapse );
@@ -1759,9 +1771,9 @@ namespace UI {
 
         // Load all maps of the bank into mem
         if( !selb.m_loaded || p_forceReread ) {
-            selb.m_bank = std::make_shared<DATA::mapBank>( );
+            selb.m_bank = std::make_unique<DATA::mapBank>( );
             selb.m_computedBank
-                = std::make_shared<std::vector<std::vector<DATA::computedMapSlice>>>(
+                = std::make_unique<std::vector<std::vector<DATA::computedMapSlice>>>(
                     selb.m_sizeY + 1, std::vector<DATA::computedMapSlice>(
                                           selb.m_sizeX + 1, DATA::computedMapSlice( ) ) );
             selb.m_bank->m_mapData = std::vector<std::vector<DATA::mapSlice>>(
@@ -2014,26 +2026,60 @@ namespace UI {
         if( int( _selectedMapY + p_dy ) > int( MAX_MAPY ) ) { return; }
         if( int( _selectedMapX + p_dx ) > int( MAX_MAPY ) ) { return; }
 
+        onUnloadMap( _selectedBank, _selectedMapY, _selectedMapX );
+
         _selectedMapX += p_dx;
         _selectedMapY += p_dy;
 
         if( _selectedMapY > _mapBanks[ _selectedBank ].m_sizeY ) {
             _mapBanks[ _selectedBank ].m_sizeY = _selectedMapY;
             _mapBanks[ _selectedBank ].m_widget->setSizeY( _selectedMapY );
-            _mapBanks[ _selectedBank ].m_bank->m_mapData.push_back(
-                std::vector<DATA::mapSlice>( _mapBanks[ _selectedBank ].m_sizeX ) );
+            _mapBanks[ _selectedBank ].m_bank->m_mapData.push_back( std::vector<DATA::mapSlice>(
+                _mapBanks[ _selectedBank ].m_sizeX + 1, DATA::mapSlice( ) ) );
+
+            _mapBanks[ _selectedBank ].m_computedBank->push_back(
+                std::vector<DATA::computedMapSlice>( _mapBanks[ _selectedBank ].m_sizeX + 1,
+                                                     DATA::computedMapSlice( ) ) );
+            _mapBankOverview.set( *_mapBanks[ _selectedBank ].m_computedBank );
+            _mapBankOverview.redraw( _currentDayTime );
             markBankChanged( _selectedBank );
         }
         if( _selectedMapX > _mapBanks[ _selectedBank ].m_sizeX ) {
             _mapBanks[ _selectedBank ].m_sizeX = _selectedMapX;
             _mapBanks[ _selectedBank ].m_widget->setSizeX( _selectedMapX );
-            for( u8 y = 0; y < _mapBanks[ _selectedBank ].m_sizeY; ++y ) {
+            for( u8 y = 0; y <= _mapBanks[ _selectedBank ].m_sizeY; ++y ) {
                 _mapBanks[ _selectedBank ].m_bank->m_mapData[ y ].push_back( DATA::mapSlice( ) );
+                ( *_mapBanks[ _selectedBank ].m_computedBank )[ y ].push_back(
+                    DATA::computedMapSlice( ) );
             }
+            _mapBankOverview.set( *_mapBanks[ _selectedBank ].m_computedBank );
+            _mapBankOverview.redraw( _currentDayTime );
             markBankChanged( _selectedBank );
         }
 
         loadMap( _selectedBank, _selectedMapY, _selectedMapX );
+    }
+
+    void root::onUnloadMap( u16 p_bank, u8 p_mapY, u8 p_mapX ) {
+        if( !_mapBanks.count( p_bank ) ) [[unlikely]] { return; }
+
+        auto ts1 = _mapBanks[ p_bank ].m_bank->m_mapData[ p_mapY ][ p_mapX ].m_tIdx1;
+        auto ts2 = _mapBanks[ p_bank ].m_bank->m_mapData[ p_mapY ][ p_mapX ].m_tIdx2;
+
+        auto bs = DATA::blockSet<2>( );
+        buildBlockSet( &bs, ts1, ts2 );
+        auto ts = DATA::tileSet<2>( );
+        buildTileSet( &ts, ts1, ts2 );
+
+        buildPalette( ( *_mapBanks[ p_bank ].m_computedBank )[ p_mapY ][ p_mapX ].m_pals, ts1,
+                      ts2 );
+        ( *_mapBanks[ p_bank ].m_computedBank )[ p_mapY ][ p_mapX ].m_computedBlocks
+            = _mapBanks[ p_bank ].m_bank->m_mapData[ p_mapY ][ p_mapX ].compute( &bs, &ts );
+
+        if( p_bank == _selectedBank ) {
+            _mapBankOverview.replaceMap(
+                ( *_mapBanks[ p_bank ].m_computedBank )[ p_mapY ][ p_mapX ], p_mapY, p_mapX );
+        }
     }
 
     void root::loadMap( u16 p_bank, u8 p_mapY, u8 p_mapX ) {
@@ -2065,7 +2111,7 @@ namespace UI {
                   std::to_string( p_bank ) + "/" + std::to_string( p_mapY ) + "_"
                       + std::to_string( p_mapX ) + ".map",
                   FSROOT_PATH );
-        _mapBankOverview.selectMap( p_mapY, p_mapX );
+        _mapBankOverview.selectMap( p_mapX, p_mapY );
     }
 
     void root::switchContext( root::context p_context ) {

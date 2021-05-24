@@ -36,14 +36,14 @@ namespace UI {
     class root : public Gtk::Window {
         struct mapBankInfo {
             std::shared_ptr<mapBank>       m_widget = nullptr;
-            std::shared_ptr<DATA::mapBank> m_bank   = nullptr;
+            std::unique_ptr<DATA::mapBank> m_bank   = nullptr;
 
             bool m_loaded    = false;
             bool m_scattered = true; // maps are scattered over subfolders according to y
             u8   m_sizeX     = 0;
             u8   m_sizeY     = 0;
 
-            std::shared_ptr<std::vector<std::vector<DATA::computedMapSlice>>> m_computedBank;
+            std::unique_ptr<std::vector<std::vector<DATA::computedMapSlice>>> m_computedBank;
         };
 
         struct blockSetInfo {
@@ -375,6 +375,12 @@ namespace UI {
          * @brief: Loads the specified bank and map.
          */
         void loadMap( u16 p_bank, u8 p_mapY, u8 p_mapX );
+
+        /*
+         * @brief: Cleanup operations when the specified map gets unloaded (update map bank
+         * overview)
+         */
+        void onUnloadMap( u16 p_bank, u8 p_mapY, u8 p_mapX );
 
         /*
          * @brief: Displays the specified map of the currently selected map.
