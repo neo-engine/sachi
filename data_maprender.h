@@ -158,10 +158,6 @@ namespace DATA {
         }
     };
 
-    struct mapBank {
-        std::vector<std::vector<mapSlice>> m_mapData; // [y][x]
-    };
-
     struct position {
         u16 m_posX; // Global
         u16 m_posY; // Global
@@ -275,15 +271,8 @@ namespace DATA {
         u8         m_surfBattlePlat1;
         u8         m_surfBattlePlat2;
 
-        u16 m_baseLocationId;
-        u8  m_extraLocationCount;
-        struct locationData {
-            u8  m_left;
-            u8  m_top;
-            u8  m_right;
-            u8  m_bottom;
-            u16 m_locationId;
-        } m_extraLocations[ 4 ];
+        u16 m_locationIds[ 4 ][ 4 ]; // (y, x), 8x8 blocks each
+
         u8 m_pokemonDescrCount;
         struct wildPkmnData {
             u16          m_speciesId;
@@ -312,31 +301,35 @@ namespace DATA {
                     u16 m_itemId;
                 } m_item;
                 struct {
-                    u8  m_movementType;
                     u16 m_spriteId;
                     u16 m_trainerId;
-                    u8  m_sight;
+
+                    u8 m_movementType;
+                    u8 m_sight;
                 } m_trainer;
                 struct {
                     u16 m_speciesId;
                     u8  m_level;
                     u8  m_forme; // BIT(6) female; BIT(7) genderless
-                    u8  m_shiny; // BIT(6) hidden ability, BIT(7) fateful
+
+                    u8 m_shiny; // BIT(6) hidden ability, BIT(7) fateful
                 } m_owPkmn;
                 struct {
-                    u8  m_movementType;
                     u16 m_spriteId;
                     u16 m_scriptId;
-                    u8  m_scriptType;
+
+                    u8 m_movementType;
+                    u8 m_scriptType;
                 } m_npc;
                 struct {
                     warpType m_warpType;
                     u8       m_bank;
                     u8       m_mapY;
                     u8       m_mapX;
-                    u8       m_posX;
-                    u8       m_posY;
-                    u8       m_posZ;
+
+                    u8 m_posX;
+                    u8 m_posY;
+                    u8 m_posZ;
                 } m_warp;
                 struct {
                     u16 m_scriptId;
@@ -350,6 +343,26 @@ namespace DATA {
                 } m_berryTree;
             } m_data;
         } m_events[ MAX_EVENTS_PER_SLICE ];
+    };
+
+    struct mapBank {
+        std::vector<std::vector<mapSlice>> m_slices;  // [y][x]
+        std::vector<std::vector<mapData>>  m_mapData; // [y][x]
+    };
+
+    constexpr u8 MAPMODE_DEFAULT   = 0;
+    constexpr u8 MAPMODE_SCATTERED = 1;
+    constexpr u8 MAPMODE_COMBINED  = 2;
+    struct mapBankInfo {
+        u8 m_sizeX   = 0;
+        u8 m_sizeY   = 0;
+        u8 m_mapMode = 0; // 0: normal maps/data in folder, 1: scattered in subfolders, 2: combined
+        u8 : 8;
+        u32 : 32;
+
+        constexpr mapBankInfo( u8 p_sizeX = 0, u8 p_sizeY = 0, u8 p_mapMode = MAPMODE_DEFAULT )
+            : m_sizeX( p_sizeX ), m_sizeY( p_sizeY ), m_mapMode( p_mapMode ) {
+        }
     };
 
     void renderTile( const tile* p_tile, const palette* p_pal, bool p_flipX, bool p_flipY,

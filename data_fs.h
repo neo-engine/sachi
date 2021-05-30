@@ -310,11 +310,22 @@ namespace DATA {
     bool readTiles( FILE* p_file, tile* p_tileSet, u16 p_startIdx = 0, u16 p_size = 512 );
     bool readPal( FILE* p_file, palette* p_palette, u8 p_count = 6 );
     bool readBlocks( FILE* p_file, block* p_tileSet, u16 p_startIdx = 0, u16 p_size = 512 );
-    bool readMapData( FILE* p_file, mapData& p_result );
+    bool readMapData( FILE* p_file, mapData* p_result, bool p_close = true );
 
-    bool readMapSlice( FILE* p_mapFile, mapSlice* p_result, u16 p_x = 0, u16 p_y = 0 );
+    bool readMapSlice( FILE* p_mapFile, mapSlice* p_result, u16 p_x = 0, u16 p_y = 0,
+                       bool p_close = true );
 
-    bool writeMapSlice( FILE* p_mapFile, const mapSlice* p_map );
+    bool readMapSliceAndData( FILE* p_mapFile, mapSlice* p_slice, mapData* p_data, u16 p_x,
+                              u16 p_y );
+
+    bool readMapBank( FILE* p_mapFile, mapBankInfo* p_info, mapBank* p_out );
+
+    bool writeMapData( FILE* p_file, const mapData* p_data, bool p_close = true );
+    bool writeMapSlice( FILE* p_mapFile, const mapSlice* p_map, bool p_close = true );
+    bool writeMapSliceAndData( FILE* p_mapFile, const mapBankInfo& p_info, const mapSlice* p_slice,
+                               const mapData* p_data, u16 p_x, u16 p_y );
+
+    bool writeMapBank( FILE* p_mapFile, const mapBankInfo* p_info, const mapBank* p_out );
 
     size_t         getLength( u8 p_c );
     char           getValue( char* p_text, size_t* p_readIdx );

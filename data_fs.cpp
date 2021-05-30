@@ -69,7 +69,7 @@ namespace DATA {
         return true;
     }
 
-    bool readMapSlice( FILE* p_mapFile, mapSlice* p_result, u16 p_x, u16 p_y ) {
+    bool readMapSlice( FILE* p_mapFile, mapSlice* p_result, u16 p_x, u16 p_y, bool p_close ) {
         if( p_mapFile == 0 ) return false;
 
         p_result->m_x = p_x;
@@ -100,7 +100,7 @@ namespace DATA {
         }
 
         read( p_mapFile, p_result->m_blocks, sizeof( mapBlockAtom ), SIZE * SIZE );
-        fclose( p_mapFile );
+        if( p_close ) { fclose( p_mapFile ); }
 
         p_result->m_tIdx1 = tsidx1;
         p_result->m_tIdx2 = tsidx2;
@@ -108,7 +108,7 @@ namespace DATA {
         return true;
     }
 
-    bool writeMapSlice( FILE* p_mapFile, const mapSlice* p_map ) {
+    bool writeMapSlice( FILE* p_mapFile, const mapSlice* p_map, bool p_close ) {
         if( p_mapFile == 0 ) return false;
         write( p_mapFile, &SIZE, sizeof( u8 ), 1 );
         writeNop( p_mapFile, 3 );
@@ -124,18 +124,111 @@ namespace DATA {
         writeNop( p_mapFile, 4 );
 
         write( p_mapFile, p_map->m_blocks, sizeof( mapBlockAtom ), SIZE * SIZE );
-        fclose( p_mapFile );
+        if( p_close ) { fclose( p_mapFile ); }
 
         return true;
     }
 
-    bool readMapData( FILE* p_file, mapData& p_result ) {
+    bool readMapData( FILE* p_file, mapData* p_result, bool p_close ) {
         if( !p_file ) {
-            std::memset( &p_result, 0, sizeof( mapData ) );
+            std::memset( p_result, 0, sizeof( mapData ) );
             return false;
         }
-        fread( &p_result, sizeof( mapData ), 1, p_file );
-        fclose( p_file );
+        fread( p_result, sizeof( mapData ), 1, p_file );
+        if( p_close ) { fclose( p_file ); }
+        return true;
+    }
+
+    bool writeMapData( FILE* p_file, const mapData* p_data, bool p_close ) {
+        if( !p_file ) { return false; }
+        fwrite( p_data, sizeof( mapData ), 1, p_file );
+        if( p_close ) { fclose( p_file ); }
+        return true;
+    }
+
+    bool readMapSliceAndData( FILE* p_mapFile, mapSlice* p_slice, mapData* p_data, u16 p_x,
+                              u16 p_y ) {
+        if( p_mapFile == 0 ) return false;
+
+        mapBankInfo info;
+        if( fseek( p_mapFile, 0, SEEK_SET ) ) { return false; }
+        fread( &info, sizeof( mapBankInfo ), 1, p_mapFile );
+
+        if( fseek( p_mapFile,
+                   sizeof( mapBankInfo )
+                       + ( ( info.m_sizeX + 1 ) * p_y + p_x )
+                             * ( sizeof( mapSlice ) + sizeof( mapData ) ),
+                   SEEK_SET ) ) {
+            return false;
+        }
+
+        if( !readMapSlice( p_mapFile, p_slice, p_x, p_y, false ) ) { return false; }
+        if( !readMapData( p_mapFile, p_data, false ) ) { return false; }
+        return true;
+    }
+
+    bool writeMapSliceAndData( FILE* p_mapFile, const mapBankInfo& p_info, const mapSlice* p_slice,
+                               const mapData* p_data, u16 p_x, u16 p_y ) {
+        if( p_mapFile == 0 ) return false;
+
+        if( fseek( p_mapFile,
+                   sizeof( mapBankInfo )
+                       + ( ( p_info.m_sizeX + 1 ) * p_y + p_x )
+                             * ( sizeof( mapSlice ) + sizeof( mapData ) ),
+                   SEEK_SET ) ) {
+            return false;
+        }
+
+        if( !writeMapSlice( p_mapFile, p_slice, false ) ) { return false; }
+        if( !writeMapData( p_mapFile, p_data, false ) ) { return false; }
+        return true;
+    }
+
+    bool readMapBank( FILE* p_mapFile, mapBankInfo* p_info, mapBank* p_out ) {
+        if( p_mapFile == 0 ) return false;
+        if( fseek( p_mapFile, 0, SEEK_SET ) ) { return false; }
+        fread( p_info, sizeof( mapBankInfo ), 1, p_mapFile );
+
+        if( p_info->m_mapMode != MAPMODE_COMBINED ) { return true; }
+
+        // the following could be read faster by using a struct and arrays, probably;
+        // anyway, it doesn't really matter here
+
+        p_out->m_slices.assign( p_info->m_sizeY + 1,
+                                std::vector<mapSlice>( p_info->m_sizeX + 1, mapSlice( ) ) );
+        p_out->m_mapData.assign( p_info->m_sizeY + 1,
+                                 std::vector<mapData>( p_info->m_sizeX + 1, mapData( ) ) );
+
+        for( u8 y = 0; y <= p_info->m_sizeY; ++y ) {
+            for( u8 x = 0; x <= p_info->m_sizeX; ++x ) {
+                mapSlice sl;
+                mapData  dt;
+                if( !readMapSlice( p_mapFile, &sl, x, y, false ) ) { return false; }
+                if( !readMapData( p_mapFile, &dt, false ) ) { return false; }
+                p_out->m_slices[ y ][ x ]  = sl;
+                p_out->m_mapData[ y ][ x ] = dt;
+            }
+        }
+        return true;
+    }
+
+    bool writeMapBank( FILE* p_mapFile, const mapBankInfo* p_info, const mapBank* p_bank ) {
+        if( p_mapFile == 0 ) return false;
+        if( fseek( p_mapFile, 0, SEEK_SET ) ) { return false; }
+        fwrite( p_info, sizeof( mapBankInfo ), 1, p_mapFile );
+
+        if( p_info->m_mapMode != MAPMODE_COMBINED ) { return true; }
+
+        for( u8 y = 0; y <= p_info->m_sizeY; ++y ) {
+            for( u8 x = 0; x <= p_info->m_sizeX; ++x ) {
+                if( !writeMapSlice( p_mapFile, &p_bank->m_slices[ y ][ x ], false ) ) {
+                    return false;
+                }
+                if( !writeMapData( p_mapFile, &p_bank->m_mapData[ y ][ x ], false ) ) {
+                    return false;
+                }
+            }
+        }
         return true;
     }
 

@@ -35,15 +35,45 @@
 namespace UI {
     class root : public Gtk::Window {
         struct mapBankInfo {
-            std::shared_ptr<mapBank>       m_widget = nullptr;
-            std::unique_ptr<DATA::mapBank> m_bank   = nullptr;
-
-            bool m_loaded    = false;
-            bool m_scattered = true; // maps are scattered over subfolders according to y
-            u8   m_sizeX     = 0;
-            u8   m_sizeY     = 0;
-
+            std::shared_ptr<mapBank>                                          m_widget = nullptr;
+            std::unique_ptr<DATA::mapBank>                                    m_bank   = nullptr;
             std::unique_ptr<std::vector<std::vector<DATA::computedMapSlice>>> m_computedBank;
+
+            bool m_loaded = false;
+
+            DATA::mapBankInfo m_info = { 0, 0, 1 };
+
+            inline u8 getSizeX( ) const {
+                return m_info.m_sizeX;
+            }
+            inline u8 getSizeY( ) const {
+                return m_info.m_sizeY;
+            }
+            inline bool isScattered( ) const {
+                return m_info.m_mapMode == DATA::MAPMODE_SCATTERED;
+            }
+            inline bool isCombined( ) const {
+                return m_info.m_mapMode == DATA::MAPMODE_COMBINED;
+            }
+            inline u8 getMapMode( ) const {
+                return m_info.m_mapMode;
+            }
+
+            inline void setSizeX( u8 p_newSize ) {
+                m_info.m_sizeX = p_newSize;
+            }
+            inline void setSizeY( u8 p_newSize ) {
+                m_info.m_sizeY = p_newSize;
+            }
+            inline void setScattered( bool p_scattered = true ) {
+                m_info.m_mapMode = p_scattered;
+            }
+            inline void setCombined( ) {
+                m_info.m_mapMode = DATA::MAPMODE_COMBINED;
+            }
+            inline void setMapMode( u8 p_mode ) {
+                m_info.m_mapMode = p_mode;
+            }
         };
 
         struct blockSetInfo {
@@ -51,12 +81,6 @@ namespace UI {
             DATA::tileSet<1>  m_tileSet;
             DATA::palette     m_pals[ 8 * 5 ];
             u8                m_stringListItem = 0;
-        };
-
-        struct mapBankData {
-            u8   m_sizeX     = 0;
-            u8   m_sizeY     = 0;
-            bool m_scattered = true;
         };
 
         class recentFsRootModelColumn : public Gtk::TreeModel::ColumnRecord {
@@ -249,6 +273,15 @@ namespace UI {
         Gtk::SpinButton _mapBankOverviewSettings2;
         Gtk::SpinButton _mapBankOverviewSettings3;
 
+        //////////////////////////////////////////////////////////////////////////////////
+        //
+        // Map bank Settings
+        //
+        //////////////////////////////////////////////////////////////////////////////////
+
+        Gtk::Box _mapSettingsBox{ Gtk::Orientation::VERTICAL };
+        std::vector<std::shared_ptr<Gtk::ToggleButton>> _mapBankSettingsMapModeToggles;
+
       public:
         root( );
         ~root( ) override;
@@ -356,7 +389,8 @@ namespace UI {
          * it will be stored at the default location (FSROOT/MAPS/p_bank[/p_mapY]/p_mapY_p_mapX.map)
          * in the current working directory.
          */
-        bool writeMapSlice( u16 p_bank, u8 p_mapX, u8 p_mapY, std::string p_path = "" );
+        bool writeMapSlice( u16 p_bank, u8 p_mapX, u8 p_mapY, std::string p_path = "",
+                            bool p_writeMapData = true );
 
         /*
          * @brief: Writes all map slices of the specified map bank to the FS.
@@ -369,7 +403,8 @@ namespace UI {
          * it will be read from the default location (FSROOT/MAPS/p_bank[/p_mapY]/p_mapY_p_mapX.map)
          * in the current working directory.
          */
-        bool readMapSlice( u16 p_bank, u8 p_mapX, u8 p_mapY, std::string p_path = "" );
+        bool readMapSlice( u16 p_bank, u8 p_mapX, u8 p_mapY, std::string p_path = "",
+                           bool p_readMapData = true );
 
         /*
          * @brief: Reads all map slices of the specified map bank from the FS.
@@ -411,8 +446,9 @@ namespace UI {
          * @brief: Adds a new map bank to the FSROOT and the editor, unloading any data
          * that may exist in the editor.
          */
-        void addNewMapBank( u16 p_bank, u8 p_sizeY, u8 p_sizeX, bool p_scattered = false,
-                            mapBank::status p_status = mapBank::STATUS_UNTOUCHED );
+        void addNewMapBank( u16 p_bank, u8 p_sizeY, u8 p_sizeX,
+                            u8              p_mapMode = DATA::MAPMODE_COMBINED,
+                            mapBank::status p_status  = mapBank::STATUS_UNTOUCHED );
 
         /*
          * @brief: Does nothing if p_bank is loaded, otherwise creates and loads a new
@@ -527,7 +563,7 @@ namespace UI {
          * @brief: Walks through the specified directory and its subdirectory to explore
          * how large a map bank is and whether its maps are distributed over subfolders.
          */
-        static mapBankData exploreMapBank( const fs::path& p_path );
+        static DATA::mapBankInfo exploreMapBank( const fs::path& p_path );
 
         /*
          * @brief: Checks if the specified path exists or creates it if it doesn't.
