@@ -689,13 +689,13 @@ namespace UI {
             DATA::palette pals[ 16 * 5 ] = { 0 };
             buildPalette( pals );
 
-            _ts1widget.set(
-                DATA::mapBlockAtom::computeBlockSet( &_blockSets[ mp.m_tIdx1 ].m_blockSet, &ts ),
-                pals, _blockSetWidth );
+            _ts1widget.set( DATA::mapBlockAtom::computeBlockSet(
+                                &_blockSets[ mp.m_data.m_tIdx1 ].m_blockSet, &ts ),
+                            pals, _blockSetWidth );
 
-            _ts2widget.set(
-                DATA::mapBlockAtom::computeBlockSet( &_blockSets[ mp.m_tIdx2 ].m_blockSet, &ts ),
-                pals, _blockSetWidth );
+            _ts2widget.set( DATA::mapBlockAtom::computeBlockSet(
+                                &_blockSets[ mp.m_data.m_tIdx2 ].m_blockSet, &ts ),
+                            pals, _blockSetWidth );
 
             _ts1widget.setDaytime( _currentDayTime );
             _ts2widget.setDaytime( _currentDayTime );
@@ -1396,7 +1396,7 @@ namespace UI {
                             auto& mp
                                 = _mapBanks[ _selectedBank ]
                                       .m_bank->m_slices[ _selectedMapY + my ][ _selectedMapX + mx ];
-                            currentBlock = mp.m_blocks[ remy + ycorr ][ remx + xcorr ];
+                            currentBlock = mp.m_data.m_blocks[ remy + ycorr ][ remx + xcorr ];
                         }
 
                         if( revx ) {
@@ -1460,7 +1460,7 @@ namespace UI {
 
         auto& mp = _mapBanks[ _selectedBank ]
                        .m_bank->m_slices[ _selectedMapY + p_mapY ][ _selectedMapX + p_mapX ];
-        auto& block = mp.m_blocks[ p_blockY + ycorr ][ p_blockX + xcorr ];
+        auto& block = mp.m_data.m_blocks[ p_blockY + ycorr ][ p_blockX + xcorr ];
 
         switch( p_button ) {
         case mapSlice::clickType::LEFT:
@@ -1473,7 +1473,7 @@ namespace UI {
                         for( size_t y = 0; y < _blockStampData.size( ) / _blockStampWidth; ++y ) {
                             for( size_t x = 0; x < _blockStampWidth; ++x, ++pos ) {
                                 if( bx + x < DATA::SIZE && by + y < DATA::SIZE ) {
-                                    mp.m_blocks[ by + y ][ bx + x ] = _blockStampData[ pos ];
+                                    mp.m_data.m_blocks[ by + y ][ bx + x ] = _blockStampData[ pos ];
                                     _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlock(
                                         _blockStampData[ pos ], bx + x, by + y );
                                     _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlockMovement(
@@ -1493,7 +1493,7 @@ namespace UI {
                         for( size_t y = 0; y < _blockStampData.size( ) / _blockStampWidth; ++y ) {
                             for( size_t x = 0; x < _blockStampWidth; ++x, ++pos ) {
                                 if( bx + x < DATA::SIZE && by + y < DATA::SIZE ) {
-                                    mp.m_blocks[ by + y ][ bx + x ].m_movedata
+                                    mp.m_data.m_blocks[ by + y ][ bx + x ].m_movedata
                                         = _blockStampData[ pos ].m_movedata;
                                     _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlockMovement(
                                         _blockStampData[ pos ].m_movedata, bx + x, by + y );
@@ -1530,15 +1530,21 @@ namespace UI {
                     if( cx < 0 || cx >= DATA::SIZE || cy < 0 || cy >= DATA::SIZE ) { continue; }
 
                     if( _currentMapDisplayMode == MODE_EDIT_TILES ) {
-                        if( mp.m_blocks[ cy ][ cx ].m_blockidx != oldb.m_blockidx ) { continue; }
-                        mp.m_blocks[ cy ][ cx ].m_blockidx = _currentlySelectedBlock.m_blockidx;
+                        if( mp.m_data.m_blocks[ cy ][ cx ].m_blockidx != oldb.m_blockidx ) {
+                            continue;
+                        }
+                        mp.m_data.m_blocks[ cy ][ cx ].m_blockidx
+                            = _currentlySelectedBlock.m_blockidx;
                         _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlock(
                             _currentlySelectedBlock, p_blockX, p_blockY );
                     } else if( _currentMapDisplayMode == MODE_EDIT_MOVEMENT ) {
-                        if( mp.m_blocks[ cy ][ cx ].m_movedata != oldb.m_movedata ) { continue; }
-                        mp.m_blocks[ cy ][ cx ].m_movedata = _currentlySelectedBlock.m_movedata;
+                        if( mp.m_data.m_blocks[ cy ][ cx ].m_movedata != oldb.m_movedata ) {
+                            continue;
+                        }
+                        mp.m_data.m_blocks[ cy ][ cx ].m_movedata
+                            = _currentlySelectedBlock.m_movedata;
                         _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlockMovement(
-                            mp.m_blocks[ cy ][ cx ].m_movedata, p_blockX, p_blockY );
+                            mp.m_data.m_blocks[ cy ][ cx ].m_movedata, p_blockX, p_blockY );
                     }
 
                     for( s8 i = -1; i <= 1; ++i ) {
@@ -1967,15 +1973,15 @@ namespace UI {
             for( u16 y = 0; y <= selb.getSizeY( ); ++y ) {
                 for( u16 x = 0; x <= selb.getSizeX( ); ++x ) {
                     auto bs = DATA::blockSet<2>( );
-                    buildBlockSet( &bs, selb.m_bank->m_slices[ y ][ x ].m_tIdx1,
-                                   selb.m_bank->m_slices[ y ][ x ].m_tIdx2 );
+                    buildBlockSet( &bs, selb.m_bank->m_slices[ y ][ x ].m_data.m_tIdx1,
+                                   selb.m_bank->m_slices[ y ][ x ].m_data.m_tIdx2 );
                     auto ts = DATA::tileSet<2>( );
-                    buildTileSet( &ts, selb.m_bank->m_slices[ y ][ x ].m_tIdx1,
-                                  selb.m_bank->m_slices[ y ][ x ].m_tIdx2 );
+                    buildTileSet( &ts, selb.m_bank->m_slices[ y ][ x ].m_data.m_tIdx1,
+                                  selb.m_bank->m_slices[ y ][ x ].m_data.m_tIdx2 );
 
                     buildPalette( ( *selb.m_computedBank )[ y ][ x ].m_pals,
-                                  selb.m_bank->m_slices[ y ][ x ].m_tIdx1,
-                                  selb.m_bank->m_slices[ y ][ x ].m_tIdx2 );
+                                  selb.m_bank->m_slices[ y ][ x ].m_data.m_tIdx1,
+                                  selb.m_bank->m_slices[ y ][ x ].m_data.m_tIdx2 );
                     ( *selb.m_computedBank )[ y ][ x ].m_computedBlocks
                         = selb.m_bank->m_slices[ y ][ x ].compute( &bs, &ts );
                 }
@@ -2024,10 +2030,10 @@ namespace UI {
         DATA::palette pals[ 16 * 5 ] = { 0 };
         buildPalette( pals );
 
-        _currentBlockset1
-            = DATA::mapBlockAtom::computeBlockSet( &_blockSets[ mp.m_tIdx1 ].m_blockSet, &ts );
-        _currentBlockset2
-            = DATA::mapBlockAtom::computeBlockSet( &_blockSets[ mp.m_tIdx2 ].m_blockSet, &ts );
+        _currentBlockset1 = DATA::mapBlockAtom::computeBlockSet(
+            &_blockSets[ mp.m_data.m_tIdx1 ].m_blockSet, &ts );
+        _currentBlockset2 = DATA::mapBlockAtom::computeBlockSet(
+            &_blockSets[ mp.m_data.m_tIdx2 ].m_blockSet, &ts );
 
         _ts1widget.set( _currentBlockset1, pals, _blockSetWidth );
         _ts2widget.set( _currentBlockset2, pals, _blockSetWidth );
@@ -2036,8 +2042,8 @@ namespace UI {
         _ts1widget.draw( );
         _ts2widget.draw( );
 
-        if( p_newTS != mp.m_tIdx1 ) {
-            mp.m_tIdx1 = p_newTS;
+        if( p_newTS != mp.m_data.m_tIdx1 ) {
+            mp.m_data.m_tIdx1 = p_newTS;
             markBankChanged( _selectedBank );
             redrawMap( _selectedMapY, _selectedMapX );
         }
@@ -2052,10 +2058,10 @@ namespace UI {
         DATA::palette pals[ 16 * 5 ] = { 0 };
         buildPalette( pals );
 
-        _currentBlockset1
-            = DATA::mapBlockAtom::computeBlockSet( &_blockSets[ mp.m_tIdx1 ].m_blockSet, &ts );
-        _currentBlockset2
-            = DATA::mapBlockAtom::computeBlockSet( &_blockSets[ mp.m_tIdx2 ].m_blockSet, &ts );
+        _currentBlockset1 = DATA::mapBlockAtom::computeBlockSet(
+            &_blockSets[ mp.m_data.m_tIdx1 ].m_blockSet, &ts );
+        _currentBlockset2 = DATA::mapBlockAtom::computeBlockSet(
+            &_blockSets[ mp.m_data.m_tIdx2 ].m_blockSet, &ts );
 
         _ts1widget.set( _currentBlockset1, pals, _blockSetWidth );
         _ts2widget.set( _currentBlockset2, pals, _blockSetWidth );
@@ -2064,8 +2070,8 @@ namespace UI {
         _ts1widget.draw( );
         _ts2widget.draw( );
 
-        if( p_newTS != mp.m_tIdx2 ) {
-            mp.m_tIdx2 = p_newTS;
+        if( p_newTS != mp.m_data.m_tIdx2 ) {
+            mp.m_data.m_tIdx2 = p_newTS;
             markBankChanged( _selectedBank );
             redrawMap( _selectedMapY, _selectedMapX );
         }
@@ -2079,14 +2085,14 @@ namespace UI {
         } else {
             ts1 = _mapBanks[ _selectedBank ]
                       .m_bank->m_slices[ _selectedMapY ][ _selectedMapX ]
-                      .m_tIdx1;
+                      .m_data.m_tIdx1;
         }
         if( p_ts2 != -1 ) {
             ts2 = p_ts2;
         } else {
             ts2 = _mapBanks[ _selectedBank ]
                       .m_bank->m_slices[ _selectedMapY ][ _selectedMapX ]
-                      .m_tIdx2;
+                      .m_data.m_tIdx2;
         }
         std::memcpy( p_out->m_blocks, _blockSets[ ts1 ].m_blockSet.m_blocks,
                      sizeof( DATA::block ) * DATA::MAX_BLOCKS_PER_TILE_SET );
@@ -2103,14 +2109,14 @@ namespace UI {
         } else {
             ts1 = _mapBanks[ _selectedBank ]
                       .m_bank->m_slices[ _selectedMapY ][ _selectedMapX ]
-                      .m_tIdx1;
+                      .m_data.m_tIdx1;
         }
         if( p_ts2 != -1 ) {
             ts2 = p_ts2;
         } else {
             ts2 = _mapBanks[ _selectedBank ]
                       .m_bank->m_slices[ _selectedMapY ][ _selectedMapX ]
-                      .m_tIdx2;
+                      .m_data.m_tIdx2;
         }
         std::memcpy( p_out->m_tiles, _blockSets[ ts1 ].m_tileSet.m_tiles,
                      sizeof( DATA::tile ) * DATA::MAX_TILES_PER_TILE_SET );
@@ -2127,14 +2133,14 @@ namespace UI {
         } else {
             ts1 = _mapBanks[ _selectedBank ]
                       .m_bank->m_slices[ _selectedMapY ][ _selectedMapX ]
-                      .m_tIdx1;
+                      .m_data.m_tIdx1;
         }
         if( p_ts2 != -1 ) {
             ts2 = p_ts2;
         } else {
             ts2 = _mapBanks[ _selectedBank ]
                       .m_bank->m_slices[ _selectedMapY ][ _selectedMapX ]
-                      .m_tIdx2;
+                      .m_data.m_tIdx2;
         }
         for( u8 dt = 0; dt < 5; ++dt ) {
             std::memcpy( &p_out[ 16 * dt ], &_blockSets[ ts1 ].m_pals[ 8 * dt ],
@@ -2194,7 +2200,7 @@ namespace UI {
                                 filtered.push_back( { 0, 1 } );
                             } else {
                                 filtered.push_back(
-                                    mbank[ p_mapY + y ][ p_mapX + x ].m_blocks[ y2 ][ x2 ] );
+                                    mbank[ p_mapY + y ][ p_mapX + x ].m_data.m_blocks[ y2 ][ x2 ] );
                             }
                         }
                     }
@@ -2257,8 +2263,8 @@ namespace UI {
     void root::onUnloadMap( u16 p_bank, u8 p_mapY, u8 p_mapX ) {
         if( !_mapBanks.count( p_bank ) ) [[unlikely]] { return; }
 
-        auto ts1 = _mapBanks[ p_bank ].m_bank->m_slices[ p_mapY ][ p_mapX ].m_tIdx1;
-        auto ts2 = _mapBanks[ p_bank ].m_bank->m_slices[ p_mapY ][ p_mapX ].m_tIdx2;
+        auto ts1 = _mapBanks[ p_bank ].m_bank->m_slices[ p_mapY ][ p_mapX ].m_data.m_tIdx1;
+        auto ts2 = _mapBanks[ p_bank ].m_bank->m_slices[ p_mapY ][ p_mapX ].m_data.m_tIdx2;
 
         auto bs = DATA::blockSet<2>( );
         buildBlockSet( &bs, ts1, ts2 );
@@ -2286,8 +2292,8 @@ namespace UI {
 
         // update drop downs
         auto& mp       = _mapBanks[ _selectedBank ].m_bank->m_slices[ p_mapY ][ p_mapX ];
-        u8    ts1      = mp.m_tIdx1;
-        u8    ts2      = mp.m_tIdx2;
+        u8    ts1      = mp.m_data.m_tIdx1;
+        u8    ts2      = mp.m_data.m_tIdx2;
         _disableRedraw = true;
         _mapEditorBS1CB.set_selected( _blockSets[ ts1 ].m_stringListItem );
         _mapEditorBS2CB.set_selected( _blockSets[ ts2 ].m_stringListItem );

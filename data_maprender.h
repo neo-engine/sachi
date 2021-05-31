@@ -127,20 +127,36 @@ namespace DATA {
         }
     };
 
-    struct mapSlice {
+    struct mapSliceData {
+        u8 m_sizeX = SIZE; // ignored / assumed to be SIZE
+        u32 : 24;
+        u8 m_sizeY = SIZE; // ignored / assumed to be SIZE
+        u32 : 24;
+
+        u8 m_tIdx1 = 0;
+        u32 : 24;
+        u8 m_tIdx2 = 0;
+        u32 : 24;
+
+        u8 m_borderSizeX = 0; // ignored / assumed to be 0
+        u8 m_borderSizeY = 0; // ignored / assumed to be 0
+        u32 : 16;
+
         mapBlockAtom m_blocks[ SIZE ][ SIZE ] = { { mapBlockAtom( ) } }; // [ y ][ x ]
-        u8           m_map                    = 0;
+    };
+
+    struct mapSlice {
+        mapSliceData m_data;
         u16          m_x = 0, m_y = 0;
-        u8           m_tIdx1 = 0, m_tIdx2 = 0;
 
         inline std::vector<std::pair<computedBlock, u8>> compute( const blockSet<2>* p_blocks,
                                                                   const tileSet<2>*  p_tiles ) {
             auto res = std::vector<std::pair<computedBlock, u8>>( );
             for( u8 y = 0; y < SIZE; ++y ) {
                 for( u8 x = 0; x < SIZE; ++x ) {
-                    auto bidx = m_blocks[ y ][ x ].m_blockidx;
+                    auto bidx = m_data.m_blocks[ y ][ x ].m_blockidx;
                     res.push_back( { p_blocks->m_blocks[ bidx ].compute( p_tiles ),
-                                     u8( m_blocks[ y ][ x ].m_movedata ) } );
+                                     u8( m_data.m_blocks[ y ][ x ].m_movedata ) } );
                 }
             }
             return res;
@@ -233,21 +249,28 @@ namespace DATA {
         SWEET_SCENT,
     };
     enum mapWeather : u8 {
-        NOTHING        = 0, // Inside
-        SUNNY          = 1,
-        REGULAR        = 2,
-        RAINY          = 3,
-        SNOW           = 4,
-        THUNDERSTORM   = 5,
-        MIST           = 6,
-        BLIZZARD       = 7,
-        SANDSTORM      = 8,
-        FOG            = 9,
-        DENSE_MIST     = 0xa,
-        CLOUDY         = 0xb, // Dark Forest clouds
-        HEAVY_SUNLIGHT = 0xc,
-        HEAVY_RAIN     = 0xd,
-        UNDERWATER     = 0xe
+        NOTHING         = 0, // Inside
+        SUNNY           = 1,
+        REGULAR         = 2,
+        RAINY           = 3,
+        SNOW            = 4,
+        THUNDERSTORM    = 5,
+        MIST            = 6,
+        BLIZZARD        = 7,
+        SANDSTORM       = 8,
+        FOG             = 9,
+        DENSE_MIST      = 0xa,
+        CLOUDY          = 0xb, // Dark Forest clouds
+        HEAVY_SUNLIGHT  = 0xc,
+        HEAVY_RAIN      = 0xd,
+        UNDERWATER      = 0xe,
+        DARK_FLASHABLE  = 0xf,
+        DARK_PERMANENT  = 0x10,
+        DARK_FLASH_USED = 0x11,
+        FOREST_CLOUDS   = 0x12,
+        ASH_RAIN        = 0x13, // route 113
+        DARK_FLASH_1    = 0x14, // dewford gym defeated 1-2 trainers
+        DARK_FLASH_2    = 0x15, // dewford gym defeated 3-4 trainers
     };
     enum mapType : u8 { OUTSIDE = 0, CAVE = 1, INSIDE = 2, DARK = 4, FLASHABLE = 8 };
     enum warpType : u8 {
@@ -262,35 +285,40 @@ namespace DATA {
 
     constexpr u8 MAX_EVENTS_PER_SLICE = 64;
     struct mapData {
-        mapType    m_mapType;
-        mapWeather m_weather;
-        u8         m_battleBG;
-        u8         m_battlePlat1;
-        u8         m_battlePlat2;
-        u8         m_surfBattleBG;
-        u8         m_surfBattlePlat1;
-        u8         m_surfBattlePlat2;
+        u8 m_mapType;
+        u8 m_weather;
+        u8 m_battleBG;
+        u8 m_battlePlat1;
+
+        u8 m_battlePlat2;
+        u8 m_surfBattleBG;
+        u8 m_surfBattlePlat1;
+        u8 m_surfBattlePlat2;
+
+        u8 m_pokemonDescrCount;
+        u8 m_eventCount;
+        u32 : 16;
 
         u16 m_locationIds[ 4 ][ 4 ]; // (y, x), 8x8 blocks each
 
-        u8 m_pokemonDescrCount;
         struct wildPkmnData {
             u16          m_speciesId;
             u8           m_forme;
             wildPkmnType m_encounterType;
-            u8           m_slot;
-            u8           m_daytime;
-            u8           m_encounterRate;
+
+            u8 m_slot;
+            u8 m_daytime;
+            u8 m_encounterRate;
         } m_pokemon[ 30 ];
-        u8 m_eventCount;
         struct event {
-            u8           m_posX;
-            u8           m_posY;
-            u8           m_posZ;
-            u16          m_activateFlag;
-            u16          m_deactivateFlag;
-            eventType    m_type;
-            eventTrigger m_trigger;
+            u8  m_posX;
+            u8  m_posY;
+            u8  m_posZ;
+            u16 m_activateFlag;
+            u16 m_deactivateFlag;
+            u8  m_type;
+
+            u8 m_trigger;
             union data {
                 struct {
                     u8  m_msgType;
@@ -312,7 +340,7 @@ namespace DATA {
                     u8  m_level;
                     u8  m_forme; // BIT(6) female; BIT(7) genderless
 
-                    u8 m_shiny; // BIT(6) hidden ability, BIT(7) fateful
+                    u8 m_shiny; // BIT(6) hidden ability, BIT(7)    fateful
                 } m_owPkmn;
                 struct {
                     u16 m_spriteId;
@@ -322,10 +350,10 @@ namespace DATA {
                     u8 m_scriptType;
                 } m_npc;
                 struct {
-                    warpType m_warpType;
-                    u8       m_bank;
-                    u8       m_mapY;
-                    u8       m_mapX;
+                    u8 m_warpType;
+                    u8 m_bank;
+                    u8 m_mapX;
+                    u8 m_mapY;
 
                     u8 m_posX;
                     u8 m_posY;

@@ -76,54 +76,15 @@ namespace DATA {
         p_result->m_y = p_y;
 
         //    printf( "constructing slice\n" );
-
-        readNop( p_mapFile, 8 ); // map size ignored
-
-        u8 tsidx1, tsidx2;
-
-        read( p_mapFile, &tsidx1, sizeof( u8 ), 1 );
-        readNop( p_mapFile, 3 );
-        read( p_mapFile, &tsidx2, sizeof( u8 ), 1 );
-        readNop( p_mapFile, 3 );
-
-        // printf( "red tsidx %hhu %hhu\n", tsidx1, tsidx2 );
-
-        // border size
-        u8 b1, b2;
-        //    readNop( p_mapFile, 4 );
-        read( p_mapFile, &b1, sizeof( u8 ), 1 );
-        read( p_mapFile, &b2, sizeof( u8 ), 1 );
-        readNop( p_mapFile, 2 );
-
-        if( b1 && b2 ) {
-            read( p_mapFile, p_result->m_blocks, sizeof( mapBlockAtom ), b1 * b2 ); // Border blocks
-        }
-
-        read( p_mapFile, p_result->m_blocks, sizeof( mapBlockAtom ), SIZE * SIZE );
+        fread( &p_result->m_data, sizeof( mapSliceData ), 1, p_mapFile );
         if( p_close ) { fclose( p_mapFile ); }
-
-        p_result->m_tIdx1 = tsidx1;
-        p_result->m_tIdx2 = tsidx2;
 
         return true;
     }
 
     bool writeMapSlice( FILE* p_mapFile, const mapSlice* p_map, bool p_close ) {
         if( p_mapFile == 0 ) return false;
-        write( p_mapFile, &SIZE, sizeof( u8 ), 1 );
-        writeNop( p_mapFile, 3 );
-        write( p_mapFile, &SIZE, sizeof( u8 ), 1 );
-        writeNop( p_mapFile, 3 );
-
-        write( p_mapFile, &p_map->m_tIdx1, sizeof( u8 ), 1 );
-        writeNop( p_mapFile, 3 );
-        write( p_mapFile, &p_map->m_tIdx2, sizeof( u8 ), 1 );
-        writeNop( p_mapFile, 3 );
-
-        // border size
-        writeNop( p_mapFile, 4 );
-
-        write( p_mapFile, p_map->m_blocks, sizeof( mapBlockAtom ), SIZE * SIZE );
+        fwrite( &p_map->m_data, sizeof( mapSliceData ), 1, p_mapFile );
         if( p_close ) { fclose( p_mapFile ); }
 
         return true;
@@ -150,6 +111,8 @@ namespace DATA {
                               u16 p_y ) {
         if( p_mapFile == 0 ) return false;
 
+        fprintf( stderr, "%hu_%hu.map\n", p_y, p_x );
+
         mapBankInfo info;
         if( fseek( p_mapFile, 0, SEEK_SET ) ) { return false; }
         fread( &info, sizeof( mapBankInfo ), 1, p_mapFile );
@@ -157,13 +120,29 @@ namespace DATA {
         if( fseek( p_mapFile,
                    sizeof( mapBankInfo )
                        + ( ( info.m_sizeX + 1 ) * p_y + p_x )
-                             * ( sizeof( mapSlice ) + sizeof( mapData ) ),
+                             * ( sizeof( mapSliceData ) + sizeof( mapData ) ),
                    SEEK_SET ) ) {
             return false;
         }
+        fprintf( stderr, "%lu %lu %lu %lu\n",
+                 sizeof( mapBankInfo )
+                     + ( ( info.m_sizeX + 1 ) * p_y + p_x )
+                           * ( sizeof( mapSliceData ) + sizeof( mapData ) + 12 ),
+                 sizeof( mapBankInfo ), sizeof( mapSliceData ), sizeof( mapData ) );
 
         if( !readMapSlice( p_mapFile, p_slice, p_x, p_y, false ) ) { return false; }
         if( !readMapData( p_mapFile, p_data, false ) ) { return false; }
+
+        fprintf(
+            stderr,
+            "%02hhx %02hhx %02hhx %02hhx | %02hhx %02hhx %02hhx %02hhx | %02hhx %02hhx %02hhx %02hhx\n",
+            reinterpret_cast<u8*>( p_data )[ 0 ], reinterpret_cast<u8*>( p_data )[ 1 ],
+            reinterpret_cast<u8*>( p_data )[ 2 ], reinterpret_cast<u8*>( p_data )[ 3 ],
+            reinterpret_cast<u8*>( p_data )[ 4 ], reinterpret_cast<u8*>( p_data )[ 5 ],
+            reinterpret_cast<u8*>( p_data )[ 6 ], reinterpret_cast<u8*>( p_data )[ 7 ],
+            reinterpret_cast<u8*>( p_data )[ 8 ], reinterpret_cast<u8*>( p_data )[ 9 ],
+            reinterpret_cast<u8*>( p_data )[ 10 ], reinterpret_cast<u8*>( p_data )[ 11 ] );
+
         return true;
     }
 
@@ -174,7 +153,7 @@ namespace DATA {
         if( fseek( p_mapFile,
                    sizeof( mapBankInfo )
                        + ( ( p_info.m_sizeX + 1 ) * p_y + p_x )
-                             * ( sizeof( mapSlice ) + sizeof( mapData ) ),
+                             * ( sizeof( mapSliceData ) + sizeof( mapData ) ),
                    SEEK_SET ) ) {
             return false;
         }

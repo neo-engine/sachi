@@ -127,9 +127,10 @@ namespace DATA {
 
         for( u16 x = 0; x < SIZE; ++x ) {
             for( u16 y = 0; y < SIZE; ++y ) {
-                renderBlock( &p_blockSet->m_blocks[ p_mapSlice->m_blocks[ y ][ x ].m_blockidx ],
-                             p_tileSet, p_pals, p_out, p_x + blocksize * x, p_y + blocksize * y,
-                             p_scale, p_time );
+                renderBlock(
+                    &p_blockSet->m_blocks[ p_mapSlice->m_data.m_blocks[ y ][ x ].m_blockidx ],
+                    p_tileSet, p_pals, p_out, p_x + blocksize * x, p_y + blocksize * y, p_scale,
+                    p_time );
             }
         }
     }
