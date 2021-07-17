@@ -69,6 +69,33 @@ namespace DATA {
         return true;
     }
 
+    bool writeTiles( FILE* p_file, const tile* p_tileSet, u16 p_startIdx, u16 p_size ) {
+        if( p_file == 0 ) return false;
+        write( p_file, p_tileSet + p_startIdx, sizeof( tile ) * p_size, 1 );
+        return true;
+    }
+
+    bool writePal( FILE* p_file, const palette* p_palette, u8 p_count ) {
+        if( p_file == 0 ) return false;
+        write( p_file, p_palette, sizeof( u16 ) * 16, p_count );
+        return true;
+    }
+
+    bool writeBlocks( FILE* p_file, const block* p_tileSet, u16 p_startIdx, u16 p_size ) {
+        if( p_file == 0 ) return false;
+        u8 magic[ 4 ] = { 0, 2, 0, 0 };
+        fwrite( magic, 1, 4, p_file );
+        for( u16 i = 0; i < p_size; ++i ) {
+            write( p_file, &( p_tileSet + p_startIdx + i )->m_bottom, 4 * sizeof( blockAtom ), 1 );
+            write( p_file, &( p_tileSet + p_startIdx + i )->m_top, 4 * sizeof( blockAtom ), 1 );
+        }
+        for( u16 i = 0; i < p_size; ++i ) {
+            write( p_file, &( p_tileSet + p_startIdx + i )->m_bottombehave, sizeof( u8 ), 1 );
+            write( p_file, &( p_tileSet + p_startIdx + i )->m_topbehave, sizeof( u8 ), 1 );
+        }
+        return true;
+    }
+
     bool readMapSlice( FILE* p_mapFile, mapSlice* p_result, u16 p_x, u16 p_y, bool p_close ) {
         if( p_mapFile == 0 ) return false;
 

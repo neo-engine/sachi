@@ -100,4 +100,16 @@ namespace UI {
         _outerFrame.remove_css_class( "mapbank-selected" );
     }
 
+    editTileSet::editTileSet( )
+        : mapBank( "pan-up-symbolic", "pan-down-symbolic" ) {
+        _nameLabel.set_markup( "<span size=\"x-large\" weight=\"bold\">TS</span>" );
+        _loadMapButton.set_label( "Edit" );
+
+        _mapXAdj->set_lower( 0 );
+        _mapYAdj->set_lower( 0 );
+        setSizeX( MAX_TILESET_NAME );
+        setSizeY( MAX_TILESET_NAME );
+    }
+
+
 } // namespace UI

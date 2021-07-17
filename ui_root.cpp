@@ -20,6 +20,7 @@
 
 #include "data_fs.h"
 #include "defines.h"
+#include "log.h"
 #include "ui_root.h"
 
 namespace UI {
@@ -31,7 +32,7 @@ namespace UI {
         res.app_name   = APP_NAME;
         res.is_private = true;
         if( !_recentlyUsedFsRoots->add_item( "file://" + p_path, res ) ) {
-            printf( "Adding %s failed.\n", p_path.c_str( ) );
+            message_log( "addFsRootToRecent", "Adding \"" + p_path + "\" failed.", LOGLEVEL_DEBUG );
         }
     }
 
@@ -91,18 +92,7 @@ namespace UI {
         return resultButton;
     }
 
-    root::root( ) {
-        set_default_size( 800, 600 );
-
-        auto provider = Gtk::CssProvider::create( );
-        provider->load_from_data( EXTRA_CSS );
-        Gtk::StyleContext::add_provider_for_display( Gdk::Display::get_default( ), provider,
-                                                     GTK_STYLE_PROVIDER_PRIORITY_APPLICATION );
-
-        _recentlyUsedFsRoots = Gtk::RecentManager::get_default( );
-
-        // actions
-
+    void root::initActions( ) {
         _loadActions = Gio::SimpleActionGroup::create( );
         _saveActions = Gio::SimpleActionGroup::create( );
         _loadFsrootAction
@@ -127,7 +117,7 @@ namespace UI {
             dialog->set_default_size( 800, 600 );
             dialog->signal_response( ).connect( [ dialog, this ]( int p_responseId ) {
                 if( dialog == nullptr ) {
-                    fprintf( stderr, "[ERROR] importMap: dialog is nullptr." );
+                    message_error( "importMap", "Dialog is nullptr." );
                     return;
                 }
 
@@ -171,7 +161,7 @@ namespace UI {
             dialog->set_default_size( 800, 600 );
             dialog->signal_response( ).connect( [ dialog, this ]( int p_responseId ) {
                 if( dialog == nullptr ) {
-                    fprintf( stderr, "[ERROR] exportMap: dialog is nullptr." );
+                    message_error( "exportMap", "Dialog is nullptr." );
                     return;
                 }
                 // Handle the response:
@@ -194,7 +184,9 @@ namespace UI {
 
         insert_action_group( "load", _loadActions );
         insert_action_group( "save", _saveActions );
+    }
 
+    void root::initHeaderBar( ) {
         // Header bar
 
         auto headerBar = Gtk::HeaderBar( );
@@ -251,17 +243,98 @@ namespace UI {
         saveBox.append( *_saveMenuButton );
         headerBar.pack_start( openBox );
         headerBar.pack_start( saveBox );
+    }
 
-        auto mbox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
-        _mainBox  = Gtk::Box( Gtk::Orientation::HORIZONTAL );
-        set_child( mbox );
-        mbox.append( _mainBox );
+    void root::initSideBar( ) {
+        // main box
+        auto lMainBox = Gtk::Box( Gtk::Orientation::VERTICAL, MARGIN );
+        _mainBox.append( lMainBox );
 
+        {
+            // collapse sidebar widget
+            auto sideBarBarCollapseBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+            sideBarBarCollapseBox.append( *_collapseMapBanksButton );
+            sideBarBarCollapseBox.set_halign( Gtk::Align::CENTER );
+            _collapseMapBanksButton->set_expand( false );
+            lMainBox.append( sideBarBarCollapseBox );
+        }
+        {
+            // tile set
+            auto lFrame = Gtk::Frame( );
+            lFrame.set_margin( MARGIN );
+            lFrame.set_margin_top( 0 );
+            lFrame.set_margin_bottom( 0 );
+            lMainBox.append( lFrame );
+
+            auto sbTileSetBarLabelBox   = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+            auto sbTileSetBarLabelImage = Gtk::Image( );
+            sbTileSetBarLabelImage.set_from_icon_name( "applications-graphics-symbolic" );
+            sbTileSetBarLabelImage.set_margin( MARGIN );
+            _sbTileSetBarLabel = Gtk::Label( "Tile Sets" );
+            sbTileSetBarLabelBox.append( sbTileSetBarLabelImage );
+            sbTileSetBarLabelBox.append( _sbTileSetBarLabel );
+
+            lFrame.set_label_widget( sbTileSetBarLabelBox );
+            lFrame.set_label_align( Gtk::Align::CENTER );
+
+            _sbTileSetBox = Gtk::Box( Gtk::Orientation::VERTICAL, MARGIN );
+            lFrame.set_child( _sbTileSetBox );
+            _sbTileSetBox.set_margin( MARGIN );
+            _sbTileSetBox.set_vexpand( false );
+
+            _editTileSet = std::make_shared<editTileSet>( );
+            if( _editTileSet ) {
+                _sbTileSetBox.append( *_editTileSet );
+                _editTileSet->connect(
+                    [ this ]( u8 p_ts1, u8 p_ts2 ) { editTileSets( p_ts1, p_ts2 ); } );
+            }
+
+            _sbTileSetSel1 = 0;
+            _sbTileSetSel2 = 1;
+        }
+        {
+            // map banks
+            auto lScrolledWindow = Gtk::ScrolledWindow( );
+            lMainBox.append( lScrolledWindow );
+            auto lFrame = Gtk::Frame( );
+            lFrame.set_margin( MARGIN );
+            lScrolledWindow.set_child( lFrame );
+            lScrolledWindow.set_policy( Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC );
+
+            auto mapBankBarLabelBox   = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+            auto mapBankBarLabelImage = Gtk::Image( );
+            mapBankBarLabelImage.set_from_icon_name( "image-x-generic-symbolic" );
+            mapBankBarLabelImage.set_margin( MARGIN );
+            _mapBankBarLabel = Gtk::Label( "Map Banks" );
+            mapBankBarLabelBox.append( mapBankBarLabelImage );
+            mapBankBarLabelBox.append( _mapBankBarLabel );
+
+            lFrame.set_label_widget( mapBankBarLabelBox );
+            lFrame.set_label_align( Gtk::Align::CENTER );
+
+            _mapBankBox = Gtk::Box( Gtk::Orientation::VERTICAL, MARGIN );
+            lFrame.set_child( _mapBankBox );
+            _mapBankBox.set_margin( MARGIN );
+            _mapBankBox.set_vexpand( true );
+
+            _addMapBank = std::make_shared<addMapBank>( );
+
+            if( _addMapBank ) {
+                _mapBankBox.append( *_addMapBank );
+                _addMapBank->connect(
+                    [ this ]( u16 p_bk, u8 p_y, u8 p_x ) { createMapBank( p_bk, p_y, p_x ); } );
+            }
+
+            _mapBanks.clear( );
+            _selectedBank = -1;
+        }
+    }
+
+    void root::initWelcome( ) {
         // Main window on application start:
         // Show icon view of recently used FSROOT folders
 
         _ivScrolledWindow.set_policy( Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC );
-        mbox.append( _ivScrolledWindow );
         _ivScrolledWindow.set_expand( );
         _ivScrolledWindow.set_child( _recentFsRootIconView );
 
@@ -279,62 +352,59 @@ namespace UI {
                 auto row  = *iter;
                 loadNewFsRoot( row[ _recentViewColumns.m_path ] );
             } );
+    }
 
-        // Main window
+    void root::initTileSetEditor( ) {
+        // Tile set editor
+        _tseNotebook.set_expand( );
+        auto tseMainBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        tseMainBox.set_margin_top( MARGIN );
+        auto tseSettingsBox = Gtk::Box( Gtk::Orientation::VERTICAL );
+        tseSettingsBox.set_margin( MARGIN );
 
-        // map bank box
+        _tseNotebook.append_page( tseMainBox, "Tile Set _Editor", true );
+        _tseNotebook.append_page( tseSettingsBox, "Tile Set Settin_gs", true );
+        _mainBox.append( _tseNotebook );
 
-        auto lFrame = Gtk::Frame( );
-        lFrame.set_margin( MARGIN );
-        auto lScrolledWindow = Gtk::ScrolledWindow( );
-        auto lMainBox        = Gtk::Box( Gtk::Orientation::VERTICAL, MARGIN );
+        // ts settings
+        // - tile set mode
+        //
 
-        _mainBox.append( lMainBox );
+        auto shbox1f1 = Gtk::Frame( "General Settings" );
+        shbox1f1.set_label_align( Gtk::Align::CENTER );
 
-        auto mapBankBarCollapseBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
-        mapBankBarCollapseBox.append( *_collapseMapBanksButton );
-        mapBankBarCollapseBox.set_halign( Gtk::Align::CENTER );
-        _collapseMapBanksButton->set_expand( false );
+        auto sboxv1 = Gtk::Box( Gtk::Orientation::VERTICAL );
+        shbox1f1.set_child( sboxv1 );
+        sboxv1.set_margin( MARGIN );
 
-        lMainBox.append( mapBankBarCollapseBox );
-        lMainBox.append( lScrolledWindow );
-        lScrolledWindow.set_child( lFrame );
-        lScrolledWindow.set_policy( Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC );
+        auto shbox1 = Gtk::CenterBox( );
+        shbox1.set_hexpand( true );
+        auto shbox1l = Gtk::Label( "Tile Set Mode" );
+        shbox1.set_start_widget( shbox1l );
 
-        auto mapBankBarLabelBox   = Gtk::Box( Gtk::Orientation::HORIZONTAL );
-        auto mapBankBarLabelImage = Gtk::Image( );
-        mapBankBarLabelImage.set_from_icon_name( "image-x-generic-symbolic" );
-        mapBankBarLabelImage.set_margin( MARGIN );
-        _mapBankBarLabel = Gtk::Label( "Map Banks" );
-        mapBankBarLabelBox.append( mapBankBarLabelImage );
-        mapBankBarLabelBox.append( _mapBankBarLabel );
+        _tseTileModeToggles.push_back( std::make_shared<Gtk::ToggleButton>( "_Simple", true ) );
+        _tseTileModeToggles.push_back( std::make_shared<Gtk::ToggleButton>( "_Combined", true ) );
 
-        lFrame.set_label_widget( mapBankBarLabelBox );
-        lFrame.set_label_align( Gtk::Align::CENTER );
-
-        _mapBankBox = Gtk::Box( Gtk::Orientation::VERTICAL, MARGIN );
-        lFrame.set_child( _mapBankBox );
-        _mapBankBox.set_margin( MARGIN );
-        _mapBankBox.set_vexpand( true );
-
-        _addMapBank = std::make_shared<addMapBank>( );
-        _mapBankBox.append( *_addMapBank );
-
-        if( _addMapBank ) {
-            _addMapBank->connect(
-                [ this ]( u16 p_bk, u8 p_y, u8 p_x ) { createMapBank( p_bk, p_y, p_x ); } );
+        auto mapBankSettingsMapModeBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        mapBankSettingsMapModeBox.get_style_context( )->add_class( "linked" );
+        mapBankSettingsMapModeBox.set_halign( Gtk::Align::CENTER );
+        for( u8 i = 0; i < _tseTileModeToggles.size( ); ++i ) {
+            mapBankSettingsMapModeBox.append( *_tseTileModeToggles[ i ] );
+            _tseTileModeToggles[ i ]->signal_clicked( ).connect( [ this, i ]( ) {
+                setTileSetMode( i );
+                markTileSetsChanged( );
+            } );
+            if( i ) { _tseTileModeToggles[ i ]->set_group( *_tseTileModeToggles[ 0 ] ); }
         }
+        _tseTileModeToggles[ 0 ]->set_active( );
+        shbox1.set_end_widget( mapBankSettingsMapModeBox );
 
-        _mapBanks.clear( );
-        _selectedBank = -1;
+        sboxv1.append( shbox1 );
+        tseSettingsBox.append( shbox1f1 );
+    }
 
+    void root::initMapEditor( ) {
         // Map editor
-
-        _loadMapLabel = Gtk::Label( );
-        _loadMapLabel.set_markup( "<span size=\"x-large\">Add or load a map bank!</span>" );
-        _loadMapLabel.set_expand( );
-        _mainBox.append( _loadMapLabel );
-
         _mapNotebook.set_expand( );
         auto mapEditorMainBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
         mapEditorMainBox.set_margin_top( MARGIN );
@@ -900,7 +970,9 @@ namespace UI {
 
         sboxv1.append( shbox1 );
         _mapSettingsBox.append( shbox1f1 );
+    }
 
+    void root::initEvents( ) {
         // Events / Button presses
 
         auto controller = Gtk::EventControllerKey::create( );
@@ -925,6 +997,41 @@ namespace UI {
             false );
 
         add_controller( controller );
+    }
+
+    root::root( ) {
+        set_default_size( 800, 600 );
+
+        auto provider = Gtk::CssProvider::create( );
+        provider->load_from_data( EXTRA_CSS );
+        Gtk::StyleContext::add_provider_for_display( Gdk::Display::get_default( ), provider,
+                                                     GTK_STYLE_PROVIDER_PRIORITY_APPLICATION );
+
+        _recentlyUsedFsRoots = Gtk::RecentManager::get_default( );
+
+        initActions( );
+        initHeaderBar( );
+
+        auto mbox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        _mainBox  = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        set_child( mbox );
+        mbox.append( _mainBox );
+        mbox.append( _ivScrolledWindow );
+
+        initSideBar( );
+
+        initWelcome( );
+
+        _loadMapLabel = Gtk::Label( );
+        _loadMapLabel.set_markup( "<span size=\"x-large\">Add or load a map bank!</span>" );
+        _loadMapLabel.set_expand( );
+        _mainBox.append( _loadMapLabel );
+
+        initTileSetEditor( );
+        initMapEditor( );
+
+        initEvents( );
+
         setNewMapEditMode( MODE_EDIT_TILES );
         populateRecentFsRootIconView( );
         switchContext( NONE );
@@ -1032,17 +1139,20 @@ namespace UI {
         fs::create_directories( path.parent_path( ) );
         FILE* f = fopen( path.c_str( ), "w" );
         if( !DATA::writeMapSlice( f, &info.m_bank->m_slices[ p_mapY ][ p_mapX ] ) ) {
-            fprintf( stderr, "[LOG] Writing map %hu/%hhu_%hhu.map to %s failed.\n", p_bank, p_mapY,
-                     p_mapX, path.c_str( ) );
+            message_log( "writeMapSlice", ( "Writing map "s ) + std::to_string( p_bank ) + ( "/"s )
+                                              + std::to_string( p_mapY ) + ( "_"s )
+                                              + std::to_string( p_mapX ) + ( ".map to "s )
+                                              + path.string( ) + ( " failed."s ) );
             return true;
         }
         if( p_writeMapData ) {
             path += ".data";
             f = fopen( path.c_str( ), "wb" );
             if( !DATA::writeMapData( f, &info.m_bank->m_mapData[ p_mapY ][ p_mapX ] ) ) {
-                fprintf( stderr,
-                         "[LOG] Writing map data %hu/%hhu_%hhu.map.data failed. (path %s)\n",
-                         p_bank, p_mapY, p_mapX, path.c_str( ) );
+                message_log( "writeMapSlice", ( "Writing map data "s ) + std::to_string( p_bank )
+                                                  + ( "/"s ) + std::to_string( p_mapY ) + ( "_"s )
+                                                  + std::to_string( p_mapX ) + ( ".map.data to "s )
+                                                  + path.string( ) + ( " failed."s ) );
                 return true;
             }
         }
@@ -1050,11 +1160,182 @@ namespace UI {
         return false;
     }
 
+    bool root::readTileSets( ) {
+        // first check if a combined file exists
+        bool error = false;
+
+        FILE* f;
+        auto  pth = fs::path( MAP_PATH ) / "tileset.tsb";
+        f         = fopen( pth.c_str( ), "rb" );
+
+        if( f ) {
+            _tileSetMode = DATA::TILEMODE_COMBINED;
+            _tseTileModeToggles[ 1 ]->set_active( );
+
+            // read header
+            auto header = DATA::blockSetBankHeader( );
+            fread( &header, sizeof( DATA::blockSetBankHeader ), 1, f );
+
+            for( auto i = 0; i < header.m_blockSetCount; ++i ) {
+                auto bInfo = blockSetInfo( );
+                error |= !DATA::readTiles( f, bInfo.m_tileSet.m_tiles );
+                error |= !DATA::readBlocks( f, bInfo.m_blockSet.m_blocks );
+                if( header.m_dayTimeCount <= DAYTIMES ) {
+                    error |= !DATA::readPal( f, bInfo.m_pals, 8 * header.m_dayTimeCount );
+                } else {
+                    error |= !DATA::readPal( f, bInfo.m_pals, 8 * DAYTIMES );
+                    DATA::readNop( f,
+                                   sizeof( u16 ) * 16 * 8 * ( header.m_dayTimeCount - DAYTIMES ) );
+                }
+
+                _blockSets[ i ] = bInfo;
+                _blockSetNames.insert( i );
+            }
+
+            message_log( "readTileSets", "Read " + std::to_string( header.m_blockSetCount )
+                                             + " TS from combined tile set." );
+            fclose( f );
+        } else {
+            if( !checkOrCreatePath( TILESET_PATH ) ) { return true; }
+            if( !checkOrCreatePath( BLOCKSET_PATH ) ) { return true; }
+            if( !checkOrCreatePath( PALETTE_PATH ) ) { return true; }
+            _tileSetMode = DATA::TILEMODE_DEFAULT;
+            _tseTileModeToggles[ 0 ]->set_active( );
+            std::error_code ec;
+
+            for( auto& p : fs::directory_iterator( BLOCKSET_PATH ) ) {
+                if( !p.is_regular_file( ec ) || ec ) { continue; }
+
+                u8 bsname;
+                if( 1
+                    != sscanf( p.path( ).filename( ).c_str( ), BLOCKSET_FORMAT.c_str( ),
+                               &bsname ) ) {
+                    continue;
+                }
+
+                auto res = blockSetInfo( );
+                f        = fopen( p.path( ).c_str( ), "r" );
+                if( !DATA::readBlocks( f, res.m_blockSet.m_blocks ) ) {
+                    fprintf( stderr, "[LOG] Reading block set %hu failed.\n", bsname );
+                    continue;
+                }
+                fclose( f );
+
+                // read corresponding tileset
+                auto tspath = fs::path( TILESET_PATH ) / ( std::to_string( bsname ) + ".ts" );
+                f           = fopen( tspath.c_str( ), "r" );
+                if( !DATA::readTiles( f, res.m_tileSet.m_tiles ) ) {
+                    fprintf( stderr, "[LOG] Reading tile set %hu failed.\n", bsname );
+                    // continue;
+                } else {
+                    fclose( f );
+                }
+
+                // read corresponding palettes
+                auto palpath = fs::path( PALETTE_PATH ) / ( std::to_string( bsname ) + ".p2l" );
+                f            = fopen( palpath.c_str( ), "r" );
+                if( !DATA::readPal( f, res.m_pals, 8 * 5 ) ) {
+                    fprintf( stderr, "[LOG] Reading palette %hu failed.\n", bsname );
+                    // continue;
+                } else {
+                    fclose( f );
+                }
+
+                // fprintf( stderr, "[LOG] Loaded blockset %hhu.\n", bsname );
+
+                _blockSets[ bsname ] = res;
+                _blockSetNames.insert( bsname );
+            }
+        }
+
+        _disableRedraw = true;
+        auto bsnames   = std::vector<Glib::ustring>( );
+
+        for( auto bsname : _blockSetNames ) {
+            bsnames.push_back( std::to_string( bsname ) );
+            _blockSets[ bsname ].m_stringListItem = bsnames.size( ) - 1;
+        }
+        _mapBankStrList->splice( 0, _mapBankStrList->get_n_items( ), bsnames );
+        _disableRedraw = false;
+
+        return error;
+    }
+
+    bool root::writeTileSets( ) {
+        if( _blockSetNames.empty( ) ) { return true; }
+        bool error = false;
+
+        switch( _tileSetMode ) {
+        default: {
+        case DATA::TILEMODE_DEFAULT:
+            // store everything in separate files
+            if( !checkOrCreatePath( TILESET_PATH ) ) { return true; }
+            if( !checkOrCreatePath( BLOCKSET_PATH ) ) { return true; }
+            if( !checkOrCreatePath( PALETTE_PATH ) ) { return true; }
+            for( const auto& [ name, bInfo ] : _blockSets ) {
+                FILE* f;
+
+                auto tspath = fs::path( TILESET_PATH ) / ( std::to_string( name ) + ".ts" );
+                f           = fopen( tspath.c_str( ), "wb" );
+                error |= !DATA::writeTiles( f, bInfo.m_tileSet.m_tiles );
+                fclose( f );
+
+                auto blpath = fs::path( BLOCKSET_PATH ) / ( std::to_string( name ) + ".bvd" );
+                f           = fopen( blpath.c_str( ), "wb" );
+                error |= !DATA::writeBlocks( f, bInfo.m_blockSet.m_blocks );
+                fclose( f );
+
+                auto palpath = fs::path( PALETTE_PATH ) / ( std::to_string( name ) + ".p2l" );
+                f            = fopen( palpath.c_str( ), "wb" );
+                error |= !DATA::writePal( f, bInfo.m_pals, 8 * DAYTIMES );
+                fclose( f );
+            }
+            break;
+        }
+        case DATA::TILEMODE_COMBINED: {
+            // store everything in a single file
+            FILE* f;
+            auto  pth = fs::path( MAP_PATH ) / "tileset.tsb";
+            f         = fopen( pth.c_str( ), "wb" );
+
+            // compute header
+            auto header            = DATA::blockSetBankHeader( );
+            header.m_blockSetCount = *_blockSetNames.crbegin( ) + 1;
+            header.m_dayTimeCount  = DAYTIMES;
+
+            fwrite( &header, sizeof( DATA::blockSetBankHeader ), 1, f );
+
+            for( auto i = 0; i < header.m_blockSetCount; ++i ) {
+                if( _blockSets.count( i ) ) {
+                    const auto& bInfo = _blockSets[ i ];
+                    error |= !DATA::writeTiles( f, bInfo.m_tileSet.m_tiles );
+                    error |= !DATA::writeBlocks( f, bInfo.m_blockSet.m_blocks );
+                    error |= !DATA::writePal( f, bInfo.m_pals, 8 * header.m_dayTimeCount );
+                } else {
+                    // write dummy values
+                    // TODO: directly write dummy values?
+                    auto bInfo = blockSetInfo( );
+                    error |= !DATA::writeTiles( f, bInfo.m_tileSet.m_tiles );
+                    error |= !DATA::writeBlocks( f, bInfo.m_blockSet.m_blocks );
+                    error |= !DATA::writePal( f, bInfo.m_pals, 8 * header.m_dayTimeCount );
+                }
+            }
+            fclose( f );
+            break;
+        }
+        }
+
+        if( !error ) { _editTileSet->setStatus( mapBank::STATUS_SAVED ); }
+
+        return error;
+    }
+
     bool root::writeMapBank( u16 p_bank ) {
-        if( !_mapBanks.count( p_bank ) ) { return false; }
+        if( !_mapBanks.count( p_bank ) ) { return true; }
         auto& info = _mapBanks[ p_bank ];
 
-        fprintf( stderr, "[LOG] Saving map bank %hu.\n", p_bank );
+        message_log( "writeMapBank", "Saving map bank " + std::to_string( p_bank ) + ".",
+                     LOGLEVEL_STATUS );
         bool            error = false;
         std::error_code ec;
 
@@ -1124,11 +1405,15 @@ namespace UI {
                 writeMapBank( bank );
             }
         }
+
+        if( _editTileSet && _editTileSet->getStatus( ) == mapBank::STATUS_EDITED_UNSAVED ) {
+            writeTileSets( );
+        }
     }
 
     void root::onFolderDialogResponse( int p_responseId, Gtk::FileChooserDialog* p_dialog ) {
         if( p_dialog == nullptr ) {
-            fprintf( stderr, "[ERROR] root::onFolderDialogResponse: p_dialog is nullptr." );
+            message_log( "onFolderDialogResponse", "p_dialog is nullptr.", LOGLEVEL_DEBUG );
             return;
         }
 
@@ -1669,9 +1954,6 @@ namespace UI {
     void root::loadNewFsRoot( const std::string& p_path ) {
         if( !checkOrCreatePath( p_path ) ) { return; }
         if( !checkOrCreatePath( p_path + "/MAPS/" ) ) { return; }
-        if( !checkOrCreatePath( p_path + "/MAPS/TILESETS/" ) ) { return; }
-        if( !checkOrCreatePath( p_path + "/MAPS/BLOCKSETS/" ) ) { return; }
-        if( !checkOrCreatePath( p_path + "/DATA/MAP_DATA/" ) ) { return; }
         FSROOT_PATH   = p_path;
         MAP_PATH      = FSROOT_PATH + "/MAPS/";
         TILESET_PATH  = FSROOT_PATH + "/MAPS/TILESETS/";
@@ -1744,55 +2026,7 @@ namespace UI {
         }
 
         // load all tilesets and blocksets
-        for( auto& p : fs::directory_iterator( BLOCKSET_PATH ) ) {
-            if( !p.is_regular_file( ec ) || ec ) { continue; }
-
-            u8 bsname;
-            if( 1 != sscanf( p.path( ).filename( ).c_str( ), BLOCKSET_FORMAT.c_str( ), &bsname ) ) {
-                continue;
-            }
-
-            blockSetInfo res;
-            FILE*        f = fopen( p.path( ).c_str( ), "r" );
-            if( !DATA::readBlocks( f, res.m_blockSet.m_blocks ) ) {
-                fprintf( stderr, "[LOG] Reading block set %hu failed.\n", bsname );
-                continue;
-            }
-            fclose( f );
-
-            // read corresponding tileset
-            auto tspath = fs::path( TILESET_PATH ) / ( std::to_string( bsname ) + ".ts" );
-            f           = fopen( tspath.c_str( ), "r" );
-            if( !DATA::readTiles( f, res.m_tileSet.m_tiles ) ) {
-                fprintf( stderr, "[LOG] Reading tile set %hu failed.\n", bsname );
-                continue;
-            }
-            fclose( f );
-
-            // read corresponding palettes
-            auto palpath = fs::path( PALETTE_PATH ) / ( std::to_string( bsname ) + ".p2l" );
-            f            = fopen( palpath.c_str( ), "r" );
-            if( !DATA::readPal( f, res.m_pals, 8 * 5 ) ) {
-                fprintf( stderr, "[LOG] Reading palette %hu failed.\n", bsname );
-                continue;
-            }
-            fclose( f );
-
-            // fprintf( stderr, "[LOG] Loaded blockset %hhu.\n", bsname );
-
-            _blockSets[ bsname ] = res;
-            _blockSetNames.insert( bsname );
-        }
-
-        _disableRedraw = true;
-        auto bsnames   = std::vector<Glib::ustring>( );
-
-        for( auto bsname : _blockSetNames ) {
-            bsnames.push_back( std::to_string( bsname ) );
-            _blockSets[ bsname ].m_stringListItem = bsnames.size( ) - 1;
-        }
-        _mapBankStrList->splice( 0, _mapBankStrList->get_n_items( ), bsnames );
-        _disableRedraw = false;
+        if( readTileSets( ) ) { return; }
 
         addFsRootToRecent( p_path );
     }
@@ -1833,7 +2067,7 @@ namespace UI {
 
     void root::createMapBank( u16 p_bank, u8 p_sizeY, u8 p_sizeX ) {
         if( !_fsRootLoaded ) {
-            fprintf( stderr, "[ERROR] No FSROOT loaded. Won't create a new map bank.\n" );
+            message_log( "createMapBank", "No FSROOT loaded. Won't create a new map bank." );
             return;
         }
         if( _mapBanks.count( p_bank ) ) {
@@ -1847,6 +2081,64 @@ namespace UI {
         loadMap( p_bank, 0, 0 );
     }
 
+    void root::createBlockSet( u8 p_tsIdx ) {
+        if( _blockSets.count( p_tsIdx ) ) { return; }
+
+        _blockSetNames.insert( p_tsIdx );
+        _blockSets[ p_tsIdx ] = blockSetInfo( );
+
+        auto bsnames = std::vector<Glib::ustring>( );
+
+        for( auto bsname : _blockSetNames ) {
+            bsnames.push_back( std::to_string( bsname ) );
+            _blockSets[ bsname ].m_stringListItem = bsnames.size( ) - 1;
+        }
+        _mapBankStrList->splice( 0, _mapBankStrList->get_n_items( ), bsnames );
+
+        markTileSetsChanged( );
+    }
+
+    void root::editTileSets( u8 p_ts1, u8 p_ts2 ) {
+        if( !_fsRootLoaded ) {
+            message_log( "editTileSets", "No FSROOT loaded. Won't load any tile sets." );
+            return;
+        }
+
+        message_log( "editTileSets",
+                     "Loading tile set editor for " + std::to_string( p_ts1 ) + "|"
+                         + std::to_string( p_ts2 ) + ".",
+                     LOGLEVEL_STATUS );
+
+        if( _selectedBank != -1 ) {
+            _mapBanks[ _selectedBank ].m_widget->unselect( );
+            onUnloadMap( _selectedBank, _selectedMapY, _selectedMapX );
+        }
+        _selectedBank = -1;
+        switchContext( TILE_EDITOR );
+
+        setTitle( "", "Tile Set " + std::to_string( p_ts1 ) + "|" + std::to_string( p_ts2 ),
+                  FSROOT_PATH );
+
+        // check if block sets exist
+
+        if( !_blockSetNames.count( p_ts1 ) ) { createBlockSet( p_ts1 ); }
+        if( !_blockSetNames.count( p_ts2 ) ) { createBlockSet( p_ts2 ); }
+
+        // compute block set
+
+        auto ts = DATA::tileSet<2>( );
+        buildTileSet( &ts, p_ts1, p_ts2 );
+        DATA::palette pals[ 16 * 5 ] = { 0 };
+        buildPalette( pals, p_ts1, p_ts2 );
+
+        _currentBlockset1
+            = DATA::mapBlockAtom::computeBlockSet( &_blockSets[ p_ts1 ].m_blockSet, &ts );
+        _currentBlockset2
+            = DATA::mapBlockAtom::computeBlockSet( &_blockSets[ p_ts2 ].m_blockSet, &ts );
+
+        // TODO
+    }
+
     void root::collapseMapBankBar( bool p_collapse ) {
         for( auto& i : _mapBanks ) {
             if( i.second.m_widget ) { i.second.m_widget->collapse( p_collapse ); }
@@ -1857,6 +2149,7 @@ namespace UI {
             icon.set_from_icon_name( "view-fullscreen-symbolic" );
             _collapseMapBanksButton->set_child( icon );
             _mapBankBarLabel.hide( );
+            _sbTileSetBarLabel.hide( );
         } else {
             auto icon = Gtk::Image( );
             icon.set_from_icon_name( "view-restore-symbolic" );
@@ -1869,6 +2162,7 @@ namespace UI {
             hbox.append( label );
             _collapseMapBanksButton->set_child( hbox );
             _mapBankBarLabel.show( );
+            _sbTileSetBarLabel.show( );
         }
         _mapBankBarCollapsed = p_collapse;
     }
@@ -2013,6 +2307,10 @@ namespace UI {
         }
     }
 
+    void root::markTileSetsChanged( mapBank::status p_newStatus ) {
+        if( _editTileSet ) { _editTileSet->setStatus( p_newStatus ); }
+    }
+
     void root::markBankChanged( u16 p_bank, mapBank::status p_newStatus ) {
         if( !_mapBanks.count( p_bank ) ) { return; }
         if( _mapBanks[ p_bank ].m_widget ) {
@@ -2026,12 +2324,12 @@ namespace UI {
 
         // although it shouldn't, bs1 can use tiles or palettes from ts2
         auto ts = DATA::tileSet<2>( );
-        buildTileSet( &ts );
+        buildTileSet( &ts, p_newTS, mp.m_data.m_tIdx2 );
         DATA::palette pals[ 16 * 5 ] = { 0 };
-        buildPalette( pals );
+        buildPalette( pals, p_newTS, mp.m_data.m_tIdx2 );
 
-        _currentBlockset1 = DATA::mapBlockAtom::computeBlockSet(
-            &_blockSets[ mp.m_data.m_tIdx1 ].m_blockSet, &ts );
+        _currentBlockset1
+            = DATA::mapBlockAtom::computeBlockSet( &_blockSets[ p_newTS ].m_blockSet, &ts );
         _currentBlockset2 = DATA::mapBlockAtom::computeBlockSet(
             &_blockSets[ mp.m_data.m_tIdx2 ].m_blockSet, &ts );
 
@@ -2054,14 +2352,14 @@ namespace UI {
         auto& mp = _mapBanks[ _selectedBank ].m_bank->m_slices[ _selectedMapY ][ _selectedMapX ];
 
         auto ts = DATA::tileSet<2>( );
-        buildTileSet( &ts );
+        buildTileSet( &ts, mp.m_data.m_tIdx1, p_newTS );
         DATA::palette pals[ 16 * 5 ] = { 0 };
-        buildPalette( pals );
+        buildPalette( pals, mp.m_data.m_tIdx1, p_newTS );
 
         _currentBlockset1 = DATA::mapBlockAtom::computeBlockSet(
             &_blockSets[ mp.m_data.m_tIdx1 ].m_blockSet, &ts );
-        _currentBlockset2 = DATA::mapBlockAtom::computeBlockSet(
-            &_blockSets[ mp.m_data.m_tIdx2 ].m_blockSet, &ts );
+        _currentBlockset2
+            = DATA::mapBlockAtom::computeBlockSet( &_blockSets[ p_newTS ].m_blockSet, &ts );
 
         _ts1widget.set( _currentBlockset1, pals, _blockSetWidth );
         _ts2widget.set( _currentBlockset2, pals, _blockSetWidth );
@@ -2328,8 +2626,10 @@ namespace UI {
         _saveMenuButton->hide( );
         _loadMapLabel.hide( );
         _mapNotebook.hide( );
+        _tseNotebook.hide( );
         _ivScrolledWindow.hide( );
         _mainBox.hide( );
+        if( _editTileSet != nullptr ) { _editTileSet->unselect( ); }
         if( _saveButton != nullptr ) { _saveButton->hide( ); }
 
         switch( p_context ) {
@@ -2355,7 +2655,15 @@ namespace UI {
             _openMenuButton->show( );
             _saveMenuButton->show( );
             break;
+        case TILE_EDITOR:
+            _mainBox.show( );
+            _tseNotebook.show( );
+            if( _saveButton != nullptr ) { _saveButton->show( ); }
+            if( _editTileSet != nullptr ) { _editTileSet->select( ); }
 
+            // TODO: actions
+
+            break;
         default:
             setTitle( );
             _ivScrolledWindow.show( );

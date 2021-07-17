@@ -34,8 +34,6 @@ namespace UI {
         Gtk::Button                      _loadMapButton{ "Load" };
 
       protected:
-        // mapBank( const std::string& p_yicon = "go-down", const std::string& p_xicon = "go-next"
-        // );
         mapBank( const std::string& p_yicon = "view-more-symbolic",
                  const std::string& p_xicon = "content-loading-symbolic" );
 
@@ -144,6 +142,23 @@ namespace UI {
             _loadMapButton.signal_clicked( ).connect( [ this, p_callback ]( ) {
                 p_callback( _nameEntry.get_value_as_int( ), _mapYEntry.get_value_as_int( ),
                             _mapXEntry.get_value_as_int( ) );
+            } );
+        }
+    };
+
+    class editTileSet : public mapBank {
+        // mapy: ts0; mapx: ts1
+      public:
+        editTileSet( );
+
+        inline ~editTileSet( ) override {
+        }
+
+        inline void connect( const std::function<void( u8, u8 )>& p_callback ) {
+            if( !p_callback ) { return; }
+
+            _loadMapButton.signal_clicked( ).connect( [ this, p_callback ]( ) {
+                p_callback( _mapYEntry.get_value_as_int( ), _mapXEntry.get_value_as_int( ) );
             } );
         }
     };

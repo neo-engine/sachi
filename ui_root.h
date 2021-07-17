@@ -79,7 +79,7 @@ namespace UI {
         struct blockSetInfo {
             DATA::blockSet<1> m_blockSet;
             DATA::tileSet<1>  m_tileSet;
-            DATA::palette     m_pals[ 8 * 5 ];
+            DATA::palette     m_pals[ 8 * DAYTIMES ];
             u8                m_stringListItem = 0;
         };
 
@@ -113,6 +113,7 @@ namespace UI {
             NONE,        // nothing loaded
             FSROOT_NONE, // fsroot loaded, but nothing else
             MAP_EDITOR,  // map bank loaded and map visible
+            TILE_EDITOR, // tile set editor loaded
         };
 
         //////////////////////////////////////////////////////////////////////////////////
@@ -183,7 +184,19 @@ namespace UI {
 
         //////////////////////////////////////////////////////////////////////////////////
         //
-        // map banks
+        // side bar -> tile set editor
+        //
+        //////////////////////////////////////////////////////////////////////////////////
+
+        Gtk::Label _sbTileSetBarLabel;
+        Gtk::Box   _sbTileSetBox;
+        s16        _sbTileSetSel1 = 0, _sbTileSetSel2 = 1;
+
+        std::shared_ptr<editTileSet> _editTileSet;
+
+        //////////////////////////////////////////////////////////////////////////////////
+        //
+        // side bar -> map bank / map chooser
         //
         //////////////////////////////////////////////////////////////////////////////////
 
@@ -194,6 +207,16 @@ namespace UI {
         std::map<u16, mapBankInfo> _mapBanks; // bank -> bankinfo
         int                        _selectedBank = -1;
         s16                        _selectedMapX = -1, _selectedMapY = -1;
+
+        //////////////////////////////////////////////////////////////////////////////////
+        //
+        // tile set editor
+        //
+        //////////////////////////////////////////////////////////////////////////////////
+
+        Gtk::Notebook _tseNotebook; // main container for anything tile set editor related
+
+        std::vector<std::shared_ptr<Gtk::ToggleButton>> _tseTileModeToggles;
 
         //////////////////////////////////////////////////////////////////////////////////
         //
@@ -229,6 +252,8 @@ namespace UI {
 
         u8 _bankOverviewSpacing = 2;
         u8 _bankOverviewScale   = 3;
+
+        u8 _tileSetMode = DATA::TILEMODE_DEFAULT;
 
         DATA::mapBlockAtom _currentlySelectedBlock = DATA::mapBlockAtom( );
 
@@ -299,6 +324,16 @@ namespace UI {
         //
         //////////////////////////////////////////////////////////////////////////////////
 
+        void initActions( );
+        void initHeaderBar( );
+        void initSideBar( );
+
+        void initWelcome( );
+        void initTileSetEditor( );
+        void initMapEditor( );
+
+        void initEvents( );
+
         /*
          * @brief: Sets the current main working context, enables/disables actions and
          * hides/shows the corresponding widgets.
@@ -355,6 +390,38 @@ namespace UI {
 
         //////////////////////////////////////////////////////////////////////////////////
         //
+        // Tile set editor
+        //
+        //////////////////////////////////////////////////////////////////////////////////
+
+        /*
+         * @brief: Creates a new block/tile/palette set with the specified index.
+         */
+        void createBlockSet( u8 p_tsIdx );
+
+        /*
+         * @brief: Loads the tile set editing UI and the combined tile set of p_ts1 and
+         * p_ts2 in particular.
+         */
+        void editTileSets( u8 p_ts1, u8 p_ts2 );
+
+        /*
+         * @brief: Sets the status of the edit tile set widget to the specified status,
+         * resulting in the TS being highlighted in the sidebar.
+         */
+        void markTileSetsChanged( mapBank::status p_newStatus
+                                  = mapBank::status::STATUS_EDITED_UNSAVED );
+
+        /*
+         * @brief: Sets the tile set mode (single file per ts/bs/pal or one combined file
+         * for everything)
+         */
+        inline void setTileSetMode( u8 p_mode ) {
+            _tileSetMode = p_mode;
+        }
+
+        //////////////////////////////////////////////////////////////////////////////////
+        //
         // Map editor
         //
         //////////////////////////////////////////////////////////////////////////////////
@@ -381,7 +448,19 @@ namespace UI {
             }
         }
 
-        // Map IO
+        //  IO
+
+        /*
+         * @brief: Reads all tile / block / palette sets from disk; first looks for a
+         * combined tile set bank ("MAP_PATH/tileset.tsb"), then checks the directories
+         * "TILESET_PATH", "BLOCKSET_PATH" and "PALETTE_PATH".
+         */
+        bool readTileSets( );
+
+        /*
+         * @brief: Writes all tile / block / palette sets to disk.
+         */
+        bool writeTileSets( );
 
         /*
          * @brief: Writes the specified map slice to the FS.

@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <string>
 namespace fs = std::filesystem;
+using namespace std::string_literals;
 
 #define conv( a )    ( ( u8 )( (a) *31 / 255 ) )
 #define revconv( a ) ( ( (a) *255 / 31 ) )
@@ -28,9 +29,12 @@ extern std::string BLOCKSET_PATH;
 extern std::string PALETTE_PATH;
 extern std::string MAPDATA_PATH;
 
+constexpr u8 DAYTIMES = 5;
+
 constexpr u8 MAP_SIZE = 32;
 
 constexpr s64 MAX_MAPBANK_NAME = 99;
+constexpr s64 MAX_TILESET_NAME = 255;
 constexpr u8  MAX_MAPY         = 255;
 
 const std::string MAPNAME_FORMAT  = "%hhu_%hhu.map";

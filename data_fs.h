@@ -299,6 +299,13 @@ namespace DATA {
         char m_data[ 200 ][ NUM_LANGUAGES ];
     };
 
+    struct blockSetBankHeader {
+        u8  m_blockSetCount = 0;        // number of block sets
+        u8  m_dayTimeCount  = DAYTIMES; // number of extra daytime palettes per palette
+        u32 m_1 : 16        = 0;
+        u32 m_2 : 32        = 0;
+    };
+
     size_t read( FILE* p_stream, void* p_buffer, size_t p_size, size_t p_count );
     bool   readNop( FILE* p_file, u32 p_cnt );
 
@@ -319,6 +326,10 @@ namespace DATA {
                               u16 p_y );
 
     bool readMapBank( FILE* p_mapFile, mapBankInfo* p_info, mapBank* p_out );
+
+    bool writeTiles( FILE* p_file, const tile* p_tileSet, u16 p_startIdx = 0, u16 p_size = 512 );
+    bool writePal( FILE* p_file, const palette* p_palette, u8 p_count = 6 );
+    bool writeBlocks( FILE* p_file, const block* p_tileSet, u16 p_startIdx = 0, u16 p_size = 512 );
 
     bool writeMapData( FILE* p_file, const mapData* p_data, bool p_close = true );
     bool writeMapSlice( FILE* p_mapFile, const mapSlice* p_map, bool p_close = true );

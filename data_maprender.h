@@ -393,6 +393,9 @@ namespace DATA {
         }
     };
 
+    constexpr u8 TILEMODE_DEFAULT  = 0;
+    constexpr u8 TILEMODE_COMBINED = 1;
+
     void renderTile( const tile* p_tile, const palette* p_pal, bool p_flipX, bool p_flipY,
                      bitmap* p_out, u32 p_x = 0, u32 p_y = 0, u16 p_scale = 1 );
     void renderBlock( const block* p_block, const tileSet<>* p_tiles,
