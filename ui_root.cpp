@@ -2534,6 +2534,8 @@ namespace UI {
             _mapBanks[ _selectedBank ].m_widget->setSizeY( _selectedMapY );
             _mapBanks[ _selectedBank ].m_bank->m_slices.push_back( std::vector<DATA::mapSlice>(
                 _mapBanks[ _selectedBank ].getSizeX( ) + 1, DATA::mapSlice( ) ) );
+            _mapBanks[ _selectedBank ].m_bank->m_mapData.push_back( std::vector<DATA::mapData>(
+                _mapBanks[ _selectedBank ].getSizeX( ) + 1, DATA::mapData( ) ) );
 
             _mapBanks[ _selectedBank ].m_computedBank->push_back(
                 std::vector<DATA::computedMapSlice>( _mapBanks[ _selectedBank ].getSizeX( ) + 1,
@@ -2547,6 +2549,7 @@ namespace UI {
             _mapBanks[ _selectedBank ].m_widget->setSizeX( _selectedMapX );
             for( u8 y = 0; y <= _mapBanks[ _selectedBank ].getSizeY( ); ++y ) {
                 _mapBanks[ _selectedBank ].m_bank->m_slices[ y ].push_back( DATA::mapSlice( ) );
+                _mapBanks[ _selectedBank ].m_bank->m_mapData[ y ].push_back( DATA::mapData( ) );
                 ( *_mapBanks[ _selectedBank ].m_computedBank )[ y ].push_back(
                     DATA::computedMapSlice( ) );
             }

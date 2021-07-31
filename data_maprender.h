@@ -135,7 +135,7 @@ namespace DATA {
 
         u8 m_tIdx1 = 0;
         u32 : 24;
-        u8 m_tIdx2 = 0;
+        u8 m_tIdx2 = 1;
         u32 : 24;
 
         u8 m_borderSizeX = 0; // ignored / assumed to be 0
@@ -391,6 +391,40 @@ namespace DATA {
         constexpr mapBankInfo( u8 p_sizeX = 0, u8 p_sizeY = 0, u8 p_mapMode = MAPMODE_DEFAULT )
             : m_sizeX( p_sizeX ), m_sizeY( p_sizeY ), m_mapMode( p_mapMode ) {
         }
+    };
+
+    constexpr u8 MAX_MAP_X    = 30;
+    constexpr u8 MAX_MAP_Y    = 20;
+    constexpr u8 MAX_FLY_POS  = 16;
+    constexpr u8 MAX_FLY_INFO = 16;
+
+    struct flyPos {
+        u8  m_activationFlag;
+        u8  m_deactivationFlag;
+        u8  m_targetBank;
+        u8  m_targetZ : 4;
+        u8  m_targetFlyBank : 4;
+        u16 m_targetX;
+        u16 m_targetY;
+    };
+
+    struct flyInfo {
+        u8 m_bank;   // map bank this fly map is corresponding to
+        u8 m_picIdx; // picture index
+        u8 m_dimX;
+        u8 m_dimY;
+        u8 m_mapTopX; // on-screen pos of top left corner of the map bank
+        u8 m_mapTopY;
+        u8 m_flyPosCount;
+        u8 : 8;
+
+        u8     m_flyPosIdx[ MAX_MAP_Y ][ MAX_MAP_X ]; // <= 2 fly pos per map
+        u16    m_mapLocations[ 4 * MAX_MAP_Y ][ 4 * MAX_MAP_X ];
+        flyPos m_flyPos[ MAX_FLY_POS ];
+    };
+
+    struct flyInfoBank {
+        flyInfo infos[ MAX_FLY_INFO ];
     };
 
     constexpr u8 TILEMODE_DEFAULT  = 0;

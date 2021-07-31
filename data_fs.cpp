@@ -5,6 +5,7 @@
 
 #include "data_fs.h"
 #include "data_maprender.h"
+#include "log.h"
 
 namespace DATA {
     char TMP_BUFFER[ 100 ];
@@ -128,7 +129,7 @@ namespace DATA {
     }
 
     bool writeMapData( FILE* p_file, const mapData* p_data, bool p_close ) {
-        if( !p_file ) { return false; }
+        if( !p_file || !p_data ) { return false; }
         fwrite( p_data, sizeof( mapData ), 1, p_file );
         if( p_close ) { fclose( p_file ); }
         return true;
@@ -221,11 +222,34 @@ namespace DATA {
     bool writeMapBank( FILE* p_mapFile, const mapBankInfo* p_info, const mapBank* p_bank ) {
         if( p_mapFile == 0 ) return false;
         if( fseek( p_mapFile, 0, SEEK_SET ) ) { return false; }
+
+        if( p_info->m_sizeY + 1LU != p_bank->m_slices.size( )
+            || p_info->m_sizeY + 1LU != p_bank->m_mapData.size( ) ) {
+            message_error( "writeMapBank",
+                           std::string( "Writing map bank failed. Should have height " )
+                               + std::to_string( p_info->m_sizeY ) + ", but has heights "
+                               + std::to_string( p_bank->m_slices.size( ) ) + " and "
+                               + std::to_string( p_bank->m_mapData.size( ) ) + "." );
+            return false;
+        }
+
         fwrite( p_info, sizeof( mapBankInfo ), 1, p_mapFile );
 
         if( p_info->m_mapMode != MAPMODE_COMBINED ) { return true; }
 
         for( u8 y = 0; y <= p_info->m_sizeY; ++y ) {
+            if( p_info->m_sizeX + 1LU != p_bank->m_slices[ y ].size( )
+                || p_info->m_sizeX + 1LU != p_bank->m_mapData[ y ].size( ) ) {
+                message_error( "writeMapBank",
+                               std::string( "Writing map bank failed. Row " ) + std::to_string( y )
+                                   + " have width " + std::to_string( p_info->m_sizeX )
+                                   + ", but has heights "
+                                   + std::to_string( p_bank->m_slices[ y ].size( ) ) + " and "
+                                   + std::to_string( p_bank->m_mapData[ y ].size( ) ) + "." );
+
+                return false;
+            }
+
             for( u8 x = 0; x <= p_info->m_sizeX; ++x ) {
                 if( !writeMapSlice( p_mapFile, &p_bank->m_slices[ y ][ x ], false ) ) {
                     return false;
