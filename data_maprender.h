@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "data_bitmap.h"
-#include "data_locationNames.h"
 #include "defines.h"
 
 namespace DATA {
@@ -12,7 +11,9 @@ namespace DATA {
     constexpr u16 MAX_BLOCKS_PER_TILE_SET = 512;
     constexpr u8  MAX_MOVEMENTS           = 64;
 
-    constexpr u16 BLOCK_SIZE = 16;
+    constexpr u16 BLOCK_SIZE   = 16;
+    constexpr u16 BLOCK_LAYERS = 2;
+    constexpr u16 TILE_SIZE    = BLOCK_SIZE / 2;
 
     constexpr u16 SIZE          = 32;
     constexpr s16 dir[ 4 ][ 2 ] = { { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 } };
@@ -59,20 +60,22 @@ namespace DATA {
 
     class computedBlock {
       public:
-        computedBlockAtom m_top[ 2 ][ 2 ] = { computedBlockAtom( ) };
-        u8                m_topbehave     = 0;
+        computedBlockAtom m_top[ BLOCK_SIZE / TILE_SIZE ][ BLOCK_SIZE / TILE_SIZE ]
+            = { computedBlockAtom( ) };
+        u8 m_topbehave = 0;
 
-        computedBlockAtom m_bottom[ 2 ][ 2 ] = { computedBlockAtom( ) };
-        u8                m_bottombehave     = 0;
+        computedBlockAtom m_bottom[ BLOCK_SIZE / TILE_SIZE ][ BLOCK_SIZE / TILE_SIZE ]
+            = { computedBlockAtom( ) };
+        u8 m_bottombehave = 0;
     };
 
     class block {
       public:
-        blockAtom m_top[ 2 ][ 2 ] = { blockAtom( ) };
-        u8        m_topbehave     = 0;
+        blockAtom m_top[ BLOCK_SIZE / TILE_SIZE ][ BLOCK_SIZE / TILE_SIZE ] = { blockAtom( ) };
+        u8        m_topbehave                                               = 0;
 
-        blockAtom m_bottom[ 2 ][ 2 ] = { blockAtom( ) };
-        u8        m_bottombehave     = 0;
+        blockAtom m_bottom[ BLOCK_SIZE / TILE_SIZE ][ BLOCK_SIZE / TILE_SIZE ] = { blockAtom( ) };
+        u8        m_bottombehave                                               = 0;
 
         inline computedBlock compute( const tileSet<2>* p_tiles ) const {
             auto res           = computedBlock( );
@@ -459,88 +462,7 @@ namespace DATA {
         auto searoutecol = pixel( 7, 211, 255, 100 );
         auto citycol     = pixel( 255, 68, 119, 100 );
         auto specialcol  = pixel( 0, 255, 0, 100 );
-
-        switch( p_loc ) {
-        case L_METEOR_FALLS:
-        case L_RUSTURF_TUNNEL:
-        case L_DESERT_RUINS:
-        case L_GRANITE_CAVE:
-        case L_PETALBURG_WOODS:
-        case L_MT_CHIMNEY:
-        case L_JAGGED_PASS:
-        case L_FIERY_PATH:
-        case L_MT_PYRE:
-        case L_TEAM_AQUA_HIDEOUT:
-        case L_SEAFLOOR_CAVERN:
-        case L_CAVE_OF_ORIGIN:
-        case L_VICTORY_ROAD3:
-        case L_SHOAL_CAVE:
-        case L_NEW_MAUVILLE:
-        case L_SEA_MAUVILLE:
-        case L_ISLAND_CAVE:
-        case L_ANCIENT_TOMB:
-        case L_SEALED_CHAMBER:
-        case L_SCORCHED_SLAB:
-        case L_TEAM_MAGMA_HIDEOUT:
-        case L_SKY_PILLAR:
-        case L_BATTLE_FRONTIER2:
-        case L_SOUTHERN_ISLAND:
-        case L_SS_TIDAL:
-        case L_SAFARI_ZONE2:
-        case L_MIRAGE_FOREST:
-        case L_MIRAGE_CAVE:
-        case L_MIRAGE_ISLAND:
-        case L_MIRAGE_MOUNTAIN:
-        case L_TRACKLESS_FOREST:
-        case L_PATHLESS_PLAIN:
-        case L_NAMELESS_CAVERN:
-        case L_FABLED_CAVE:
-        case L_GNARLED_DEN:
-        case L_CRESCENT_ISLE:
-        case L_SECRET_ISLET:
-        case L_SECRET_SHORE:
-        case L_SECRET_MEADOW:
-        case L_HIDDEN_LAKE:
-        case L_POKEMON_LEAGUE2:
-        case L_CRYSTAL_CAVERN: return specialcol;
-        case L_LITTLEROOT_TOWN:
-        case L_OLDALE_TOWN:
-        case L_DEWFORD_TOWN:
-        case L_LAVARIDGE_TOWN:
-        case L_FALLARBOR_TOWN:
-        case L_VERDANTURF_TOWN:
-        case L_PACIFIDLOG_TOWN:
-        case L_PETALBURG_CITY:
-        case L_SLATEPORT_CITY:
-        case L_MAUVILLE_CITY:
-        case L_RUSTBORO_CITY:
-        case L_FORTREE_CITY:
-        case L_LILYCOVE_CITY:
-        case L_MOSSDEEP_CITY:
-        case L_SOOTOPOLIS_CITY:
-        case L_EVER_GRANDE_CITY:
-        case L_NEW_LILYCOVE_CITY:
-        case L_BLOSSAND_TOWN:
-        case L_CLIFFELTA_CITY: return citycol;
-        case L_ROUTE_105:
-        case L_ROUTE_106:
-        case L_ROUTE_107:
-        case L_ROUTE_108:
-        case L_ROUTE_109:
-        case L_ROUTE_122:
-        case L_ROUTE_124:
-        case L_ROUTE_125:
-        case L_ROUTE_126:
-        case L_ROUTE_127:
-        case L_ROUTE_128:
-        case L_ROUTE_129:
-        case L_ROUTE_130:
-        case L_ROUTE_131:
-        case L_ROUTE_132:
-        case L_ROUTE_133:
-        case L_ROUTE_134:
-        case L_ROUTE_137: return searoutecol;
-        default: return routecol;
-        }
+        // TODO
+        return routecol;
     }
 } // namespace DATA

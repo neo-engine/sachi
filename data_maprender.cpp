@@ -10,7 +10,6 @@
 #include <png.h>
 #include "data_bitmap.h"
 #include "data_fs.h"
-#include "data_locationNames.h"
 #include "data_maprender.h"
 
 std::string MAP_PATH;

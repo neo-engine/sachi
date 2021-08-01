@@ -28,6 +28,7 @@
 #include <gtkmm/window.h>
 
 #include "data_maprender.h"
+#include "ui_editableBlock.h"
 #include "ui_mapBank.h"
 #include "ui_mapBankOverview.h"
 #include "ui_mapSlice.h"
@@ -215,8 +216,13 @@ namespace UI {
         //////////////////////////////////////////////////////////////////////////////////
 
         Gtk::Notebook _tseNotebook; // main container for anything tile set editor related
+        std::shared_ptr<editableBlock> _editBlock;
+
+        computedMapSlice _tsets1widget, _tsets2widget;
 
         std::vector<std::shared_ptr<Gtk::ToggleButton>> _tseTileModeToggles;
+
+        u16 _tseSelectedBlockIdx;
 
         //////////////////////////////////////////////////////////////////////////////////
         //
@@ -609,6 +615,9 @@ namespace UI {
          * @brief: Handles clicks of blocks of the tile/block set widget.
          */
         void onTSClicked( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY, u8 p_ts );
+
+        void onTSETSClicked( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY,
+                             u8 p_ts );
 
         void onMapDragStart( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY,
                              s8 p_mapX, s8 p_mapY, bool p_allowEdit = true );

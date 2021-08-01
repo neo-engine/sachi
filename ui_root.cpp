@@ -359,12 +359,90 @@ namespace UI {
         _tseNotebook.set_expand( );
         auto tseMainBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
         tseMainBox.set_margin_top( MARGIN );
+
+        auto tseScrolledWindow0 = Gtk::ScrolledWindow( );
+        tseScrolledWindow0.set_child( tseMainBox );
+        tseScrolledWindow0.set_policy( Gtk::PolicyType::AUTOMATIC, Gtk::PolicyType::NEVER );
+
         auto tseSettingsBox = Gtk::Box( Gtk::Orientation::VERTICAL );
         tseSettingsBox.set_margin( MARGIN );
 
-        _tseNotebook.append_page( tseMainBox, "Tile Set _Editor", true );
+        _tseNotebook.append_page( tseScrolledWindow0, "Tile Set _Editor", true );
         _tseNotebook.append_page( tseSettingsBox, "Tile Set Settin_gs", true );
         _mainBox.append( _tseNotebook );
+
+        // ts editor
+
+        auto ehbox1f1 = Gtk::Frame( "Blocks" );
+        ehbox1f1.set_label_align( Gtk::Align::CENTER );
+
+        tseMainBox.append( ehbox1f1 );
+        tseMainBox.set_spacing( MARGIN );
+        tseMainBox.set_margin( MARGIN );
+
+        // block chooser
+
+        auto eboxv1 = Gtk::Box( Gtk::Orientation::VERTICAL );
+        ehbox1f1.set_child( eboxv1 );
+        eboxv1.set_margin( MARGIN );
+        eboxv1.set_vexpand( true );
+
+        auto tseScrolledWindow1 = Gtk::ScrolledWindow( );
+        tseScrolledWindow1.set_child( _tsets1widget );
+        tseScrolledWindow1.set_margin( MARGIN );
+        tseScrolledWindow1.set_vexpand( );
+        tseScrolledWindow1.set_halign( Gtk::Align::CENTER );
+        tseScrolledWindow1.set_policy( Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC );
+        eboxv1.append( tseScrolledWindow1 );
+
+        _tsets1widget.connectClick(
+            [ this ]( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY ) {
+                onTSETSClicked( p_button, p_blockX, p_blockY, 0 );
+            } );
+
+        auto tseScrolledWindow2 = Gtk::ScrolledWindow( );
+        tseScrolledWindow2.set_child( _tsets2widget );
+        tseScrolledWindow2.set_margin( MARGIN );
+        tseScrolledWindow2.set_vexpand( );
+        tseScrolledWindow2.set_halign( Gtk::Align::CENTER );
+        tseScrolledWindow2.set_policy( Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC );
+        eboxv1.append( tseScrolledWindow2 );
+
+        _tsets2widget.connectClick(
+            [ this ]( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY ) {
+                onTSETSClicked( p_button, p_blockX, p_blockY, 1 );
+            } );
+
+        auto eboxv2 = Gtk::Box( Gtk::Orientation::VERTICAL );
+        eboxv2.set_spacing( MARGIN );
+        tseMainBox.append( eboxv2 );
+
+        // block being edited
+        _editBlock = std::make_shared<editableBlock>( );
+        eboxv2.append( *_editBlock );
+
+        // current palette selector
+
+        // ts / palette
+        auto eboxh1 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        eboxv2.append( eboxh1 );
+        eboxh1.set_spacing( MARGIN );
+
+        // ts
+        auto ehbox1f2 = Gtk::Frame( "Tiles" );
+        ehbox1f2.set_label_align( Gtk::Align::CENTER );
+        auto eboxv3 = Gtk::Box( Gtk::Orientation::VERTICAL );
+        eboxv3.set_expand( true );
+        eboxh1.append( ehbox1f2 );
+        ehbox1f2.set_child( eboxv3 );
+
+        // palette
+        auto ehbox1f3 = Gtk::Frame( "Palette" );
+        ehbox1f3.set_label_align( Gtk::Align::CENTER );
+        auto eboxv4 = Gtk::Box( Gtk::Orientation::VERTICAL );
+        eboxv4.set_vexpand( true );
+        eboxh1.append( ehbox1f3 );
+        ehbox1f3.set_child( eboxv4 );
 
         // ts settings
         // - tile set mode
@@ -488,7 +566,7 @@ namespace UI {
         bsselbox.set_margin( MARGIN );
         bsselbox.set_halign( Gtk::Align::CENTER );
 
-        _blockSetFrame = Gtk::Frame( "Blocksets" );
+        _blockSetFrame = Gtk::Frame( "Tile Sets" );
         _blockSetFrame.set_margin_start( MARGIN );
         _blockSetFrame.set_label_align( Gtk::Align::CENTER );
         mapEditorMainBox.append( _blockSetFrame );
@@ -1851,6 +1929,22 @@ namespace UI {
         updateSelectedBlock( { u16( block + p_ts * DATA::MAX_BLOCKS_PER_TILE_SET ), 0 } );
     }
 
+    void root::onTSETSClicked( UI::mapSlice::clickType, u16 p_blockX, u16 p_blockY, u8 p_ts ) {
+        u16 block = p_blockY * _blockSetWidth + p_blockX;
+
+        if( p_ts == 0 ) {
+            _tsets1widget.selectBlock( block );
+            _tsets2widget.selectBlock( -1 );
+            _editBlock->setBlock( _currentBlockset1[ block ].first );
+        } else {
+            _tsets1widget.selectBlock( -1 );
+            _tsets2widget.selectBlock( block );
+            _editBlock->setBlock( _currentBlockset2[ block ].first );
+        }
+
+        _tseSelectedBlockIdx = block + p_ts * DATA::MAX_BLOCKS_PER_TILE_SET;
+    }
+
     bool root::checkOrCreatePath( const std::string& p_path ) {
         std::error_code ec;
         auto            p = fs::path( p_path, fs::path::generic_format );
@@ -2136,7 +2230,16 @@ namespace UI {
         _currentBlockset2
             = DATA::mapBlockAtom::computeBlockSet( &_blockSets[ p_ts2 ].m_blockSet, &ts );
 
-        // TODO
+        _tsets1widget.setScale( 2 * _blockScale );
+        _tsets2widget.setScale( 2 * _blockScale );
+        _tsets1widget.set( _currentBlockset1, pals, _blockSetWidth );
+        _tsets1widget.set( _currentBlockset1, pals, _blockSetWidth );
+        _tsets2widget.set( _currentBlockset2, pals, _blockSetWidth );
+        _tsets1widget.setDaytime( _currentDayTime );
+        _tsets2widget.setDaytime( _currentDayTime );
+        _tsets1widget.draw( );
+        _tsets2widget.draw( );
+        _editBlock->redraw( pals, _currentDayTime );
     }
 
     void root::collapseMapBankBar( bool p_collapse ) {
@@ -2144,6 +2247,7 @@ namespace UI {
             if( i.second.m_widget ) { i.second.m_widget->collapse( p_collapse ); }
         }
         _addMapBank->collapse( p_collapse );
+        _editTileSet->collapse( p_collapse );
         if( p_collapse ) {
             auto icon = Gtk::Image( );
             icon.set_from_icon_name( "view-fullscreen-symbolic" );
