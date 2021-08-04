@@ -420,6 +420,37 @@ namespace UI {
         // block being edited
         _editBlock = std::make_shared<editableBlock>( );
         eboxv2.append( *_editBlock );
+        _editBlock->connect(
+            [ this ]( u8 p_newMajBehave ) {
+                if( _tseSelectedBlockIdx > DATA::MAX_BLOCKS_PER_TILE_SET ) {
+                    auto blk = _tseSelectedBlockIdx - DATA::MAX_BLOCKS_PER_TILE_SET;
+                    printf( "Change from %hx to %hx\n",
+                            _currentBlockset2[ blk ].first.m_bottombehave, p_newMajBehave );
+                    _currentBlockset2[ blk ].first.m_bottombehave = p_newMajBehave;
+                    _blockSets[ _sbTileSetSel2 ].m_blockSet.m_blocks[ blk ].m_bottombehave
+                        = p_newMajBehave;
+                } else {
+                    auto blk                                      = _tseSelectedBlockIdx;
+                    _currentBlockset1[ blk ].first.m_bottombehave = p_newMajBehave;
+                    _blockSets[ _sbTileSetSel1 ].m_blockSet.m_blocks[ blk ].m_bottombehave
+                        = p_newMajBehave;
+                }
+                markTileSetsChanged( );
+            },
+            [ this ]( u8 p_newMinBehave ) {
+                if( _tseSelectedBlockIdx > DATA::MAX_BLOCKS_PER_TILE_SET ) {
+                    auto blk = _tseSelectedBlockIdx - DATA::MAX_BLOCKS_PER_TILE_SET;
+                    _currentBlockset2[ blk ].first.m_topbehave = p_newMinBehave;
+                    _blockSets[ _sbTileSetSel2 ].m_blockSet.m_blocks[ blk ].m_topbehave
+                        = p_newMinBehave;
+                } else {
+                    auto blk                                   = _tseSelectedBlockIdx;
+                    _currentBlockset1[ blk ].first.m_topbehave = p_newMinBehave;
+                    _blockSets[ _sbTileSetSel1 ].m_blockSet.m_blocks[ blk ].m_topbehave
+                        = p_newMinBehave;
+                }
+                markTileSetsChanged( );
+            } );
 
         // current palette selector
 
@@ -2239,6 +2270,8 @@ namespace UI {
         _tsets2widget.setDaytime( _currentDayTime );
         _tsets1widget.draw( );
         _tsets2widget.draw( );
+        _sbTileSetSel1 = p_ts1;
+        _sbTileSetSel2 = p_ts2;
         _editBlock->redraw( pals, _currentDayTime );
     }
 

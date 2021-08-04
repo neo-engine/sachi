@@ -222,7 +222,7 @@ namespace UI {
 
         std::vector<std::shared_ptr<Gtk::ToggleButton>> _tseTileModeToggles;
 
-        u16 _tseSelectedBlockIdx;
+        u16 _tseSelectedBlockIdx = 0;
 
         //////////////////////////////////////////////////////////////////////////////////
         //

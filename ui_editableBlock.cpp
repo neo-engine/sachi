@@ -281,7 +281,7 @@ namespace UI {
                                                  "0D",
                                                  "0E",
                                                  "0F",
-                                                 "10 Hide Player",
+                                                 "10 Hidden by Player",
                                                  "11",
                                                  "12",
                                                  "13",
@@ -693,11 +693,13 @@ namespace UI {
     }
 
     void editableBlock::setBlock( const DATA::computedBlock& p_block ) {
+        _noTrigger = true;
         _tiles[ 0 ].setTiles( p_block.m_top );
         _tiles[ 1 ].setTiles( p_block.m_bottom );
 
         _majorBehave.set_selected( p_block.m_bottombehave );
         _minorBehave.set_selected( p_block.m_topbehave );
+        _noTrigger = false;
     }
 
     void editableBlock::updateTile( u8 p_layer, u8 p_x, u8 p_y,

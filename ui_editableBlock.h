@@ -78,6 +78,8 @@ namespace UI {
         Gtk::DropDown _majorBehave;
         Gtk::DropDown _minorBehave;
 
+        bool _noTrigger = false;
+
         editableTiles _tiles[ DATA::BLOCK_LAYERS ];
 
       public:
@@ -96,14 +98,18 @@ namespace UI {
 
             _majorBehave.property_selected_item( ).signal_changed( ).connect(
                 [ this, p_majBehave ]( ) {
-                    if( _majorBehave.get_selected( ) == GTK_INVALID_LIST_POSITION ) { return; }
+                    if( _majorBehave.get_selected( ) == GTK_INVALID_LIST_POSITION || _noTrigger ) {
+                        return;
+                    }
                     try {
                         p_majBehave( _majorBehave.get_selected( ) );
                     } catch( ... ) { return; }
                 } );
             _minorBehave.property_selected_item( ).signal_changed( ).connect(
                 [ this, p_minBehave ]( ) {
-                    if( _minorBehave.get_selected( ) == GTK_INVALID_LIST_POSITION ) { return; }
+                    if( _minorBehave.get_selected( ) == GTK_INVALID_LIST_POSITION || _noTrigger ) {
+                        return;
+                    }
                     try {
                         p_minBehave( _minorBehave.get_selected( ) );
                     } catch( ... ) { return; }
