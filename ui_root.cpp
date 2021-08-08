@@ -453,6 +453,8 @@ namespace UI {
             } );
 
         // current palette selector
+        _currentTile = std::make_shared<tileInfo>( );
+        eboxv2.append( *_currentTile );
 
         // ts / palette
         auto eboxh1 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
@@ -1961,19 +1963,18 @@ namespace UI {
     }
 
     void root::onTSETSClicked( UI::mapSlice::clickType, u16 p_blockX, u16 p_blockY, u8 p_ts ) {
-        u16 block = p_blockY * _blockSetWidth + p_blockX;
+        u16 block            = p_blockY * _blockSetWidth + p_blockX;
+        _tseSelectedBlockIdx = block + p_ts * DATA::MAX_BLOCKS_PER_TILE_SET;
 
         if( p_ts == 0 ) {
             _tsets1widget.selectBlock( block );
             _tsets2widget.selectBlock( -1 );
-            _editBlock->setBlock( _currentBlockset1[ block ].first );
+            _editBlock->setBlock( _currentBlockset1[ block ].first, _tseSelectedBlockIdx );
         } else {
             _tsets1widget.selectBlock( -1 );
             _tsets2widget.selectBlock( block );
-            _editBlock->setBlock( _currentBlockset2[ block ].first );
+            _editBlock->setBlock( _currentBlockset2[ block ].first, _tseSelectedBlockIdx );
         }
-
-        _tseSelectedBlockIdx = block + p_ts * DATA::MAX_BLOCKS_PER_TILE_SET;
     }
 
     bool root::checkOrCreatePath( const std::string& p_path ) {
@@ -2273,6 +2274,14 @@ namespace UI {
         _sbTileSetSel1 = p_ts1;
         _sbTileSetSel2 = p_ts2;
         _editBlock->redraw( pals, _currentDayTime );
+
+        if( _tseSelectedBlockIdx < DATA::MAX_BLOCKS_PER_TILE_SET ) {
+            _tsets1widget.selectBlock( _tseSelectedBlockIdx );
+            _tsets2widget.selectBlock( -1 );
+        } else {
+            _tsets1widget.selectBlock( -1 );
+            _tsets2widget.selectBlock( _tseSelectedBlockIdx - DATA::MAX_BLOCKS_PER_TILE_SET );
+        }
     }
 
     void root::collapseMapBankBar( bool p_collapse ) {

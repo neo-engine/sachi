@@ -2,10 +2,12 @@
 
 #include <functional>
 
+#include <gtkmm/checkbutton.h>
 #include <gtkmm/dropdown.h>
 #include <gtkmm/frame.h>
 #include <gtkmm/gestureclick.h>
 #include <gtkmm/image.h>
+#include <gtkmm/label.h>
 #include <gtkmm/widget.h>
 
 #include "data_maprender.h"
@@ -70,6 +72,51 @@ namespace UI {
     };
 
     /*
+     * @brief: A widget to display the currently selected tile.
+     */
+    class tileInfo {
+      protected:
+        Gtk::Frame       _outerFrame;
+        Gtk::DropDown    _palette;
+        Gtk::CheckButton _flipX, _flipY;
+        Gtk::Label       _tileName;
+
+        DATA::computedBlockAtom     _tile;
+        std::shared_ptr<Gtk::Image> _tileImage = nullptr;
+
+        u16           _mapScale       = 4;
+        u8            _daytime        = 0;
+        DATA::palette _pals[ 5 * 16 ] = { };
+
+        bool _noTrigger      = false;
+        u16  _currentTileIdx = 0;
+
+      public:
+        tileInfo( );
+
+        virtual inline ~tileInfo( ) {
+        }
+
+        void setTile( const DATA::computedBlockAtom& p_tile, u16 p_tileIdx );
+
+        void setScale( u16 p_scale = 1 );
+
+        inline operator Gtk::Widget&( ) {
+            return _outerFrame;
+        }
+
+        void redraw( DATA::palette p_pals[ 5 * 16 ], u8 p_daytime );
+
+        inline DATA::computedBlockAtom getTile( ) const {
+            return _tile;
+        }
+
+        inline u16 getTileIdx( ) const {
+            return _currentTileIdx;
+        }
+    };
+
+    /*
      * @brief: A widget to display and edit a single block
      */
     class editableBlock {
@@ -77,8 +124,10 @@ namespace UI {
         Gtk::Frame    _outerFrame;
         Gtk::DropDown _majorBehave;
         Gtk::DropDown _minorBehave;
+        Gtk::Label    _blockName;
 
-        bool _noTrigger = false;
+        bool _noTrigger       = false;
+        u16  _currentBlockIdx = 0;
 
         editableTiles _tiles[ DATA::BLOCK_LAYERS ];
 
@@ -88,7 +137,7 @@ namespace UI {
         virtual inline ~editableBlock( ) {
         }
 
-        void setBlock( const DATA::computedBlock& p_block );
+        void setBlock( const DATA::computedBlock& p_block, u16 p_blockIdx );
 
         void updateTile( u8 p_layer, u8 p_x, u8 p_y, const DATA::computedBlockAtom& p_tile );
 

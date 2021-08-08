@@ -587,6 +587,7 @@ namespace UI {
     void editableTiles::redraw( DATA::palette p_pals[ 5 * 16 ], u8 p_daytime ) {
         std::memcpy( _pals, p_pals, sizeof( _pals ) );
         _daytime = p_daytime;
+        setTiles( _tiles );
     }
 
     Gtk::SizeRequestMode editableTiles::get_request_mode_vfunc( ) const {
@@ -640,6 +641,100 @@ namespace UI {
         }
     }
 
+    tileInfo::tileInfo( ) {
+        std::vector<Glib::ustring> pals = {
+            "Pal 0 (TS1/0)",  "Pal 1 (TS1/1)",  "Pal 2 (TS1/2)",     "Pal 3 (TS1/3)",
+            "Pal 4 (TS1/4)",  "Pal 5 (TS1/5)",  "Pal 6 (TS2/0)",     "Pal 7 (TS2/1)",
+            "Pal 8 (TS2/2)",  "Pal 9 (TS2/3)",  "Pal 10 (TS2/4)",    "Pal 11 (TS2/5)",
+            "Pal 12 (TS2/6)", "Pal 13 (TS2/7)", "(Pal 14) (unused)", "(Pal 15) (unused)",
+        };
+        auto sl = Gtk::StringList::create( pals );
+
+        _palette.set_model( sl );
+
+        _palette.property_selected_item( ).signal_changed( ).connect( [ this ]( ) {
+            if( _noTrigger || _palette.get_selected( ) == GTK_INVALID_LIST_POSITION ) { return; }
+
+            _tile.m_palno = _palette.get_selected( );
+            redraw( _pals, _daytime );
+        } );
+
+        auto mainBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+
+        _outerFrame.set_child( mainBox );
+        _outerFrame.set_label_align( Gtk::Align::CENTER );
+
+        auto lbox  = Gtk::Box( Gtk::Orientation::VERTICAL );
+        auto rbox  = Gtk::Box( Gtk::Orientation::VERTICAL );
+        auto rhbox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+
+        mainBox.set_margin( MARGIN );
+        mainBox.set_spacing( MARGIN );
+        mainBox.set_valign( Gtk::Align::CENTER );
+        mainBox.set_hexpand( true );
+
+        lbox.set_spacing( MARGIN );
+
+        _tileImage = createImage( _tile );
+        lbox.append( *_tileImage );
+        _tileImage->set_size_request( _mapScale * DATA::TILE_SIZE, _mapScale * DATA::TILE_SIZE );
+
+        rbox.set_valign( Gtk::Align::CENTER );
+        rbox.set_hexpand( true );
+
+        mainBox.append( lbox );
+        mainBox.append( rbox );
+
+        rbox.append( _tileName );
+        rbox.append( _palette );
+        lbox.append( rhbox );
+
+        rhbox.append( _flipX );
+        _flipX.set_label( "X Flip" );
+        _flipX.property_active( ).signal_changed( ).connect( [ this ]( ) {
+            if( _noTrigger ) { return; }
+            _tile.m_vflip = _flipX.get_active( );
+            redraw( _pals, _daytime );
+        } );
+
+        rhbox.append( _flipY );
+        _flipY.set_label( "Y Flip" );
+        _flipY.property_active( ).signal_changed( ).connect( [ this ]( ) {
+            if( _noTrigger ) { return; }
+            _tile.m_hflip = _flipY.get_active( );
+            redraw( _pals, _daytime );
+        } );
+
+        _tileName.set_margin_bottom( MARGIN );
+
+        char buffer[ 50 ];
+        snprintf( buffer, 49, "Tile 0x%03hX / %04hu", _currentTileIdx, _currentTileIdx );
+        _tileName.set_text( std::string( buffer ) );
+    }
+
+    void tileInfo::setTile( const DATA::computedBlockAtom& p_tile, u16 p_tileIdx ) {
+        _noTrigger      = true;
+        _tile           = p_tile;
+        _currentTileIdx = p_tileIdx;
+
+        _flipX.set_active( p_tile.m_vflip );
+        _flipY.set_active( p_tile.m_hflip );
+        _palette.set_selected( p_tile.m_palno );
+
+        _noTrigger = false;
+    }
+
+    void tileInfo::redraw( DATA::palette p_pals[ 5 * 16 ], u8 p_daytime ) {
+        std::memcpy( _pals, p_pals, sizeof( _pals ) );
+        _daytime   = p_daytime;
+        _tileImage = createImage( _tile, p_pals, p_daytime );
+    }
+
+    void tileInfo::setScale( u16 p_scale ) {
+        _mapScale = p_scale;
+        _tileImage->set_size_request( _mapScale * DATA::TILE_SIZE, _mapScale * DATA::TILE_SIZE );
+    }
+
     editableBlock::editableBlock( ) {
         auto sl1 = Gtk::StringList::create( MAJOR_BEHAVES );
         auto sl2 = Gtk::StringList::create( MINOR_BEHAVES );
@@ -688,11 +783,18 @@ namespace UI {
             lbox.append( f );
         }
 
+        rbox.append( _blockName );
         rbox.append( _majorBehave );
         rbox.append( _minorBehave );
+
+        _blockName.set_margin_bottom( MARGIN );
+
+        char buffer[ 50 ];
+        snprintf( buffer, 49, "Block 0x%03hX / %04hu", _currentBlockIdx, _currentBlockIdx );
+        _blockName.set_text( std::string( buffer ) );
     }
 
-    void editableBlock::setBlock( const DATA::computedBlock& p_block ) {
+    void editableBlock::setBlock( const DATA::computedBlock& p_block, u16 p_blockIdx ) {
         _noTrigger = true;
         _tiles[ 0 ].setTiles( p_block.m_top );
         _tiles[ 1 ].setTiles( p_block.m_bottom );
@@ -700,6 +802,12 @@ namespace UI {
         _majorBehave.set_selected( p_block.m_bottombehave );
         _minorBehave.set_selected( p_block.m_topbehave );
         _noTrigger = false;
+
+        _currentBlockIdx = p_blockIdx;
+
+        char buffer[ 50 ];
+        snprintf( buffer, 49, "Block 0x%03hX / %04hu", p_blockIdx, p_blockIdx );
+        _blockName.set_text( std::string( buffer ) );
     }
 
     void editableBlock::updateTile( u8 p_layer, u8 p_x, u8 p_y,

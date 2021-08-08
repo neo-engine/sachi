@@ -217,6 +217,7 @@ namespace UI {
 
         Gtk::Notebook _tseNotebook; // main container for anything tile set editor related
         std::shared_ptr<editableBlock> _editBlock;
+        std::shared_ptr<tileInfo>      _currentTile; // currently selected tile
 
         computedMapSlice _tsets1widget, _tsets2widget;
 
