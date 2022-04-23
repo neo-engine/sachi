@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Sachi
+GenericName=Sachi
+Comment=A map editor for neo that is pure happiness
+Icon=sachi
+StartupNotify=true
+Exec=@bindir@/sachi %U
+Categories=PNEO;Utility

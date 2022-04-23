@@ -5,7 +5,7 @@
 #include <gtkmm/frame.h>
 #include <gtkmm/stringlist.h>
 
-#include "ui_editableBlock.h"
+#include "editableBlock.h"
 
 namespace UI {
     std::vector<Glib::ustring> MAJOR_BEHAVES = { "00 None",

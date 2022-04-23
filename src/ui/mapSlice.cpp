@@ -1,7 +1,7 @@
 #include <cstring>
 
-#include "ui_block.h"
-#include "ui_mapSlice.h"
+#include "block.h"
+#include "mapSlice.h"
 
 namespace UI {
     std::string toHexString( u8 p_value ) {

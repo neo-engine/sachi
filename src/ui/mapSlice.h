@@ -10,9 +10,9 @@
 #include <gtkmm/overlay.h>
 #include <gtkmm/widget.h>
 
-#include "data_maprender.h"
-#include "defines.h"
-#include "ui_block.h"
+#include "../data/maprender.h"
+#include "../defines.h"
+#include "block.h"
 
 namespace UI {
     class mapSlice : public Gtk::Widget {

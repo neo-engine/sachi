@@ -42,6 +42,9 @@ const std::string BLOCKSET_FORMAT = "%hhu.bvd";
 
 constexpr u8 MARGIN = 5;
 
+extern char TMP_BUFFER[ 100 ];
+extern char TMP_BUFFER_SHORT[ 50 ];
+
 const std::string EXTRA_CSS
     = ".mapbank-saved { background-color: rgb( 180, 240, 180 ); color: #2e3436; }\n"
       ".mapbank-created { background-color: rgb( 180, 240, 240 ); color: #2e3436; }\n"

@@ -9,7 +9,7 @@
 #include <gtkmm/label.h>
 #include <gtkmm/spinbutton.h>
 
-#include "defines.h"
+#include "../defines.h"
 
 namespace UI {
     /*

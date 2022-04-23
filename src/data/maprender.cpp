@@ -8,9 +8,9 @@
 #include <vector>
 
 #include <png.h>
-#include "data_bitmap.h"
-#include "data_fs.h"
-#include "data_maprender.h"
+#include "bitmap.h"
+#include "fs.h"
+#include "maprender.h"
 
 std::string MAP_PATH;
 std::string TILESET_PATH;

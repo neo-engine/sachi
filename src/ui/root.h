@@ -27,11 +27,11 @@
 #include <gtkmm/togglebutton.h>
 #include <gtkmm/window.h>
 
-#include "data_maprender.h"
-#include "ui_editableBlock.h"
-#include "ui_mapBank.h"
-#include "ui_mapBankOverview.h"
-#include "ui_mapSlice.h"
+#include "../data/maprender.h"
+#include "editableBlock.h"
+#include "mapBank.h"
+#include "mapBankOverview.h"
+#include "mapSlice.h"
 
 namespace UI {
     class root : public Gtk::Window {

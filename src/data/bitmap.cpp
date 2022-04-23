@@ -4,7 +4,7 @@
 
 #include <png.h>
 
-#include "data_bitmap.h"
+#include "bitmap.h"
 
 namespace DATA {
 

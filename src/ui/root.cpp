@@ -18,10 +18,11 @@
 #include <gtkmm/scrolledwindow.h>
 #include <gtkmm/signallistitemfactory.h>
 
-#include "data_fs.h"
-#include "defines.h"
-#include "log.h"
-#include "ui_root.h"
+#include "../data/fs.h"
+#include "../data/fs/util.h"
+#include "../defines.h"
+#include "../log.h"
+#include "root.h"
 
 namespace UI {
     const std::string APP_NAME     = std::string( "Sachi" );
@@ -100,14 +101,14 @@ namespace UI {
         _loadReloadmapAction     = _loadActions->add_action( "reloadmap", [ & ]( ) {
             readMapSlice( _selectedBank, _selectedMapX, _selectedMapY );
             redrawMap( _selectedMapY, _selectedMapX );
-        } );
+            } );
         _loadReloadmapbankAction = _loadActions->add_action( "reloadmapbank", [ & ]( ) {
             readMapBank( _selectedBank, true );
             redrawMap( _selectedMapY, _selectedMapX );
         } );
         _loadImportmapAction     = _loadActions->add_action( "importmap", [ & ]( ) {
             auto dialog    = new Gtk::FileChooserDialog( "Choose a map to import",
-                                                      Gtk::FileChooser::Action::OPEN, true );
+                                                             Gtk::FileChooser::Action::OPEN, true );
             auto mapFilter = Gtk::FileFilter::create( );
             mapFilter->add_pattern( "*.map" );
             mapFilter->set_name( "AdvanceMap 1.92 Map Files (32x32 blocks)" );
@@ -125,7 +126,7 @@ namespace UI {
                 switch( p_responseId ) {
                 case Gtk::ResponseType::OK: {
                     readMapSlice( _selectedBank, _selectedMapX, _selectedMapY,
-                                  dialog->get_file( )->get_path( ) );
+                                      dialog->get_file( )->get_path( ) );
                     redrawMap( _selectedMapY, _selectedMapX );
                     markBankChanged( _selectedBank );
                     break;
@@ -134,12 +135,12 @@ namespace UI {
                 case Gtk::ResponseType::CANCEL: break;
                 }
                 delete dialog;
-            } );
+                } );
 
             dialog->add_button( "_Cancel", Gtk::ResponseType::CANCEL );
             dialog->add_button( "_Select", Gtk::ResponseType::OK );
             dialog->show( );
-        } );
+            } );
 
         _saveFsrootAction
             = _saveActions->add_action( "fsroot", [ & ]( ) { this->onFsRootSaveClick( ); } );
@@ -149,7 +150,7 @@ namespace UI {
             = _saveActions->add_action( "mapbank", [ & ]( ) { writeMapBank( _selectedBank ); } );
         _saveExportmapAction = _saveActions->add_action( "exportmap", [ & ]( ) {
             auto dialog    = new Gtk::FileChooserDialog( "Save the current map",
-                                                      Gtk::FileChooser::Action::SAVE, true );
+                                                         Gtk::FileChooser::Action::SAVE, true );
             auto mapFilter = Gtk::FileFilter::create( );
             mapFilter->add_pattern( "*.map" );
             mapFilter->set_name( "AdvanceMap 1.92 Map Files (32x32 blocks)" );
@@ -534,11 +535,13 @@ namespace UI {
             std::make_shared<Gtk::ToggleButton>( "Loca_tions", true ) );
         _mapEditorModeToggles.push_back( std::make_shared<Gtk::ToggleButton>( "E_vents", true ) );
         _mapEditorModeToggles.push_back(
-            std::make_shared<Gtk::ToggleButton>( "Meta Data / _Wild PKMN", true ) );
+            std::make_shared<Gtk::ToggleButton>( "_Wild PKMN", true ) );
+        _mapEditorModeToggles.push_back(
+            std::make_shared<Gtk::ToggleButton>( "Meta _Data", true ) );
 
         mapEditorModeBox.get_style_context( )->add_class( "linked" );
         mapEditorModeBox.set_halign( Gtk::Align::CENTER );
-        for( u8 i = 0; i < 5; ++i ) {
+        for( u8 i = 0; i < 6; ++i ) {
             mapEditorModeBox.append( *_mapEditorModeToggles[ i ] );
             _mapEditorModeToggles[ i ]->signal_clicked( ).connect(
                 [ this, i ]( ) { setNewMapEditMode( mapDisplayMode( i ) ); } );

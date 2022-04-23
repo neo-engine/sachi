@@ -10,8 +10,8 @@
 #include <gtkmm/label.h>
 #include <gtkmm/widget.h>
 
-#include "data_maprender.h"
-#include "defines.h"
+#include "../data/maprender.h"
+#include "../defines.h"
 
 namespace UI {
     class editableTiles : public Gtk::Widget {

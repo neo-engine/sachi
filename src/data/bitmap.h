@@ -3,7 +3,7 @@
 #include <vector>
 #include <gtkmm/image.h>
 
-#include "defines.h"
+#include "../defines.h"
 
 namespace DATA {
     /**

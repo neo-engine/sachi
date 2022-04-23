@@ -3,8 +3,8 @@
 #include <typeinfo>
 #include <vector>
 
-#include "data_bitmap.h"
-#include "defines.h"
+#include "../defines.h"
+#include "bitmap.h"
 
 namespace DATA {
     constexpr u16 MAX_TILES_PER_TILE_SET  = 512;
@@ -458,10 +458,11 @@ namespace DATA {
                         u8 p_borderSides = 0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 );
 
     constexpr pixel colorForLocation( u16 p_loc ) {
-        auto routecol    = pixel( 230, 200, 30, 100 );
-        auto searoutecol = pixel( 7, 211, 255, 100 );
-        auto citycol     = pixel( 255, 68, 119, 100 );
-        auto specialcol  = pixel( 0, 255, 0, 100 );
+        (void) p_loc;
+        auto routecol = pixel( 230, 200, 30, 100 );
+        //        auto searoutecol = pixel( 7, 211, 255, 100 );
+        //        auto citycol     = pixel( 255, 68, 119, 100 );
+        //        auto specialcol  = pixel( 0, 255, 0, 100 );
         // TODO
         return routecol;
     }

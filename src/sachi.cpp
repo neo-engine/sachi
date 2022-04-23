@@ -1,9 +1,9 @@
 #include <gtkmm/application.h>
 
-#include "data_bitmap.h"
+#include "data/bitmap.h"
 #include "defines.h"
 #include "sachi.h"
-#include "ui_root.h"
+#include "ui/root.h"
 
 std::string FSROOT_PATH;
 

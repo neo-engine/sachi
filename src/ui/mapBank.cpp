@@ -1,7 +1,7 @@
-#include "ui_mapBank.h"
-#include "defines.h"
-
 #include <gtkmm/image.h>
+
+#include "../defines.h"
+#include "mapBank.h"
 
 namespace UI {
     mapBank::mapBank( const std::string& p_yicon, const std::string& p_xicon )
@@ -100,8 +100,7 @@ namespace UI {
         _outerFrame.remove_css_class( "mapbank-selected" );
     }
 
-    editTileSet::editTileSet( )
-        : mapBank( "pan-up-symbolic", "pan-down-symbolic" ) {
+    editTileSet::editTileSet( ) : mapBank( "pan-up-symbolic", "pan-down-symbolic" ) {
         _nameLabel.set_markup( "<span size=\"x-large\" weight=\"bold\">TS</span>" );
         _loadMapButton.set_label( "Edit" );
 
@@ -110,6 +109,5 @@ namespace UI {
         setSizeX( MAX_TILESET_NAME );
         setSizeY( MAX_TILESET_NAME );
     }
-
 
 } // namespace UI

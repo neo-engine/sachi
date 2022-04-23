@@ -1,7 +1,7 @@
 #include <gdkmm/pixbuf.h>
 
-#include "data_bitmap.h"
-#include "ui_block.h"
+#include "../data/bitmap.h"
+#include "block.h"
 
 namespace UI {
     int                          cnt = 100;

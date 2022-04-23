@@ -4,7 +4,7 @@
 #include <gtkmm/application.h>
 
 #include "defines.h"
-#include "ui_root.h"
+#include "ui/root.h"
 
 class sachi : public Gtk::Application {
   protected:

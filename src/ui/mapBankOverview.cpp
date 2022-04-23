@@ -1,7 +1,7 @@
 #include <cstring>
 
-#include "ui_block.h"
-#include "ui_mapBankOverview.h"
+#include "block.h"
+#include "mapBankOverview.h"
 
 namespace UI {
     constexpr u16 DOWN_SCALE = 8;
