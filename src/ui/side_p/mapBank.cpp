@@ -1,6 +1,4 @@
 #include <gtkmm/image.h>
-
-#include "../defines.h"
 #include "mapBank.h"
 
 namespace UI {

@@ -23,6 +23,7 @@
 #include "../defines.h"
 #include "../log.h"
 #include "root.h"
+#include "util.h"
 
 namespace UI {
     const std::string APP_NAME     = std::string( "Sachi" );
@@ -71,40 +72,19 @@ namespace UI {
         }
     }
 
-    auto root::createButton( const std::string& p_iconName, const std::string& p_labelText,
-                             std::function<void( )> p_callback ) {
-        auto hbox = Gtk::Box( Gtk::Orientation::HORIZONTAL, 5 );
-        if( p_iconName != "" ) {
-            auto icon = Gtk::Image( );
-            hbox.append( icon );
-            icon.set_from_icon_name( p_iconName );
-        }
-        if( p_labelText != "" ) {
-            auto label = Gtk::Label( p_labelText );
-            label.set_expand( true );
-            label.set_use_underline( );
-            hbox.append( label );
-        }
-
-        // auto resultButton = Gtk::make_managed<Gtk::Button>( );
-        auto resultButton = std::make_shared<Gtk::Button>( );
-        resultButton->set_child( hbox );
-        resultButton->signal_clicked( ).connect( p_callback, false );
-        return resultButton;
-    }
-
     void root::initActions( ) {
         _loadActions = Gio::SimpleActionGroup::create( );
         _saveActions = Gio::SimpleActionGroup::create( );
         _loadFsrootAction
             = _loadActions->add_action( "fsroot", [ & ]( ) { this->onFsRootOpenClick( ); } );
         _loadReloadmapAction     = _loadActions->add_action( "reloadmap", [ & ]( ) {
-            readMapSlice( _selectedBank, _selectedMapX, _selectedMapY );
-            redrawMap( _selectedMapY, _selectedMapX );
+            readMapSlice( _sideBar->selectedBank( ), _sideBar->selectedMapX( ),
+                              _sideBar->selectedMapY( ) );
+            redrawMap( _sideBar->selectedMapY( ), _sideBar->selectedMapX( ) );
             } );
         _loadReloadmapbankAction = _loadActions->add_action( "reloadmapbank", [ & ]( ) {
-            readMapBank( _selectedBank, true );
-            redrawMap( _selectedMapY, _selectedMapX );
+            readMapBank( _sideBar->selectedBank( ), true );
+            redrawMap( _sideBar->selectedMapY( ), _sideBar->selectedMapX( ) );
         } );
         _loadImportmapAction     = _loadActions->add_action( "importmap", [ & ]( ) {
             auto dialog    = new Gtk::FileChooserDialog( "Choose a map to import",
@@ -125,10 +105,10 @@ namespace UI {
                 // Handle the response:
                 switch( p_responseId ) {
                 case Gtk::ResponseType::OK: {
-                    readMapSlice( _selectedBank, _selectedMapX, _selectedMapY,
-                                      dialog->get_file( )->get_path( ) );
-                    redrawMap( _selectedMapY, _selectedMapX );
-                    markBankChanged( _selectedBank );
+                    readMapSlice( _sideBar->selectedBank( ), _sideBar->selectedMapX( ),
+                                      _sideBar->selectedMapY( ), dialog->get_file( )->get_path( ) );
+                    redrawMap( _sideBar->selectedMapY( ), _sideBar->selectedMapX( ) );
+                    _sideBar->markSelectedBankChanged( );
                     break;
                 }
                 default:
@@ -144,10 +124,12 @@ namespace UI {
 
         _saveFsrootAction
             = _saveActions->add_action( "fsroot", [ & ]( ) { this->onFsRootSaveClick( ); } );
-        _saveMapAction = _saveActions->add_action(
-            "map", [ & ]( ) { writeMapSlice( _selectedBank, _selectedMapX, _selectedMapY ); } );
-        _saveMapbankAction
-            = _saveActions->add_action( "mapbank", [ & ]( ) { writeMapBank( _selectedBank ); } );
+        _saveMapAction     = _saveActions->add_action( "map", [ & ]( ) {
+            writeMapSlice( _sideBar->selectedBank( ), _sideBar->selectedMapX( ),
+                               _sideBar->selectedMapY( ) );
+            } );
+        _saveMapbankAction = _saveActions->add_action(
+            "mapbank", [ & ]( ) { writeMapBank( _sideBar->selectedBank( ) ); } );
         _saveExportmapAction = _saveActions->add_action( "exportmap", [ & ]( ) {
             auto dialog    = new Gtk::FileChooserDialog( "Save the current map",
                                                          Gtk::FileChooser::Action::SAVE, true );
@@ -155,8 +137,8 @@ namespace UI {
             mapFilter->add_pattern( "*.map" );
             mapFilter->set_name( "AdvanceMap 1.92 Map Files (32x32 blocks)" );
             dialog->set_filter( mapFilter );
-            dialog->set_current_name( std::to_string( _selectedMapY ) + "_"
-                                      + std::to_string( _selectedMapX ) + ".map " );
+            dialog->set_current_name( std::to_string( _sideBar->selectedMapY( ) ) + "_"
+                                      + std::to_string( _sideBar->selectedMapX( ) ) + ".map " );
             dialog->set_transient_for( *this );
             dialog->set_modal( true );
             dialog->set_default_size( 800, 600 );
@@ -168,8 +150,8 @@ namespace UI {
                 // Handle the response:
                 switch( p_responseId ) {
                 case Gtk::ResponseType::OK: {
-                    writeMapSlice( _selectedBank, _selectedMapX, _selectedMapY,
-                                   dialog->get_file( )->get_path( ) );
+                    writeMapSlice( _sideBar->selectedBank( ), _sideBar->selectedMapX( ),
+                                   _sideBar->selectedMapY( ), dialog->get_file( )->get_path( ) );
                     break;
                 }
                 default:
@@ -226,13 +208,6 @@ namespace UI {
         _saveMenuButton = std::make_shared<Gtk::MenuButton>( );
         _saveMenuButton->set_popover( _saveMenuPopover );
 
-        _collapseMapBanksButton
-            = createButton( "view-restore-symbolic", "_Collapse Sidebar",
-                            [ & ]( ) { this->collapseMapBankBar( !_mapBankBarCollapsed ); } );
-        _collapseMapBanksButton->set_expand( true );
-        _collapseMapBanksButton->set_margin( MARGIN );
-        _collapseMapBanksButton->set_has_frame( false );
-
         auto openBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
         openBox.get_style_context( )->add_class( "linked" );
         openBox.append( *_openButton );
@@ -244,91 +219,6 @@ namespace UI {
         saveBox.append( *_saveMenuButton );
         headerBar.pack_start( openBox );
         headerBar.pack_start( saveBox );
-    }
-
-    void root::initSideBar( ) {
-        // main box
-        auto lMainBox = Gtk::Box( Gtk::Orientation::VERTICAL, MARGIN );
-        _mainBox.append( lMainBox );
-
-        {
-            // collapse sidebar widget
-            auto sideBarBarCollapseBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
-            sideBarBarCollapseBox.append( *_collapseMapBanksButton );
-            sideBarBarCollapseBox.set_halign( Gtk::Align::CENTER );
-            _collapseMapBanksButton->set_expand( false );
-            lMainBox.append( sideBarBarCollapseBox );
-        }
-        {
-            // tile set
-            auto lFrame = Gtk::Frame( );
-            lFrame.set_margin( MARGIN );
-            lFrame.set_margin_top( 0 );
-            lFrame.set_margin_bottom( 0 );
-            lMainBox.append( lFrame );
-
-            auto sbTileSetBarLabelBox   = Gtk::Box( Gtk::Orientation::HORIZONTAL );
-            auto sbTileSetBarLabelImage = Gtk::Image( );
-            sbTileSetBarLabelImage.set_from_icon_name( "applications-graphics-symbolic" );
-            sbTileSetBarLabelImage.set_margin( MARGIN );
-            _sbTileSetBarLabel = Gtk::Label( "Tile Sets" );
-            sbTileSetBarLabelBox.append( sbTileSetBarLabelImage );
-            sbTileSetBarLabelBox.append( _sbTileSetBarLabel );
-
-            lFrame.set_label_widget( sbTileSetBarLabelBox );
-            lFrame.set_label_align( Gtk::Align::CENTER );
-
-            _sbTileSetBox = Gtk::Box( Gtk::Orientation::VERTICAL, MARGIN );
-            lFrame.set_child( _sbTileSetBox );
-            _sbTileSetBox.set_margin( MARGIN );
-            _sbTileSetBox.set_vexpand( false );
-
-            _editTileSet = std::make_shared<editTileSet>( );
-            if( _editTileSet ) {
-                _sbTileSetBox.append( *_editTileSet );
-                _editTileSet->connect(
-                    [ this ]( u8 p_ts1, u8 p_ts2 ) { editTileSets( p_ts1, p_ts2 ); } );
-            }
-
-            _sbTileSetSel1 = 0;
-            _sbTileSetSel2 = 1;
-        }
-        {
-            // map banks
-            auto lScrolledWindow = Gtk::ScrolledWindow( );
-            lMainBox.append( lScrolledWindow );
-            auto lFrame = Gtk::Frame( );
-            lFrame.set_margin( MARGIN );
-            lScrolledWindow.set_child( lFrame );
-            lScrolledWindow.set_policy( Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC );
-
-            auto mapBankBarLabelBox   = Gtk::Box( Gtk::Orientation::HORIZONTAL );
-            auto mapBankBarLabelImage = Gtk::Image( );
-            mapBankBarLabelImage.set_from_icon_name( "image-x-generic-symbolic" );
-            mapBankBarLabelImage.set_margin( MARGIN );
-            _mapBankBarLabel = Gtk::Label( "Map Banks" );
-            mapBankBarLabelBox.append( mapBankBarLabelImage );
-            mapBankBarLabelBox.append( _mapBankBarLabel );
-
-            lFrame.set_label_widget( mapBankBarLabelBox );
-            lFrame.set_label_align( Gtk::Align::CENTER );
-
-            _mapBankBox = Gtk::Box( Gtk::Orientation::VERTICAL, MARGIN );
-            lFrame.set_child( _mapBankBox );
-            _mapBankBox.set_margin( MARGIN );
-            _mapBankBox.set_vexpand( true );
-
-            _addMapBank = std::make_shared<addMapBank>( );
-
-            if( _addMapBank ) {
-                _mapBankBox.append( *_addMapBank );
-                _addMapBank->connect(
-                    [ this ]( u16 p_bk, u8 p_y, u8 p_x ) { createMapBank( p_bk, p_y, p_x ); } );
-            }
-
-            _mapBanks.clear( );
-            _selectedBank = -1;
-        }
     }
 
     void root::initWelcome( ) {
@@ -428,29 +318,29 @@ namespace UI {
                     printf( "Change from %hx to %hx\n",
                             _currentBlockset2[ blk ].first.m_bottombehave, p_newMajBehave );
                     _currentBlockset2[ blk ].first.m_bottombehave = p_newMajBehave;
-                    _blockSets[ _sbTileSetSel2 ].m_blockSet.m_blocks[ blk ].m_bottombehave
+                    _blockSets[ _sideBar->_sbTileSetSel2 ].m_blockSet.m_blocks[ blk ].m_bottombehave
                         = p_newMajBehave;
                 } else {
                     auto blk                                      = _tseSelectedBlockIdx;
                     _currentBlockset1[ blk ].first.m_bottombehave = p_newMajBehave;
-                    _blockSets[ _sbTileSetSel1 ].m_blockSet.m_blocks[ blk ].m_bottombehave
+                    _blockSets[ _sideBar->_sbTileSetSel1 ].m_blockSet.m_blocks[ blk ].m_bottombehave
                         = p_newMajBehave;
                 }
-                markTileSetsChanged( );
+                _sideBar->markTileSetsChanged( );
             },
             [ this ]( u8 p_newMinBehave ) {
                 if( _tseSelectedBlockIdx > DATA::MAX_BLOCKS_PER_TILE_SET ) {
                     auto blk = _tseSelectedBlockIdx - DATA::MAX_BLOCKS_PER_TILE_SET;
                     _currentBlockset2[ blk ].first.m_topbehave = p_newMinBehave;
-                    _blockSets[ _sbTileSetSel2 ].m_blockSet.m_blocks[ blk ].m_topbehave
+                    _blockSets[ _sideBar->_sbTileSetSel2 ].m_blockSet.m_blocks[ blk ].m_topbehave
                         = p_newMinBehave;
                 } else {
                     auto blk                                   = _tseSelectedBlockIdx;
                     _currentBlockset1[ blk ].first.m_topbehave = p_newMinBehave;
-                    _blockSets[ _sbTileSetSel1 ].m_blockSet.m_blocks[ blk ].m_topbehave
+                    _blockSets[ _sideBar->_sbTileSetSel1 ].m_blockSet.m_blocks[ blk ].m_topbehave
                         = p_newMinBehave;
                 }
-                markTileSetsChanged( );
+                _sideBar->markTileSetsChanged( );
             } );
 
         // current palette selector
@@ -504,7 +394,7 @@ namespace UI {
             mapBankSettingsMapModeBox.append( *_tseTileModeToggles[ i ] );
             _tseTileModeToggles[ i ]->signal_clicked( ).connect( [ this, i ]( ) {
                 setTileSetMode( i );
-                markTileSetsChanged( );
+                _sideBar->markTileSetsChanged( );
             } );
             if( i ) { _tseTileModeToggles[ i ]->set_group( *_tseTileModeToggles[ 0 ] ); }
         }
@@ -867,8 +757,8 @@ namespace UI {
         _mapEditorSettings4.set_max_width_chars( 1 );
         _mapEditorSettings4.signal_value_changed( ).connect( [ & ]( ) {
             _blockSetWidth = _mapEditorSettings4.get_value_as_int( );
-            auto mp = _mapBanks[ _selectedBank ].m_bank->m_slices[ _selectedMapY ][ _selectedMapX ];
-            auto ts = DATA::tileSet<2>( );
+            auto mp        = _sideBar->slice( );
+            auto ts        = DATA::tileSet<2>( );
             buildTileSet( &ts );
             DATA::palette pals[ 16 * 5 ] = { 0 };
             buildPalette( pals );
@@ -893,7 +783,7 @@ namespace UI {
         _mapEditorSettings5.set_max_width_chars( 1 );
         _mapEditorSettings5.signal_value_changed( ).connect( [ & ]( ) {
             _adjacentBlocks = _mapEditorSettings5.get_value_as_int( );
-            redrawMap( _selectedMapY, _selectedMapX );
+            redrawMap( _sideBar->selectedMapY( ), _sideBar->selectedMapX( ) );
         } );
 
         _mapEditorSettings6 = Gtk::SpinButton( abEAdj3 );
@@ -1014,8 +904,9 @@ namespace UI {
 
         _mapBankOverview.connectClick(
             [ this ]( UI::mapBankOverview::clickType, u16 p_mapX, u16 p_mapY ) {
-                onUnloadMap( _selectedBank, _selectedMapY, _selectedMapX );
-                loadMap( _selectedBank, p_mapY, p_mapX );
+                onUnloadMap( _sideBar->selectedBank( ), _sideBar->selectedMapY( ),
+                             _sideBar->selectedMapX( ) );
+                loadMap( _sideBar->selectedBank( ), p_mapY, p_mapX );
             } );
 
         auto abSlBO1 = Gtk::Image( );
@@ -1071,8 +962,8 @@ namespace UI {
         for( u8 i = 0; i < _mapBankSettingsMapModeToggles.size( ); ++i ) {
             mapBankSettingsMapModeBox.append( *_mapBankSettingsMapModeToggles[ i ] );
             _mapBankSettingsMapModeToggles[ i ]->signal_clicked( ).connect( [ this, i ]( ) {
-                _mapBanks[ _selectedBank ].setMapMode( i );
-                markBankChanged( _selectedBank );
+                _sideBar->bank( ).setMapMode( i );
+                _sideBar->markSelectedBankChanged( );
             } );
             if( i ) {
                 _mapBankSettingsMapModeToggles[ i ]->set_group(
@@ -1132,7 +1023,12 @@ namespace UI {
         mbox.append( _mainBox );
         mbox.append( _ivScrolledWindow );
 
-        initSideBar( );
+        _sideBar = std::make_shared<sideBar>( );
+        if( _sideBar ) { _mainBox.append( *_sideBar ); }
+
+        _sideBar->connect(
+            [ this ]( u8 p_ts1, u8 p_ts2 ) { editTileSets( p_ts1, p_ts2 ); },
+            [ this ]( u16 p_bk, u8 p_y, u8 p_x ) { createMapBank( p_bk, p_y, p_x ); } );
 
         initWelcome( );
 
@@ -1241,10 +1137,10 @@ namespace UI {
 
     bool root::writeMapSlice( u16 p_bank, u8 p_mapX, u8 p_mapY, std::string p_path,
                               bool p_writeMapData ) {
-        if( !_mapBanks.count( p_bank ) ) { return true; }
+        if( !_sideBar->existsBank( p_bank ) ) { return true; }
 
         auto        path = fs::path( MAP_PATH ) / std::to_string( p_bank );
-        const auto& info = _mapBanks[ p_bank ];
+        const auto& info = _sideBar->bank( p_bank );
         if( info.isScattered( ) ) { path /= std::to_string( p_mapY ); }
         path /= std::to_string( p_mapY ) + "_" + std::to_string( p_mapX ) + ".map";
 
@@ -1439,14 +1335,14 @@ namespace UI {
         }
         }
 
-        if( !error ) { _editTileSet->setStatus( mapBank::STATUS_SAVED ); }
+        if( !error ) { _sideBar->_editTileSet->setStatus( mapBank::STATUS_SAVED ); }
 
         return error;
     }
 
     bool root::writeMapBank( u16 p_bank ) {
-        if( !_mapBanks.count( p_bank ) ) { return true; }
-        auto& info = _mapBanks[ p_bank ];
+        if( !_sideBar->existsBank( p_bank ) ) { return true; }
+        auto& info = _sideBar->bank( p_bank );
 
         message_log( "writeMapBank", "Saving map bank " + std::to_string( p_bank ) + ".",
                      LOGLEVEL_STATUS );
@@ -1510,7 +1406,7 @@ namespace UI {
     void root::onFsRootSaveClick( ) {
         // Only write map banks that have been changed
 
-        for( const auto& [ bank, info ] : _mapBanks ) {
+        for( const auto& [ bank, info ] : _sideBar->_mapBanks ) {
             if( info.m_widget != nullptr && info.m_bank != nullptr
                 && ( info.m_widget->getStatus( ) == mapBank::STATUS_NEW
                      || info.m_widget->getStatus( ) == mapBank::STATUS_EDITED_UNSAVED ) ) {
@@ -1520,7 +1416,8 @@ namespace UI {
             }
         }
 
-        if( _editTileSet && _editTileSet->getStatus( ) == mapBank::STATUS_EDITED_UNSAVED ) {
+        if( _sideBar->_editTileSet
+            && _sideBar->_editTileSet->getStatus( ) == mapBank::STATUS_EDITED_UNSAVED ) {
             writeTileSets( );
         }
     }
@@ -1786,15 +1683,13 @@ namespace UI {
                         if( my < 0 ) { ycorr = DATA::SIZE - _adjacentBlocks; }
 
                         DATA::mapBlockAtom currentBlock;
-                        if( _selectedMapY + mx < 0 || _selectedMapX + my < 0
-                            || _selectedMapX + mx > _mapBanks[ _selectedBank ].getSizeX( )
-                            || _selectedMapY + my > _mapBanks[ _selectedBank ].getSizeY( ) ) {
+                        if( _sideBar->selectedMapY( ) + mx < 0 || _sideBar->selectedMapX( ) + my < 0
+                            || _sideBar->selectedMapX( ) + mx > _sideBar->selectedSizeX( )
+                            || _sideBar->selectedMapY( ) + my > _sideBar->selectedSizeY( ) ) {
                             // out of map bank bounds, add a blank block
                             currentBlock = { 0, 1 };
                         } else {
-                            auto& mp
-                                = _mapBanks[ _selectedBank ]
-                                      .m_bank->m_slices[ _selectedMapY + my ][ _selectedMapX + mx ];
+                            auto& mp     = _sideBar->slice( );
                             currentBlock = mp.m_data.m_blocks[ remy + ycorr ][ remx + xcorr ];
                         }
 
@@ -1850,15 +1745,15 @@ namespace UI {
         if( p_mapX < 0 ) { xcorr = DATA::SIZE - _adjacentBlocks; }
         if( p_mapY < 0 ) { ycorr = DATA::SIZE - _adjacentBlocks; }
 
-        if( _selectedMapY + p_mapY < 0 || _selectedMapX + p_mapX < 0
-            || _selectedMapX + p_mapX > _mapBanks[ _selectedBank ].getSizeX( )
-            || _selectedMapY + p_mapY > _mapBanks[ _selectedBank ].getSizeY( ) ) {
+        if( _sideBar->selectedMapY( ) + p_mapY < 0 || _sideBar->selectedMapX( ) + p_mapX < 0
+            || _sideBar->selectedMapX( ) + p_mapX > _sideBar->selectedSizeX( )
+            || _sideBar->selectedMapY( ) + p_mapY > _sideBar->selectedSizeY( ) ) {
             if( p_button == mapSlice::clickType::RIGHT ) { updateSelectedBlock( { 0, 1 } ); }
             return;
         }
 
-        auto& mp = _mapBanks[ _selectedBank ]
-                       .m_bank->m_slices[ _selectedMapY + p_mapY ][ _selectedMapX + p_mapX ];
+        auto& mp = _sideBar->slice( _sideBar->selectedBank( ), _sideBar->selectedMapY( ) + p_mapY,
+                                    _sideBar->selectedMapX( ) + p_mapX );
         auto& block = mp.m_data.m_blocks[ p_blockY + ycorr ][ p_blockX + xcorr ];
 
         switch( p_button ) {
@@ -1905,7 +1800,7 @@ namespace UI {
                             block.m_movedata, p_blockX, p_blockY );
                     }
                 }
-                markBankChanged( _selectedBank );
+                _sideBar->markSelectedBankChanged( );
             } else {
                 updateSelectedBlock( block );
             }
@@ -1950,8 +1845,8 @@ namespace UI {
                         for( s8 j = -1; j <= 1; ++j ) { bqueue.push( { cy + i, cx + j } ); }
                     }
                 }
-                markBankChanged( _selectedBank );
-                redrawMap( _selectedMapY + p_mapY, _selectedMapX + p_mapX );
+                _sideBar->markSelectedBankChanged( );
+                redrawMap( _sideBar->selectedMapY( ) + p_mapY, _sideBar->selectedMapX( ) + p_mapX );
             } else {
                 updateSelectedBlock( block );
             }
@@ -1978,80 +1873,6 @@ namespace UI {
             _tsets2widget.selectBlock( block );
             _editBlock->setBlock( _currentBlockset2[ block ].first, _tseSelectedBlockIdx );
         }
-    }
-
-    bool root::checkOrCreatePath( const std::string& p_path ) {
-        std::error_code ec;
-        auto            p = fs::path( p_path, fs::path::generic_format );
-        if( ec ) {
-            fprintf( stderr, "[ERROR] Could not check if path exists: %s\n",
-                     ec.message( ).c_str( ) );
-            return false;
-        }
-        if( !fs::exists( p, ec ) ) {
-            fs::create_directories( p, ec );
-            fprintf( stderr, "[LOG] Creating directory %s.\n", p_path.c_str( ) );
-            if( ec ) {
-                fprintf( stderr, "[ERROR] Creating directory failed: %s\n",
-                         ec.message( ).c_str( ) );
-                return false;
-            }
-        }
-        return true;
-    }
-
-    DATA::mapBankInfo root::exploreMapBank( const fs::path& p_path ) {
-        std::error_code ec;
-
-        u8 sx = 0, sy = 0;
-        u8 mapMode = 0;
-        for( auto& p : fs::directory_iterator( p_path, ec ) ) {
-            if( !p.is_directory( ec ) || ec ) { continue; }
-            // check if the directory has a number as name
-            std::string name         = p.path( ).filename( );
-            int         nameAsNumber = -1;
-            try {
-                nameAsNumber = std::stoi( name );
-            } catch( ... ) { continue; }
-
-            if( nameAsNumber >= 0 && nameAsNumber <= int( MAX_MAPY ) ) {
-                mapMode = 1;
-                sy      = std::max( u8( nameAsNumber ), sy );
-            }
-        }
-        if( mapMode == 1 ) {
-            // Check all subdirs [0, sy] for max horizontal dim
-            for( u16 i = 0; i < sy; ++i ) {
-                try {
-                    auto tmpath = p_path / std::to_string( i );
-                    for( auto& p : fs::directory_iterator( tmpath ) ) {
-                        if( !p.is_regular_file( ec ) || ec ) { continue; }
-                        // check if the file has a name that corresponds to a map
-                        u8 mx, my;
-                        if( sscanf( p.path( ).filename( ).c_str( ), MAPNAME_FORMAT.c_str( ), &my,
-                                    &mx )
-                            == 2 ) {
-                            sx = std::max( sx, mx );
-                            sy = std::max( sy, my );
-                        }
-                    }
-                } catch( ... ) { continue; }
-            }
-
-        } else if( mapMode == 0 ) {
-            for( auto& p : fs::directory_iterator( p_path ) ) {
-                if( !p.is_regular_file( ec ) || ec ) { continue; }
-                // check if the file has a name that corresponds to a map
-                u8 mx, my;
-                if( sscanf( p.path( ).filename( ).c_str( ), MAPNAME_FORMAT.c_str( ), &my, &mx )
-                    == 2 ) {
-                    sx = std::max( sx, mx );
-                    sy = std::max( sy, my );
-                }
-            }
-        }
-
-        return { sx, sy, mapMode };
     }
 
     void root::setTitle( const std::string& p_windowTitle, const std::string& p_mainTitle,
@@ -2092,10 +1913,10 @@ namespace UI {
         _fsRootLoaded = true;
 
         // update map banks
-        _mapBanks.clear( );
+        _sideBar->_mapBanks.clear( );
         _blockSets.clear( );
         _blockSetNames.clear( );
-        _selectedBank = -1;
+        _sideBar->selectBank( -1 );
 
         switchContext( FSROOT_NONE );
 
@@ -2162,7 +1983,7 @@ namespace UI {
 
     void root::addNewMapBank( u16 p_bank, u8 p_sizeY, u8 p_sizeX, u8 p_mapMode,
                               mapBank::status p_status ) {
-        if( _mapBanks.count( p_bank ) ) { return; }
+        if( _sideBar->existsBank( p_bank ) ) { return; }
         // if( !checkOrCreatePath( fs::path( MAP_PATH ) / std::to_string( p_bank ) ) ) {
         //     fprintf( stderr, "[ERROR] Adding map bank %hu failed.\n", p_bank );
         //     return;
@@ -2175,22 +1996,23 @@ namespace UI {
 
         auto MB1 = std::make_shared<mapBank>( p_bank, p_sizeX, p_sizeY, p_status );
         MB1->connect( [ this ]( u16 p_bk, u8 p_y, u8 p_x ) {
-            if( _selectedBank != -1 ) {
-                onUnloadMap( _selectedBank, _selectedMapY, _selectedMapX );
+            if( _sideBar->selectedBank( ) != -1 ) {
+                onUnloadMap( _sideBar->selectedBank( ), _sideBar->selectedMapY( ),
+                             _sideBar->selectedMapX( ) );
             }
             loadMap( p_bk, p_y, p_x );
         } );
-        _mapBanks[ p_bank ]
+        _sideBar->bank( p_bank )
             = { MB1, nullptr, nullptr, false, DATA::mapBankInfo( p_sizeX, p_sizeY, p_mapMode ) };
 
         // keep the list sorted: insert after bank with largest id smaller than p_bank,
         // i.e., after the element before lower_bound( p_bank )
-        auto ptr = _mapBanks.lower_bound( p_bank );
-        if( ptr == _mapBanks.end( ) || ptr == _mapBanks.begin( ) ) {
-            _mapBankBox.insert_child_after( *MB1, *_addMapBank );
+        auto ptr = _sideBar->_mapBanks.lower_bound( p_bank );
+        if( ptr == _sideBar->_mapBanks.end( ) || ptr == _sideBar->_mapBanks.begin( ) ) {
+            _sideBar->_mapBankBox.insert_child_after( *MB1, *_sideBar->_addMapBank );
         } else {
             --ptr;
-            _mapBankBox.insert_child_after( *MB1, *ptr->second.m_widget );
+            _sideBar->_mapBankBox.insert_child_after( *MB1, *ptr->second.m_widget );
         }
     }
 
@@ -2199,14 +2021,17 @@ namespace UI {
             message_log( "createMapBank", "No FSROOT loaded. Won't create a new map bank." );
             return;
         }
-        if( _mapBanks.count( p_bank ) ) {
+        if( _sideBar->existsBank( p_bank ) ) {
             // map exists, do nothing
             fprintf( stderr, "[LOG] Map bank %hu already exists.\n", p_bank );
             return;
         }
 
         addNewMapBank( p_bank, p_sizeY, p_sizeX, DATA::MAPMODE_COMBINED, mapBank::STATUS_NEW );
-        if( _selectedBank != -1 ) { onUnloadMap( _selectedBank, _selectedMapY, _selectedMapX ); }
+        if( _sideBar->selectedBank( ) != -1 ) {
+            onUnloadMap( _sideBar->selectedBank( ), _sideBar->selectedMapY( ),
+                         _sideBar->selectedMapX( ) );
+        }
         loadMap( p_bank, 0, 0 );
     }
 
@@ -2224,7 +2049,7 @@ namespace UI {
         }
         _mapBankStrList->splice( 0, _mapBankStrList->get_n_items( ), bsnames );
 
-        markTileSetsChanged( );
+        _sideBar->markTileSetsChanged( );
     }
 
     void root::editTileSets( u8 p_ts1, u8 p_ts2 ) {
@@ -2238,11 +2063,12 @@ namespace UI {
                          + std::to_string( p_ts2 ) + ".",
                      LOGLEVEL_STATUS );
 
-        if( _selectedBank != -1 ) {
-            _mapBanks[ _selectedBank ].m_widget->unselect( );
-            onUnloadMap( _selectedBank, _selectedMapY, _selectedMapX );
+        if( _sideBar->selectedBank( ) != -1 ) {
+            _sideBar->bank( ).m_widget->unselect( );
+            onUnloadMap( _sideBar->selectedBank( ), _sideBar->selectedMapY( ),
+                         _sideBar->selectedMapX( ) );
         }
-        _selectedBank = -1;
+        _sideBar->selectBank( -1 );
         switchContext( TILE_EDITOR );
 
         setTitle( "", "Tile Set " + std::to_string( p_ts1 ) + "|" + std::to_string( p_ts2 ),
@@ -2274,8 +2100,8 @@ namespace UI {
         _tsets2widget.setDaytime( _currentDayTime );
         _tsets1widget.draw( );
         _tsets2widget.draw( );
-        _sbTileSetSel1 = p_ts1;
-        _sbTileSetSel2 = p_ts2;
+        _sideBar->_sbTileSetSel1 = p_ts1;
+        _sideBar->_sbTileSetSel2 = p_ts2;
         _editBlock->redraw( pals, _currentDayTime );
 
         if( _tseSelectedBlockIdx < DATA::MAX_BLOCKS_PER_TILE_SET ) {
@@ -2287,39 +2113,10 @@ namespace UI {
         }
     }
 
-    void root::collapseMapBankBar( bool p_collapse ) {
-        for( auto& i : _mapBanks ) {
-            if( i.second.m_widget ) { i.second.m_widget->collapse( p_collapse ); }
-        }
-        _addMapBank->collapse( p_collapse );
-        _editTileSet->collapse( p_collapse );
-        if( p_collapse ) {
-            auto icon = Gtk::Image( );
-            icon.set_from_icon_name( "view-fullscreen-symbolic" );
-            _collapseMapBanksButton->set_child( icon );
-            _mapBankBarLabel.hide( );
-            _sbTileSetBarLabel.hide( );
-        } else {
-            auto icon = Gtk::Image( );
-            icon.set_from_icon_name( "view-restore-symbolic" );
-            auto label = Gtk::Label( "_Collapse Sidebar" );
-            label.set_expand( true );
-            label.set_use_underline( );
-
-            auto hbox = Gtk::Box( Gtk::Orientation::HORIZONTAL, 5 );
-            hbox.append( icon );
-            hbox.append( label );
-            _collapseMapBanksButton->set_child( hbox );
-            _mapBankBarLabel.show( );
-            _sbTileSetBarLabel.show( );
-        }
-        _mapBankBarCollapsed = p_collapse;
-    }
-
     bool root::readMapSlice( u16 p_bank, u8 p_mapX, u8 p_mapY, std::string p_path,
                              bool p_readMapData ) {
-        if( !_mapBanks.count( p_bank ) ) { return false; }
-        auto& selb = _mapBanks[ p_bank ];
+        if( !_sideBar->existsBank( p_bank ) ) { return false; }
+        auto& selb = _sideBar->bank( p_bank );
         auto  sl   = DATA::mapSlice( );
         auto  dt   = DATA::mapData( );
 
@@ -2373,9 +2170,9 @@ namespace UI {
     }
 
     bool root::readMapBank( u16 p_bank, bool p_forceReread ) {
-        if( !_mapBanks.count( p_bank ) ) { return false; }
+        if( !_sideBar->existsBank( p_bank ) ) { return false; }
 
-        auto& selb = _mapBanks[ p_bank ];
+        auto& selb = _sideBar->bank( p_bank );
         fprintf( stderr, "[LOG] Loading map bank %hu.\n", p_bank );
 
         // Load all maps of the bank into mem
@@ -2436,13 +2233,13 @@ namespace UI {
     }
 
     void root::loadMapBank( u16 p_bank ) {
-        if( p_bank == _selectedBank ) { return; }
+        if( p_bank == _sideBar->selectedBank( ) ) { return; }
 
-        if( _selectedBank != -1 ) { _mapBanks[ _selectedBank ].m_widget->unselect( ); }
-        _selectedBank = p_bank;
+        if( _sideBar->selectedBank( ) != -1 ) { _sideBar->bank( ).m_widget->unselect( ); }
+        _sideBar->selectBank( p_bank );
 
-        if( _mapBanks.count( _selectedBank ) ) {
-            auto& selb = _mapBanks[ _selectedBank ];
+        if( _sideBar->existsBank( _sideBar->selectedBank( ) ) ) {
+            auto& selb = _sideBar->bank( );
             selb.m_widget->select( );
             readMapBank( p_bank, false );
 
@@ -2456,20 +2253,12 @@ namespace UI {
         }
     }
 
-    void root::markTileSetsChanged( mapBank::status p_newStatus ) {
-        if( _editTileSet ) { _editTileSet->setStatus( p_newStatus ); }
-    }
-
-    void root::markBankChanged( u16 p_bank, mapBank::status p_newStatus ) {
-        if( !_mapBanks.count( p_bank ) ) { return; }
-        if( _mapBanks[ p_bank ].m_widget ) {
-            _mapBanks[ p_bank ].m_widget->setStatus( p_newStatus );
-        }
-    }
-
     void root::currentMapUpdateTS1( u8 p_newTS ) {
-        if( _selectedBank == -1 || _selectedMapY == -1 || _selectedMapX == -1 ) { return; }
-        auto& mp = _mapBanks[ _selectedBank ].m_bank->m_slices[ _selectedMapY ][ _selectedMapX ];
+        if( _sideBar->selectedBank( ) == -1 || _sideBar->selectedMapY( ) == -1
+            || _sideBar->selectedMapX( ) == -1 ) {
+            return;
+        }
+        auto& mp = _sideBar->slice( );
 
         // although it shouldn't, bs1 can use tiles or palettes from ts2
         auto ts = DATA::tileSet<2>( );
@@ -2491,14 +2280,17 @@ namespace UI {
 
         if( p_newTS != mp.m_data.m_tIdx1 ) {
             mp.m_data.m_tIdx1 = p_newTS;
-            markBankChanged( _selectedBank );
-            redrawMap( _selectedMapY, _selectedMapX );
+            _sideBar->markSelectedBankChanged( );
+            redrawMap( _sideBar->selectedMapY( ), _sideBar->selectedMapX( ) );
         }
     }
 
     void root::currentMapUpdateTS2( u8 p_newTS ) {
-        if( _selectedBank == -1 || _selectedMapY == -1 || _selectedMapX == -1 ) { return; }
-        auto& mp = _mapBanks[ _selectedBank ].m_bank->m_slices[ _selectedMapY ][ _selectedMapX ];
+        if( _sideBar->selectedBank( ) == -1 || _sideBar->selectedMapY( ) == -1
+            || _sideBar->selectedMapX( ) == -1 ) {
+            return;
+        }
+        auto& mp = _sideBar->slice( );
 
         auto ts = DATA::tileSet<2>( );
         buildTileSet( &ts, mp.m_data.m_tIdx1, p_newTS );
@@ -2519,8 +2311,8 @@ namespace UI {
 
         if( p_newTS != mp.m_data.m_tIdx2 ) {
             mp.m_data.m_tIdx2 = p_newTS;
-            markBankChanged( _selectedBank );
-            redrawMap( _selectedMapY, _selectedMapX );
+            _sideBar->markSelectedBankChanged( );
+            redrawMap( _sideBar->selectedMapY( ), _sideBar->selectedMapX( ) );
         }
     }
 
@@ -2530,16 +2322,12 @@ namespace UI {
         if( p_ts1 != -1 ) {
             ts1 = p_ts1;
         } else {
-            ts1 = _mapBanks[ _selectedBank ]
-                      .m_bank->m_slices[ _selectedMapY ][ _selectedMapX ]
-                      .m_data.m_tIdx1;
+            ts1 = _sideBar->slice( ).m_data.m_tIdx1;
         }
         if( p_ts2 != -1 ) {
             ts2 = p_ts2;
         } else {
-            ts2 = _mapBanks[ _selectedBank ]
-                      .m_bank->m_slices[ _selectedMapY ][ _selectedMapX ]
-                      .m_data.m_tIdx2;
+            ts2 = _sideBar->slice( ).m_data.m_tIdx2;
         }
         std::memcpy( p_out->m_blocks, _blockSets[ ts1 ].m_blockSet.m_blocks,
                      sizeof( DATA::block ) * DATA::MAX_BLOCKS_PER_TILE_SET );
@@ -2554,16 +2342,12 @@ namespace UI {
         if( p_ts1 != -1 ) {
             ts1 = p_ts1;
         } else {
-            ts1 = _mapBanks[ _selectedBank ]
-                      .m_bank->m_slices[ _selectedMapY ][ _selectedMapX ]
-                      .m_data.m_tIdx1;
+            ts1 = _sideBar->slice( ).m_data.m_tIdx1;
         }
         if( p_ts2 != -1 ) {
             ts2 = p_ts2;
         } else {
-            ts2 = _mapBanks[ _selectedBank ]
-                      .m_bank->m_slices[ _selectedMapY ][ _selectedMapX ]
-                      .m_data.m_tIdx2;
+            ts2 = _sideBar->slice( ).m_data.m_tIdx2;
         }
         std::memcpy( p_out->m_tiles, _blockSets[ ts1 ].m_tileSet.m_tiles,
                      sizeof( DATA::tile ) * DATA::MAX_TILES_PER_TILE_SET );
@@ -2578,16 +2362,12 @@ namespace UI {
         if( p_ts1 != -1 ) {
             ts1 = p_ts1;
         } else {
-            ts1 = _mapBanks[ _selectedBank ]
-                      .m_bank->m_slices[ _selectedMapY ][ _selectedMapX ]
-                      .m_data.m_tIdx1;
+            ts1 = _sideBar->slice( ).m_data.m_tIdx1;
         }
         if( p_ts2 != -1 ) {
             ts2 = p_ts2;
         } else {
-            ts2 = _mapBanks[ _selectedBank ]
-                      .m_bank->m_slices[ _selectedMapY ][ _selectedMapX ]
-                      .m_data.m_tIdx2;
+            ts2 = _sideBar->slice( ).m_data.m_tIdx2;
         }
         for( u8 dt = 0; dt < 5; ++dt ) {
             std::memcpy( &p_out[ 16 * dt ], &_blockSets[ ts1 ].m_pals[ 8 * dt ],
@@ -2598,10 +2378,9 @@ namespace UI {
     }
 
     void root::redrawMap( u8 p_mapY, u8 p_mapX ) {
-        _selectedMapX = p_mapX;
-        _selectedMapY = p_mapY;
+        _sideBar->selectMap( p_mapX, p_mapY );
 
-        const auto& mb    = _mapBanks[ _selectedBank ];
+        const auto& mb    = _sideBar->bank( );
         const auto& mbank = mb.m_bank->m_slices;
 
         for( s8 x = -1; x <= 1; ++x ) {
@@ -2667,81 +2446,75 @@ namespace UI {
     }
 
     void root::moveToMap( s8 p_dy, s8 p_dx ) {
-        if( !_selectedMapX && p_dx < 0 ) { return; }
-        if( !_selectedMapY && p_dy < 0 ) { return; }
+        if( !_sideBar->selectedMapX( ) && p_dx < 0 ) { return; }
+        if( !_sideBar->selectedMapY( ) && p_dy < 0 ) { return; }
 
-        if( int( _selectedMapY + p_dy ) > int( MAX_MAPY ) ) { return; }
-        if( int( _selectedMapX + p_dx ) > int( MAX_MAPY ) ) { return; }
+        if( int( _sideBar->selectedMapY( ) + p_dy ) > int( MAX_MAPY ) ) { return; }
+        if( int( _sideBar->selectedMapX( ) + p_dx ) > int( MAX_MAPY ) ) { return; }
 
-        onUnloadMap( _selectedBank, _selectedMapY, _selectedMapX );
+        onUnloadMap( _sideBar->selectedBank( ), _sideBar->selectedMapY( ),
+                     _sideBar->selectedMapX( ) );
 
-        _selectedMapX += p_dx;
-        _selectedMapY += p_dy;
+        _sideBar->selectMap( _sideBar->selectedMapX( ) + p_dx, _sideBar->selectedMapY( ) + p_dy );
 
-        if( _selectedMapY > _mapBanks[ _selectedBank ].getSizeY( ) ) {
-            _mapBanks[ _selectedBank ].setSizeY( _selectedMapY );
-            _mapBanks[ _selectedBank ].m_widget->setSizeY( _selectedMapY );
-            _mapBanks[ _selectedBank ].m_bank->m_slices.push_back( std::vector<DATA::mapSlice>(
-                _mapBanks[ _selectedBank ].getSizeX( ) + 1, DATA::mapSlice( ) ) );
-            _mapBanks[ _selectedBank ].m_bank->m_mapData.push_back( std::vector<DATA::mapData>(
-                _mapBanks[ _selectedBank ].getSizeX( ) + 1, DATA::mapData( ) ) );
+        if( _sideBar->selectedMapY( ) > _sideBar->selectedSizeY( ) ) {
+            _sideBar->selectedSetSizeY( _sideBar->selectedMapY( ) );
+            _sideBar->bank( ).m_bank->m_slices.push_back(
+                std::vector<DATA::mapSlice>( _sideBar->selectedSizeX( ) + 1, DATA::mapSlice( ) ) );
+            _sideBar->bank( ).m_bank->m_mapData.push_back(
+                std::vector<DATA::mapData>( _sideBar->selectedSizeX( ) + 1, DATA::mapData( ) ) );
 
-            _mapBanks[ _selectedBank ].m_computedBank->push_back(
-                std::vector<DATA::computedMapSlice>( _mapBanks[ _selectedBank ].getSizeX( ) + 1,
-                                                     DATA::computedMapSlice( ) ) );
-            _mapBankOverview.set( *_mapBanks[ _selectedBank ].m_computedBank );
+            _sideBar->bank( ).m_computedBank->push_back( std::vector<DATA::computedMapSlice>(
+                _sideBar->selectedSizeX( ) + 1, DATA::computedMapSlice( ) ) );
+            _mapBankOverview.set( *_sideBar->bank( ).m_computedBank );
             _mapBankOverview.redraw( _currentDayTime );
-            markBankChanged( _selectedBank );
+            _sideBar->markSelectedBankChanged( );
         }
-        if( _selectedMapX > _mapBanks[ _selectedBank ].getSizeX( ) ) {
-            _mapBanks[ _selectedBank ].setSizeX( _selectedMapX );
-            _mapBanks[ _selectedBank ].m_widget->setSizeX( _selectedMapX );
-            for( u8 y = 0; y <= _mapBanks[ _selectedBank ].getSizeY( ); ++y ) {
-                _mapBanks[ _selectedBank ].m_bank->m_slices[ y ].push_back( DATA::mapSlice( ) );
-                _mapBanks[ _selectedBank ].m_bank->m_mapData[ y ].push_back( DATA::mapData( ) );
-                ( *_mapBanks[ _selectedBank ].m_computedBank )[ y ].push_back(
-                    DATA::computedMapSlice( ) );
+        if( _sideBar->selectedMapX( ) > _sideBar->selectedSizeX( ) ) {
+            _sideBar->selectedSetSizeX( _sideBar->selectedMapX( ) );
+            for( u8 y = 0; y <= _sideBar->selectedSizeY( ); ++y ) {
+                _sideBar->bank( ).m_bank->m_slices[ y ].push_back( DATA::mapSlice( ) );
+                _sideBar->bank( ).m_bank->m_mapData[ y ].push_back( DATA::mapData( ) );
+                ( *_sideBar->bank( ).m_computedBank )[ y ].push_back( DATA::computedMapSlice( ) );
             }
-            _mapBankOverview.set( *_mapBanks[ _selectedBank ].m_computedBank );
+            _mapBankOverview.set( *_sideBar->bank( ).m_computedBank );
             _mapBankOverview.redraw( _currentDayTime );
-            markBankChanged( _selectedBank );
+            _sideBar->markSelectedBankChanged( );
         }
 
-        loadMap( _selectedBank, _selectedMapY, _selectedMapX );
+        loadMap( _sideBar->selectedBank( ), _sideBar->selectedMapY( ), _sideBar->selectedMapX( ) );
     }
 
     void root::onUnloadMap( u16 p_bank, u8 p_mapY, u8 p_mapX ) {
-        if( !_mapBanks.count( p_bank ) ) [[unlikely]] { return; }
+        if( !_sideBar->existsBank( p_bank ) ) [[unlikely]] { return; }
 
-        auto ts1 = _mapBanks[ p_bank ].m_bank->m_slices[ p_mapY ][ p_mapX ].m_data.m_tIdx1;
-        auto ts2 = _mapBanks[ p_bank ].m_bank->m_slices[ p_mapY ][ p_mapX ].m_data.m_tIdx2;
+        auto ts1 = _sideBar->slice( p_bank, p_mapY, p_mapX ).m_data.m_tIdx1;
+        auto ts2 = _sideBar->slice( p_bank, p_mapY, p_mapX ).m_data.m_tIdx2;
 
         auto bs = DATA::blockSet<2>( );
         buildBlockSet( &bs, ts1, ts2 );
         auto ts = DATA::tileSet<2>( );
         buildTileSet( &ts, ts1, ts2 );
 
-        buildPalette( ( *_mapBanks[ p_bank ].m_computedBank )[ p_mapY ][ p_mapX ].m_pals, ts1,
+        buildPalette( ( *_sideBar->bank( p_bank ).m_computedBank )[ p_mapY ][ p_mapX ].m_pals, ts1,
                       ts2 );
-        ( *_mapBanks[ p_bank ].m_computedBank )[ p_mapY ][ p_mapX ].m_computedBlocks
-            = _mapBanks[ p_bank ].m_bank->m_slices[ p_mapY ][ p_mapX ].compute( &bs, &ts );
+        ( *_sideBar->bank( p_bank ).m_computedBank )[ p_mapY ][ p_mapX ].m_computedBlocks
+            = _sideBar->slice( p_bank, p_mapY, p_mapX ).compute( &bs, &ts );
 
-        if( p_bank == _selectedBank ) {
+        if( p_bank == _sideBar->selectedBank( ) ) {
             _mapBankOverview.replaceMap(
-                ( *_mapBanks[ p_bank ].m_computedBank )[ p_mapY ][ p_mapX ], p_mapY, p_mapX );
+                ( *_sideBar->bank( p_bank ).m_computedBank )[ p_mapY ][ p_mapX ], p_mapY, p_mapX );
         }
     }
 
     void root::loadMap( u16 p_bank, u8 p_mapY, u8 p_mapX ) {
-        if( _selectedBank == -1 ) { switchContext( MAP_EDITOR ); }
+        if( _sideBar->selectedBank( ) == -1 ) { switchContext( MAP_EDITOR ); }
 
         loadMapBank( p_bank );
-        if( _mapBanks[ _selectedBank ].m_bank == nullptr || !_mapBanks[ _selectedBank ].m_loaded ) {
-            return;
-        }
+        if( _sideBar->bank( ).m_bank == nullptr || !_sideBar->bank( ).m_loaded ) { return; }
 
         // update drop downs
-        auto& mp       = _mapBanks[ _selectedBank ].m_bank->m_slices[ p_mapY ][ p_mapX ];
+        auto& mp       = _sideBar->slice( _sideBar->selectedBank( ), p_mapY, p_mapX );
         u8    ts1      = mp.m_data.m_tIdx1;
         u8    ts2      = mp.m_data.m_tIdx2;
         _disableRedraw = true;
@@ -2749,8 +2522,7 @@ namespace UI {
         _mapEditorBS2CB.set_selected( _blockSets[ ts2 ].m_stringListItem );
         _disableRedraw = false;
 
-        _selectedMapX = p_mapX;
-        _selectedMapY = p_mapY;
+        _sideBar->selectMap( p_mapX, p_mapY );
         currentMapUpdateTS1( ts1 );
         currentMapUpdateTS2( ts2 );
         redrawMap( p_mapY, p_mapX );
@@ -2781,7 +2553,7 @@ namespace UI {
         _tseNotebook.hide( );
         _ivScrolledWindow.hide( );
         _mainBox.hide( );
-        if( _editTileSet != nullptr ) { _editTileSet->unselect( ); }
+        if( _sideBar->_editTileSet != nullptr ) { _sideBar->_editTileSet->unselect( ); }
         if( _saveButton != nullptr ) { _saveButton->hide( ); }
 
         switch( p_context ) {
@@ -2811,7 +2583,7 @@ namespace UI {
             _mainBox.show( );
             _tseNotebook.show( );
             if( _saveButton != nullptr ) { _saveButton->show( ); }
-            if( _editTileSet != nullptr ) { _editTileSet->select( ); }
+            if( _sideBar->_editTileSet != nullptr ) { _sideBar->_editTileSet->select( ); }
 
             // TODO: actions
 

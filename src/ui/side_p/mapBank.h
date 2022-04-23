@@ -9,7 +9,7 @@
 #include <gtkmm/label.h>
 #include <gtkmm/spinbutton.h>
 
-#include "../defines.h"
+#include "../../defines.h"
 
 namespace UI {
     /*
@@ -33,7 +33,6 @@ namespace UI {
         Gtk::SpinButton                  _mapXEntry, _mapYEntry;
         Gtk::Button                      _loadMapButton{ "Load" };
 
-      protected:
         mapBank( const std::string& p_yicon = "view-more-symbolic",
                  const std::string& p_xicon = "content-loading-symbolic" );
 

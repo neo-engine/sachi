@@ -18,6 +18,7 @@ void sachi::on_activate( ) {
     auto window = createWindow( );
     window->present( );
 }
+
 void sachi::on_open( const Gio::Application::type_vec_files& p_files, const Glib::ustring& ) {
     UI::root* window  = nullptr;
     auto      windows = get_windows( );
@@ -40,6 +41,7 @@ UI::root* sachi::createWindow( ) {
     window->signal_hide( ).connect( [ this, window ]( ) { onHideWindow( window ); } );
     return window;
 }
+
 void sachi::onHideWindow( Gtk::Window* p_window ) {
     delete p_window;
 }
