@@ -10,16 +10,16 @@
 #include <gtkmm/spinbutton.h>
 
 #include "../../defines.h"
+#include "../../model.h"
 
 namespace UI {
     /*
      * @brief: A widget to draw a single map bank
      */
     class mapBank {
-      public:
-        enum status { STATUS_UNTOUCHED, STATUS_NEW, STATUS_EDITED_UNSAVED, STATUS_SAVED };
-
       protected:
+        model& _model;
+
         u16    _bankName = 0;
         u8     _sizeX = 0, _sizeY = 0;
         bool   _selected      = false;
@@ -37,7 +37,7 @@ namespace UI {
                  const std::string& p_xicon = "content-loading-symbolic" );
 
       public:
-        mapBank( u16 p_bankname, u8 p_sizeX = 0, u8 p_sizeY = 0,
+        mapBank( model& p_model, u16 p_bankname, u8 p_sizeX = 0, u8 p_sizeY = 0,
                  status p_initialStatus = STATUS_UNTOUCHED );
 
         virtual inline ~mapBank( ) {
@@ -130,7 +130,7 @@ namespace UI {
         Gtk::SpinButton                  _nameEntry;
 
       public:
-        addMapBank( );
+        addMapBank( model& p_model );
 
         inline ~addMapBank( ) override {
         }
@@ -148,7 +148,7 @@ namespace UI {
     class editTileSet : public mapBank {
         // mapy: ts0; mapx: ts1
       public:
-        editTileSet( );
+        editTileSet( model& p_model );
 
         inline ~editTileSet( ) override {
         }

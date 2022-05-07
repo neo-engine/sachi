@@ -1,0 +1,136 @@
+#include <gtkmm/centerbox.h>
+
+#include "../../defines.h"
+#include "actionBar.h"
+
+namespace UI {
+    actionBar::actionBar( ) {
+        auto abBOBox = Gtk::CenterBox( );
+        auto abSbBO1 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        auto abSbBO2 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        auto abSbBO3 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        abBOBox.set_start_widget( abSbBO1 );
+        abBOBox.set_center_widget( abSbBO2 );
+        abBOBox.set_end_widget( abSbBO3 );
+
+        _outerFrame = Gtk::Frame( );
+        _outerFrame.set_child( abBOBox );
+
+        auto abSAdjBO1
+            = Gtk::Adjustment::create( _settingValue[ SETTING_SPACING ], 0.0, 9.0, 1.0, 1.0, 0.0 );
+        auto abSAdjBO2
+            = Gtk::Adjustment::create( _settingValue[ SETTING_SCALE ], 1.0, 8.0, 1.0, 1.0, 0.0 );
+        auto abSAdj3
+            = Gtk::Adjustment::create( _settingValue[ SETTING_DAYTIME ], 0.0, 4.0, 1.0, 1.0, 0.0 );
+
+        _settings[ SETTING_SPACING ] = Gtk::SpinButton( abSAdjBO1 );
+        _settings[ SETTING_SPACING ].signal_value_changed( ).connect( [ & ]( ) {
+            auto value = _settings[ SETTING_SPACING ].get_value_as_int( );
+
+            //            _mapBankOverview.setSpacing( value );
+            //           _mapBankOverview.queue_resize( );
+
+            _settingValue[ SETTING_SPACING ] = value;
+        } );
+        _settings[ SETTING_SPACING ].set_margin_start( MARGIN );
+        _settings[ SETTING_SPACING ].set_width_chars( 1 );
+        _settings[ SETTING_SPACING ].set_max_width_chars( 1 );
+
+        _settings[ SETTING_SCALE ] = Gtk::SpinButton( abSAdjBO2 );
+        _settings[ SETTING_SCALE ].set_margin_start( MARGIN );
+        _settings[ SETTING_SCALE ].set_width_chars( 1 );
+        _settings[ SETTING_SCALE ].set_max_width_chars( 1 );
+        _settings[ SETTING_SCALE ].signal_value_changed( ).connect( [ & ]( ) {
+            auto value = _settings[ SETTING_SCALE ].get_value_as_int( );
+
+            _mapBankOverview.setScale( value );
+            _mapBankOverview.queue_resize( );
+
+            _settingValue[ SETTING_SCALE ] = value;
+        } );
+
+        _settings[ SETTING_DAYTIME ] = Gtk::SpinButton( abSAdj3 );
+        _settings[ SETTING_DAYTIME ].set_margin_start( MARGIN );
+        _settings[ SETTING_DAYTIME ].set_wrap( );
+        _settings[ SETTING_DAYTIME ].set_width_chars( 1 );
+        _settings[ SETTING_DAYTIME ].set_max_width_chars( 1 );
+        _settings[ SETTING_DAYTIME ].signal_value_changed( ).connect( [ & ]( ) {
+            auto value = _settings[ SETTING_DAYTIME ].get_value_as_int( );
+            setCurrentDaytime( value );
+        } );
+
+        _mapBankOverview.connectClick(
+            [ this ]( UI::mapBankOverview::clickType, u16 p_mapX, u16 p_mapY ) {
+                onUnloadMap( _sideBar->selectedBank( ), _sideBar->selectedMapY( ),
+                             _sideBar->selectedMapX( ) );
+                loadMap( _sideBar->selectedBank( ), p_mapY, p_mapX );
+            } );
+
+        auto abSlBO1 = Gtk::Image( );
+        abSlBO1.set_from_icon_name( "view-grid-symbolic" );
+        abSlBO1.set_margin_start( MARGIN );
+        auto abSlBO2 = Gtk::Image( );
+        abSlBO2.set_from_icon_name( "edit-find-symbolic" );
+        abSlBO2.set_margin_start( MARGIN );
+        auto abSlBO3 = Gtk::Image( );
+        abSlBO3.set_from_icon_name( "weather-clear-symbolic" );
+        abSlBO3.set_margin_start( MARGIN );
+        abSbBO1.append( abSlBO1 );
+        abSbBO1.append( _settings[ SETTING_SPACING ] );
+        abSbBO2.append( abSlBO2 );
+        abSbBO2.append( _settings[ SETTING_SCALE ] );
+        abSbBO3.append( abSlBO3 );
+        abSbBO3.append( _settings[ SETTING_DAYTIME ] );
+
+        _mapOverviewBox.append( bankOverviewModeBox );
+        _mapOverviewBox.append( bankOverviewSW );
+        _mapOverviewBox.append( _outerFrame );
+        _mapOverviewBox.set_margin( MARGIN );
+
+        // Map bank settings
+        // - sizeX, sizeY
+        // - map mode
+        //
+
+        _mapSettingsBox.set_margin( MARGIN );
+
+        auto shbox1f1 = Gtk::Frame( "General Settings" );
+        shbox1f1.set_label_align( Gtk::Align::CENTER );
+
+        auto sboxv1 = Gtk::Box( Gtk::Orientation::VERTICAL );
+        shbox1f1.set_child( sboxv1 );
+        sboxv1.set_margin( MARGIN );
+
+        auto shbox1 = Gtk::CenterBox( );
+        shbox1.set_hexpand( true );
+        auto shbox1l = Gtk::Label( "Map Mode" );
+        shbox1.set_start_widget( shbox1l );
+
+        _mapBankSettingsMapModeToggles.push_back(
+            std::make_shared<Gtk::ToggleButton>( "_Simple", true ) );
+        _mapBankSettingsMapModeToggles.push_back(
+            std::make_shared<Gtk::ToggleButton>( "Sc_attered", true ) );
+        _mapBankSettingsMapModeToggles.push_back(
+            std::make_shared<Gtk::ToggleButton>( "_Combined", true ) );
+
+        auto mapBankSettingsMapModeBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        mapBankSettingsMapModeBox.get_style_context( )->add_class( "linked" );
+        mapBankSettingsMapModeBox.set_halign( Gtk::Align::CENTER );
+        for( u8 i = 0; i < _mapBankSettingsMapModeToggles.size( ); ++i ) {
+            mapBankSettingsMapModeBox.append( *_mapBankSettingsMapModeToggles[ i ] );
+            _mapBankSettingsMapModeToggles[ i ]->signal_clicked( ).connect( [ this, i ]( ) {
+                _sideBar->bank( ).setMapMode( i );
+                _sideBar->markSelectedBankChanged( );
+            } );
+            if( i ) {
+                _mapBankSettingsMapModeToggles[ i ]->set_group(
+                    *_mapBankSettingsMapModeToggles[ 0 ] );
+            }
+        }
+        _mapBankSettingsMapModeToggles[ 0 ]->set_active( );
+        shbox1.set_end_widget( mapBankSettingsMapModeBox );
+
+        sboxv1.append( shbox1 );
+        _mapSettingsBox.append( shbox1f1 );
+    }
+} // namespace UI

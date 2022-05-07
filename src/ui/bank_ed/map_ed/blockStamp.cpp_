@@ -1,0 +1,36 @@
+#include "blockStamp.h"
+
+namespace UI::MED {
+
+    void blockStamp::reset( ) {
+        if( _blockStampDialog && !_blockStampDialogInvalid ) { _blockStampDialog->hide( ); }
+        _blockStampDialogInvalid = true;
+    }
+
+    void blockStamp::create( ) {
+        if( _blockStampDialogInvalid ) { // Block stamp dialog
+            _blockStampDialog = std::make_shared<Gtk::Dialog>( "Block Stamp", *this, false, true );
+            _blockStampDialog->get_content_area( )->append( _blockStampMap );
+            _blockStampDialog->signal_close_request( ).connect(
+                [ this ]( ) -> bool {
+                    _blockStampDialogInvalid = true;
+                    return false;
+                },
+                false );
+            _blockStampDialogInvalid = false;
+        }
+    }
+
+    void blockStamp::update( const std::vector<DATA::mapBlockAtom>& p_blockData, u16 p_width ) {
+        _blockStampWidth = p_width;
+        _blockStampData  = p_blockData;
+
+        _blockStampMap.set(
+            _blockStampData,
+            [ this ]( DATA::mapBlockAtom p_block ) { return blockSetLookup( p_block.m_blockidx ); },
+            _blockStampWidth );
+        _blockStampMap.draw( );
+        _blockStampMap.setOverlayHidden( _currentMapDisplayMode != MODE_EDIT_MOVEMENT );
+        _blockStampDialog->show( );
+    }
+} // namespace UI::MED

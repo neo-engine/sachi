@@ -1,0 +1,605 @@
+/*
+#include <cstring>
+#include <filesystem>
+#include <queue>
+
+#include <gtkmm/actionbar.h>
+#include <gtkmm/centerbox.h>
+#include <gtkmm/cssprovider.h>
+#include <gtkmm/eventcontrollerkey.h>
+#include <gtkmm/frame.h>
+#include <gtkmm/grid.h>
+#include <gtkmm/headerbar.h>
+#include <gtkmm/image.h>
+#include <gtkmm/label.h>
+#include <gtkmm/messagedialog.h>
+#include <gtkmm/multiselection.h>
+#include <gtkmm/notebook.h>
+#include <gtkmm/paned.h>
+#include <gtkmm/scrolledwindow.h>
+#include <gtkmm/signallistitemfactory.h>
+*/
+
+#include "../../defines.h"
+#include "bankEditor.h"
+
+namespace UI::MED {
+    editableMap::editableMap() {
+
+    }
+
+    bankEditor::bankEditor( ) {
+        // Map editor
+        _mapContentMainBox.set_margin_top( MARGIN );
+        _mapEditorModeBox.set_margin( MARGIN );
+        _mapEditorMainBox.append( _mapEditorModeBox );
+        _mapEditorMainBox.append( _mapContentMainBox );
+
+        // mode change (block edit, movement edit, locations, events, map data) buttons
+        _mapEditorModeToggles.push_back( std::make_shared<Gtk::ToggleButton>( "_Blocks", true ) );
+        _mapEditorModeToggles.push_back(
+            std::make_shared<Gtk::ToggleButton>( "_Movements", true ) );
+        _mapEditorModeToggles.push_back(
+            std::make_shared<Gtk::ToggleButton>( "Loca_tions", true ) );
+        _mapEditorModeToggles.push_back( std::make_shared<Gtk::ToggleButton>( "E_vents", true ) );
+        _mapEditorModeToggles.push_back(
+            std::make_shared<Gtk::ToggleButton>( "_Wild PKMN", true ) );
+        _mapEditorModeToggles.push_back(
+            std::make_shared<Gtk::ToggleButton>( "Meta _Data", true ) );
+
+        _mapEditorModeBox.get_style_context( )->add_class( "linked" );
+        _mapEditorModeBox.set_halign( Gtk::Align::CENTER );
+        for( u8 i = 0; i < 6; ++i ) {
+            _mapEditorModeBox.append( *_mapEditorModeToggles[ i ] );
+            _mapEditorModeToggles[ i ]->signal_clicked( ).connect(
+                [ this, i ]( ) { setNewMapEditMode( mapDisplayMode( i ) ); } );
+            if( i ) { _mapEditorModeToggles[ i ]->set_group( *_mapEditorModeToggles[ 0 ] ); }
+        }
+        _mapEditorModeToggles[ 0 ]->set_active( );
+
+        _mapNotebook.append_page( _mapEditorMainBox, "Map _Editor", true );
+        _mapNotebook.append_page( _mapOverviewBox, "Bank _Overview", true );
+        _mapNotebook.append_page( _mapSettingsBox, "Bank Settin_gs", true );
+
+        _mapContentMainBox.append( _mapEditorMapBox );
+        _mapEditorMapBox.set_expand( );
+
+        // Movements
+        _movementFrame = Gtk::Frame( "Movements" );
+        _movementFrame.set_margin_start( MARGIN );
+        _movementFrame.set_label_align( Gtk::Align::CENTER );
+        _mapContentMainBox.append( _movementFrame );
+
+        auto meScrolledWindow = Gtk::ScrolledWindow( );
+        meScrolledWindow.set_margin( MARGIN );
+        meScrolledWindow.set_child( _movementWidget );
+        DATA::palette pals[ 16 * 5 ] = { 0 };
+        _movementWidget.setOverlayOpacity( .9 );
+        _movementWidget.set( DATA::mapBlockAtom::computeMovementSet( ), pals, 1 );
+        _movementWidget.setOverlayHidden( false );
+        _movementWidget.draw( );
+        _movementWidget.setScale( 2 );
+        _movementWidget.queue_resize( );
+        _movementWidget.connectClick( [ this ]( UI::mapSlice::clickType, u16, u16 p_blockY ) {
+            updateSelectedBlock( { 0, DATA::mapBlockAtom::MOVEMENT_ORDER[ p_blockY ] } );
+        } );
+
+        meScrolledWindow.set_margin( MARGIN );
+        meScrolledWindow.set_vexpand( );
+        meScrolledWindow.set_halign( Gtk::Align::CENTER );
+        meScrolledWindow.set_policy( Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC );
+        _movementFrame.set_child( meScrolledWindow );
+
+        // Blocksets
+        // +-----------+
+        // | Blocksets |
+        // | [ 0 | 7 ] |
+        // |+---------+|
+        // ||         ||
+        // ||         ||
+        // ||         ||
+        // |+---------+|
+        // ||         ||
+        // ||         ||
+        // ||         ||
+        // |+---------+|
+        // +-----------+
+
+        auto bsselbox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        bsselbox.set_margin( MARGIN );
+        bsselbox.set_halign( Gtk::Align::CENTER );
+
+        _blockSetFrame = Gtk::Frame( "Tile Sets" );
+        _blockSetFrame.set_margin_start( MARGIN );
+        _blockSetFrame.set_label_align( Gtk::Align::CENTER );
+        _mapContentMainBox.append( _blockSetFrame );
+        _blockSetFrame.set_child( _mapEditorBlockSetBox );
+
+        auto emptystr   = std::vector<Glib::ustring>( );
+        _mapBankStrList = Gtk::StringList::create( emptystr );
+
+        _mapEditorBS1CB.set_model( _mapBankStrList );
+        _mapEditorBS1CB.property_selected_item( ).signal_changed( ).connect( [ this ]( ) {
+            if( _disableRedraw || _mapEditorBS1CB.get_selected( ) == GTK_INVALID_LIST_POSITION
+                || !_fsRootLoaded ) {
+                return;
+            }
+            try {
+                u16 newTS1
+                    = std::stoi( _mapBankStrList->get_string( _mapEditorBS1CB.get_selected( ) ) );
+                currentMapUpdateTS1( newTS1 );
+            } catch( ... ) { return; }
+        } );
+        _mapEditorBS2CB.set_model( _mapBankStrList );
+        _mapEditorBS2CB.property_selected_item( ).signal_changed( ).connect( [ this ]( ) {
+            if( _disableRedraw || _mapEditorBS2CB.get_selected( ) == GTK_INVALID_LIST_POSITION
+                || !_fsRootLoaded ) {
+                return;
+            }
+            try {
+                u16 newTS2
+                    = std::stoi( _mapBankStrList->get_string( _mapEditorBS2CB.get_selected( ) ) );
+                currentMapUpdateTS2( newTS2 );
+            } catch( ... ) { return; }
+        } );
+
+        bsselbox.append( _mapEditorBS1CB );
+        bsselbox.append( _mapEditorBS2CB );
+        bsselbox.get_style_context( )->add_class( "linked" );
+        _mapEditorBlockSetBox.append( bsselbox );
+
+        auto meScrolledWindow1 = Gtk::ScrolledWindow( );
+        meScrolledWindow1.set_child( _ts1widget );
+        meScrolledWindow1.set_margin( MARGIN );
+        meScrolledWindow1.set_vexpand( );
+        meScrolledWindow1.set_halign( Gtk::Align::CENTER );
+        meScrolledWindow1.set_policy( Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC );
+        _mapEditorBlockSetBox.append( meScrolledWindow1 );
+
+        _ts1widget.connectClick(
+            [ this ]( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY ) {
+                onTSClicked( p_button, p_blockX, p_blockY, 0 );
+            } );
+
+        auto meScrolledWindow2 = Gtk::ScrolledWindow( );
+        meScrolledWindow2.set_child( _ts2widget );
+        meScrolledWindow2.set_margin( MARGIN );
+        meScrolledWindow2.set_vexpand( );
+        meScrolledWindow2.set_halign( Gtk::Align::CENTER );
+        meScrolledWindow2.set_policy( Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC );
+        _mapEditorBlockSetBox.append( meScrolledWindow2 );
+
+        _ts2widget.connectClick(
+            [ this ]( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY ) {
+                onTSClicked( p_button, p_blockX, p_blockY, 1 );
+            } );
+
+        // Map window
+        // +---------------+
+        // |               |
+        // |      Map      |
+        // |               |
+        // | ------------- |
+        // |  Action Bar   |
+        // +---------------+
+
+        auto rScrolledWindow = Gtk::ScrolledWindow( );
+        rScrolledWindow.set_child( _mapGrid );
+        _mapGrid.set_halign( Gtk::Align::CENTER );
+        _mapGrid.set_valign( Gtk::Align::CENTER );
+
+        for( u8 x = 0; x < 3; ++x ) {
+            _currentMap.push_back( std::vector<lookupMapSlice>( 3 ) );
+            for( u8 y = 0; y < 3; ++y ) {
+                _mapGrid.attach( _currentMap[ x ][ y ], x, y );
+                _currentMap[ x ][ y ].connectClick(
+                    [ this, x, y ]( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY ) {
+                        onMapClicked( p_button, p_blockX, p_blockY, s8( x ) - 1, s8( y ) - 1,
+                                      x == 1 && y == 1 );
+                    } );
+                _currentMap[ x ][ y ].connectDrag(
+                    [ this, x, y ]( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY ) {
+                        onMapDragStart( p_button, p_blockX, p_blockY, s8( x ) - 1, s8( y ) - 1,
+                                        x == 1 && y == 1 );
+                    },
+                    [ this, x, y ]( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY ) {
+                        onMapDragUpdate( p_button, p_blockX, p_blockY, s8( x ) - 1, s8( y ) - 1,
+                                         x == 1 && y == 1 );
+                    },
+                    [ this, x, y ]( UI::mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY ) {
+                        onMapDragEnd( p_button, p_blockX, p_blockY, s8( x ) - 1, s8( y ) - 1,
+                                      x == 1 && y == 1 );
+                    } );
+            }
+        }
+
+        _mapGrid.set_row_spacing( _neighborSpacing );
+        _mapGrid.set_column_spacing( _neighborSpacing );
+
+        rScrolledWindow.set_expand( );
+        _mapEditorMapBox.append( rScrolledWindow );
+
+        // map editor action box
+        // +--------------------+-----+----------------------------+
+        // | Map Grid [ 0 |+|-] | Map | Blockset width   [ 8 |+|-] |
+        // | Scale    [ 1 |+|-] | Nav | Neigh map blocks [ 8 |+|-] |
+        // | Day Time [Day (2)] |     | Neigh distance   [ 9 |+|-] |
+        // +--------------------+-----+----------------------------+
+        auto abScrolledWindow = Gtk::ScrolledWindow( );
+        _mapEditorMapBox.append( _mapEditorActionBar );
+        _mapEditorActionBar.set_child( abScrolledWindow );
+        _mapEditorActionBar.set_margin_top( MARGIN );
+        abScrolledWindow.set_policy( Gtk::PolicyType::AUTOMATIC, Gtk::PolicyType::NEVER );
+        auto mapEditorActions = Gtk::CenterBox( );
+
+        abScrolledWindow.set_child( mapEditorActions );
+
+        // action bar start
+        auto abStartBox = Gtk::Box( Gtk::Orientation::VERTICAL );
+        abStartBox.set_valign( Gtk::Align::CENTER );
+        mapEditorActions.set_start_widget( abStartBox );
+        auto abSb1 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        auto abSb2 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        auto abSb3 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        abStartBox.append( abSb1 );
+        abStartBox.append( abSb2 );
+        abStartBox.append( abSb3 );
+
+        auto abSAdj1 = Gtk::Adjustment::create( _blockSpacing, 0.0, 9.0, 1.0, 1.0, 0.0 );
+        auto abSAdj2 = Gtk::Adjustment::create( _blockScale, 1.0, 8.0, 1.0, 1.0, 0.0 );
+        auto abSAdj3 = Gtk::Adjustment::create( _currentDayTime, 0.0, 4.0, 1.0, 1.0, 0.0 );
+
+        _mapEditorSettings1 = Gtk::SpinButton( abSAdj1 );
+        _mapEditorSettings1.signal_value_changed( ).connect( [ & ]( ) {
+            auto value = _mapEditorSettings1.get_value_as_int( );
+            // Set spacing of everything map-py
+
+            for( u8 x = 0; x < 3; ++x ) {
+                for( u8 y = 0; y < 3; ++y ) {
+                    _currentMap[ x ][ y ].setSpacing( value );
+                    _currentMap[ x ][ y ].queue_resize( );
+                }
+            }
+            _ts1widget.setSpacing( value );
+            _ts1widget.queue_resize( );
+            _ts2widget.setSpacing( value );
+            _ts2widget.queue_resize( );
+            _movementWidget.setSpacing( value );
+            _movementWidget.queue_resize( );
+            _blockStampMap.setSpacing( value );
+            _blockStampMap.queue_resize( );
+            _blockSpacing = value;
+        } );
+        _mapEditorSettings1.set_margin_start( MARGIN );
+        _mapEditorSettings1.set_width_chars( 1 );
+        _mapEditorSettings1.set_max_width_chars( 1 );
+
+        _mapEditorSettings2 = Gtk::SpinButton( abSAdj2 );
+        _mapEditorSettings2.set_margin_start( MARGIN );
+        _mapEditorSettings2.set_width_chars( 1 );
+        _mapEditorSettings2.set_max_width_chars( 1 );
+        _mapEditorSettings2.signal_value_changed( ).connect( [ & ]( ) {
+            auto value = _mapEditorSettings2.get_value_as_int( );
+            // Set scale of everything map-py
+
+            for( u8 x = 0; x < 3; ++x ) {
+                for( u8 y = 0; y < 3; ++y ) {
+                    _currentMap[ x ][ y ].setScale( value );
+                    _currentMap[ x ][ y ].queue_resize( );
+                }
+            }
+            _ts1widget.setScale( value );
+            _ts1widget.queue_resize( );
+            _ts2widget.setScale( value );
+            _ts2widget.queue_resize( );
+            _movementWidget.setScale( value > 1 ? value : 2 );
+            _movementWidget.queue_resize( );
+            _blockStampMap.setScale( value );
+            _blockStampMap.queue_resize( );
+            _blockScale = value;
+        } );
+
+        _mapEditorSettings3 = Gtk::SpinButton( abSAdj3 );
+        _mapEditorSettings3.set_margin_start( MARGIN );
+        _mapEditorSettings3.set_wrap( );
+        _mapEditorSettings3.set_width_chars( 1 );
+        _mapEditorSettings3.set_max_width_chars( 1 );
+        _mapEditorSettings3.signal_value_changed( ).connect( [ & ]( ) {
+            auto value = _mapEditorSettings3.get_value_as_int( );
+            setCurrentDaytime( value );
+        } );
+
+        auto abSl1 = Gtk::Image( );
+        abSl1.set_from_icon_name( "view-grid-symbolic" );
+        abSl1.set_margin_start( MARGIN );
+        auto abSl2 = Gtk::Image( );
+        abSl2.set_from_icon_name( "edit-find-symbolic" );
+        abSl2.set_margin_start( MARGIN );
+        auto abSl3 = Gtk::Image( );
+        abSl3.set_from_icon_name( "weather-clear-symbolic" );
+        abSl3.set_margin_start( MARGIN );
+        abSb1.append( abSl1 );
+        abSb1.append( _mapEditorSettings1 );
+        abSb2.append( abSl2 );
+        abSb2.append( _mapEditorSettings2 );
+        abSb3.append( abSl3 );
+        abSb3.append( _mapEditorSettings3 );
+
+        // action bar center
+        auto mapNavGrid = Gtk::Grid( );
+        for( u8 x = 0; x < 3; ++x ) {
+            for( u8 y = 0; y < 3; ++y ) {
+                if( x == 1 && y == 1 ) {
+                    auto im = Gtk::Image( );
+                    im.set_from_icon_name( "image-x-generic-symbolic" );
+                    mapNavGrid.attach( im, x, y );
+                    continue;
+                }
+                _mapNavButton[ x ][ y ] = createButton(
+                    "", "", [ this, y, x ]( ) { moveToMap( s8( y ) - 1, s8( x ) - 1 ); } );
+                _mapNavButton[ x ][ y ]->set_has_frame( false );
+                if( x == 1 && y == 2 ) {
+                    _mapNavButton[ x ][ y ]->set_icon_name( "pan-down-symbolic" );
+                } else if( x == 1 && y == 0 ) {
+                    _mapNavButton[ x ][ y ]->set_icon_name( "pan-up-symbolic" );
+                } else if( x == 0 && y == 1 ) {
+                    _mapNavButton[ x ][ y ]->set_icon_name( "pan-start-symbolic" );
+                } else if( x == 2 && y == 1 ) {
+                    _mapNavButton[ x ][ y ]->set_icon_name( "pan-end-symbolic" );
+                }
+                mapNavGrid.attach( *_mapNavButton[ x ][ y ], x, y );
+            }
+        }
+        mapEditorActions.set_center_widget( mapNavGrid );
+
+        // action bar end
+
+        auto abEndBox = Gtk::Box( Gtk::Orientation::VERTICAL );
+        abEndBox.set_valign( Gtk::Align::CENTER );
+        mapEditorActions.set_end_widget( abEndBox );
+        _abEb1     = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        auto abEb2 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        auto abEb3 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        abEndBox.append( _abEb1 );
+        abEndBox.append( abEb2 );
+        abEndBox.append( abEb3 );
+
+        auto abEAdj1 = Gtk::Adjustment::create( _blockSetWidth, 1.0, 32.0, 1.0, 1.0, 0.0 );
+        auto abEAdj2 = Gtk::Adjustment::create( _adjacentBlocks, 0.0, 32.0, 1.0, 1.0, 0.0 );
+        auto abEAdj3 = Gtk::Adjustment::create( _neighborSpacing, 0.0, 50.0, 1.0, 1.0, 0.0 );
+
+        _mapEditorSettings4 = Gtk::SpinButton( abEAdj1 );
+        _mapEditorSettings4.set_margin_start( MARGIN );
+        _mapEditorSettings4.set_width_chars( 1 );
+        _mapEditorSettings4.set_max_width_chars( 1 );
+        _mapEditorSettings4.signal_value_changed( ).connect( [ & ]( ) {
+            _blockSetWidth = _mapEditorSettings4.get_value_as_int( );
+            auto mp        = _sideBar->slice( );
+            auto ts        = DATA::tileSet<2>( );
+            buildTileSet( &ts );
+            DATA::palette pals[ 16 * 5 ] = { 0 };
+            buildPalette( pals );
+
+            _ts1widget.set( DATA::mapBlockAtom::computeBlockSet(
+                                &_blockSets[ mp.m_data.m_tIdx1 ].m_blockSet, &ts ),
+                            pals, _blockSetWidth );
+
+            _ts2widget.set( DATA::mapBlockAtom::computeBlockSet(
+                                &_blockSets[ mp.m_data.m_tIdx2 ].m_blockSet, &ts ),
+                            pals, _blockSetWidth );
+
+            _ts1widget.setDaytime( _currentDayTime );
+            _ts2widget.setDaytime( _currentDayTime );
+            _ts1widget.draw( );
+            _ts2widget.draw( );
+        } );
+
+        _mapEditorSettings5 = Gtk::SpinButton( abEAdj2 );
+        _mapEditorSettings5.set_margin_start( MARGIN );
+        _mapEditorSettings5.set_width_chars( 1 );
+        _mapEditorSettings5.set_max_width_chars( 1 );
+        _mapEditorSettings5.signal_value_changed( ).connect( [ & ]( ) {
+            _adjacentBlocks = _mapEditorSettings5.get_value_as_int( );
+            redrawMap( _sideBar->selectedMapY( ), _sideBar->selectedMapX( ) );
+        } );
+
+        _mapEditorSettings6 = Gtk::SpinButton( abEAdj3 );
+        _mapEditorSettings6.set_margin_start( MARGIN );
+        _mapEditorSettings6.set_width_chars( 1 );
+        _mapEditorSettings6.set_max_width_chars( 1 );
+
+        _mapEditorSettings6.signal_value_changed( ).connect( [ & ]( ) {
+            _neighborSpacing = _mapEditorSettings6.get_value_as_int( );
+            _mapGrid.set_row_spacing( _neighborSpacing );
+            _mapGrid.set_column_spacing( _neighborSpacing );
+        } );
+
+        auto abEl1 = Gtk::Image( );
+        abEl1.set_from_icon_name( "window-restore-symbolic" );
+        auto abEl2 = Gtk::Image( );
+        abEl2.set_from_icon_name( "process-stop-symbolic" );
+        auto abEl3 = Gtk::Image( );
+        abEl3.set_from_icon_name( "application-x-appliance-symbolic" );
+        _abEb1.append( abEl1 );
+        _abEb1.append( _mapEditorSettings4 );
+        abEb2.append( abEl2 );
+        abEb2.append( _mapEditorSettings5 );
+        abEb3.append( abEl3 );
+        abEb3.append( _mapEditorSettings6 );
+
+        // Map overview box
+        // +----------------------+
+        // | ( Maps | Locations ) |
+        // |+--------------------+|
+        // ||                    ||
+        // ||        Maps        ||
+        // ||                    ||
+        // |+--------------------+|
+        // |     ( Actionbar )    |
+        // +----------------------+
+
+        _mapOverviewBox.set_margin( MARGIN );
+
+        // mode change (block edit, locations) buttons
+        auto bankOverviewModeBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        bankOverviewModeBox.set_margin( MARGIN );
+        _bankOverviewModeToggles.push_back(
+            std::make_shared<Gtk::ToggleButton>( "_Blocks", true ) );
+        _bankOverviewModeToggles.push_back(
+            std::make_shared<Gtk::ToggleButton>( "Loca_tions", true ) );
+
+        bankOverviewModeBox.get_style_context( )->add_class( "linked" );
+        bankOverviewModeBox.set_halign( Gtk::Align::CENTER );
+        for( u8 i = 0; i < _bankOverviewModeToggles.size( ); ++i ) {
+            bankOverviewModeBox.append( *_bankOverviewModeToggles[ i ] );
+            _bankOverviewModeToggles[ i ]->signal_clicked( ).connect(
+                [ this, i ]( ) { setNewBankOverviewMode( bankOverviewMode( i ) ); } );
+            if( i ) { _bankOverviewModeToggles[ i ]->set_group( *_bankOverviewModeToggles[ 0 ] ); }
+        }
+        _bankOverviewModeToggles[ 0 ]->set_active( );
+
+        auto boswbox = Gtk::Box( );
+        boswbox.set_halign( Gtk::Align::CENTER );
+        boswbox.set_valign( Gtk::Align::CENTER );
+        boswbox.set_expand( true );
+
+        auto bankOverviewSW = Gtk::ScrolledWindow( );
+        bankOverviewSW.set_margin( MARGIN );
+        bankOverviewSW.set_policy( Gtk::PolicyType::AUTOMATIC, Gtk::PolicyType::AUTOMATIC );
+        bankOverviewSW.set_child( boswbox );
+        boswbox.append( _mapBankOverview );
+
+        auto abBOBox = Gtk::CenterBox( );
+        auto abSbBO1 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        auto abSbBO2 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        auto abSbBO3 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        abBOBox.set_start_widget( abSbBO1 );
+        abBOBox.set_center_widget( abSbBO2 );
+        abBOBox.set_end_widget( abSbBO3 );
+
+        auto abBOFrame = Gtk::Frame( );
+        abBOFrame.set_child( abBOBox );
+
+        auto abSAdjBO1 = Gtk::Adjustment::create( _bankOverviewSpacing, 0.0, 9.0, 1.0, 1.0, 0.0 );
+        auto abSAdjBO2 = Gtk::Adjustment::create( _bankOverviewScale, 1.0, 8.0, 1.0, 1.0, 0.0 );
+
+        _mapBankOverviewSettings1 = Gtk::SpinButton( abSAdjBO1 );
+        _mapBankOverviewSettings1.signal_value_changed( ).connect( [ & ]( ) {
+            auto value = _mapBankOverviewSettings1.get_value_as_int( );
+
+            _mapBankOverview.setSpacing( value );
+            _mapBankOverview.queue_resize( );
+
+            _bankOverviewSpacing = value;
+        } );
+        _mapBankOverviewSettings1.set_margin_start( MARGIN );
+        _mapBankOverviewSettings1.set_width_chars( 1 );
+        _mapBankOverviewSettings1.set_max_width_chars( 1 );
+
+        _mapBankOverviewSettings2 = Gtk::SpinButton( abSAdjBO2 );
+        _mapBankOverviewSettings2.set_margin_start( MARGIN );
+        _mapBankOverviewSettings2.set_width_chars( 1 );
+        _mapBankOverviewSettings2.set_max_width_chars( 1 );
+        _mapBankOverviewSettings2.signal_value_changed( ).connect( [ & ]( ) {
+            auto value = _mapBankOverviewSettings2.get_value_as_int( );
+
+            _mapBankOverview.setScale( value );
+            _mapBankOverview.queue_resize( );
+
+            _bankOverviewScale = value;
+        } );
+
+        _mapBankOverviewSettings3 = Gtk::SpinButton( abSAdj3 );
+        _mapBankOverviewSettings3.set_margin_start( MARGIN );
+        _mapBankOverviewSettings3.set_wrap( );
+        _mapBankOverviewSettings3.set_width_chars( 1 );
+        _mapBankOverviewSettings3.set_max_width_chars( 1 );
+        _mapBankOverviewSettings3.signal_value_changed( ).connect( [ & ]( ) {
+            auto value = _mapBankOverviewSettings3.get_value_as_int( );
+            setCurrentDaytime( value );
+        } );
+
+        _mapBankOverview.connectClick(
+            [ this ]( UI::mapBankOverview::clickType, u16 p_mapX, u16 p_mapY ) {
+                onUnloadMap( _sideBar->selectedBank( ), _sideBar->selectedMapY( ),
+                             _sideBar->selectedMapX( ) );
+                loadMap( _sideBar->selectedBank( ), p_mapY, p_mapX );
+            } );
+
+        auto abSlBO1 = Gtk::Image( );
+        abSlBO1.set_from_icon_name( "view-grid-symbolic" );
+        abSlBO1.set_margin_start( MARGIN );
+        auto abSlBO2 = Gtk::Image( );
+        abSlBO2.set_from_icon_name( "edit-find-symbolic" );
+        abSlBO2.set_margin_start( MARGIN );
+        auto abSlBO3 = Gtk::Image( );
+        abSlBO3.set_from_icon_name( "weather-clear-symbolic" );
+        abSlBO3.set_margin_start( MARGIN );
+        abSbBO1.append( abSlBO1 );
+        abSbBO1.append( _mapBankOverviewSettings1 );
+        abSbBO2.append( abSlBO2 );
+        abSbBO2.append( _mapBankOverviewSettings2 );
+        abSbBO3.append( abSlBO3 );
+        abSbBO3.append( _mapBankOverviewSettings3 );
+
+        _mapOverviewBox.append( bankOverviewModeBox );
+        _mapOverviewBox.append( bankOverviewSW );
+        _mapOverviewBox.append( abBOFrame );
+        _mapOverviewBox.set_margin( MARGIN );
+
+        // Map bank settings
+        // - sizeX, sizeY
+        // - map mode
+        //
+
+        _mapSettingsBox.set_margin( MARGIN );
+
+        auto shbox1f1 = Gtk::Frame( "General Settings" );
+        shbox1f1.set_label_align( Gtk::Align::CENTER );
+
+        auto sboxv1 = Gtk::Box( Gtk::Orientation::VERTICAL );
+        shbox1f1.set_child( sboxv1 );
+        sboxv1.set_margin( MARGIN );
+
+        auto shbox1 = Gtk::CenterBox( );
+        shbox1.set_hexpand( true );
+        auto shbox1l = Gtk::Label( "Map Mode" );
+        shbox1.set_start_widget( shbox1l );
+
+        _mapBankSettingsMapModeToggles.push_back(
+            std::make_shared<Gtk::ToggleButton>( "_Simple", true ) );
+        _mapBankSettingsMapModeToggles.push_back(
+            std::make_shared<Gtk::ToggleButton>( "Sc_attered", true ) );
+        _mapBankSettingsMapModeToggles.push_back(
+            std::make_shared<Gtk::ToggleButton>( "_Combined", true ) );
+
+        auto mapBankSettingsMapModeBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        mapBankSettingsMapModeBox.get_style_context( )->add_class( "linked" );
+        mapBankSettingsMapModeBox.set_halign( Gtk::Align::CENTER );
+        for( u8 i = 0; i < _mapBankSettingsMapModeToggles.size( ); ++i ) {
+            mapBankSettingsMapModeBox.append( *_mapBankSettingsMapModeToggles[ i ] );
+            _mapBankSettingsMapModeToggles[ i ]->signal_clicked( ).connect( [ this, i ]( ) {
+                _sideBar->bank( ).setMapMode( i );
+                _sideBar->markSelectedBankChanged( );
+            } );
+            if( i ) {
+                _mapBankSettingsMapModeToggles[ i ]->set_group(
+                    *_mapBankSettingsMapModeToggles[ 0 ] );
+            }
+        }
+        _mapBankSettingsMapModeToggles[ 0 ]->set_active( );
+        shbox1.set_end_widget( mapBankSettingsMapModeBox );
+
+        sboxv1.append( shbox1 );
+        _mapSettingsBox.append( shbox1f1 );
+    }
+
+    void bankEditor::hide( ) {
+        _mapNotebook.hide( );
+    }
+
+    void bankEditor::show( ) {
+        _mapNotebook.show( );
+    }
+
+} // namespace UI::MED

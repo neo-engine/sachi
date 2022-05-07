@@ -4,7 +4,10 @@
 namespace fs = std::filesystem;
 using namespace std::string_literals;
 
-#define conv( a )    ( ( u8 )( (a) *31 / 255 ) )
+const std::string APP_NAME     = std::string( "Sachi" );
+const std::string TITLE_STRING = APP_NAME + " " + std::string( VERSION );
+
+#define conv( a )    ( (u8) ( (a) *31 / 255 ) )
 #define revconv( a ) ( ( (a) *255 / 31 ) )
 
 #define green( a ) ( revconv( ( ( a ) >> 5 ) & 31 ) )
@@ -22,15 +25,7 @@ typedef int32_t           s32;
 typedef int64_t           s64;
 typedef __int128          s128;
 
-extern std::string FSROOT_PATH;
-extern std::string MAP_PATH;
-extern std::string TILESET_PATH;
-extern std::string BLOCKSET_PATH;
-extern std::string PALETTE_PATH;
-extern std::string MAPDATA_PATH;
-
 constexpr u8 DAYTIMES = 5;
-
 constexpr u8 MAP_SIZE = 32;
 
 constexpr s64 MAX_MAPBANK_NAME = 99;
@@ -62,3 +57,10 @@ const std::string EXTRA_CSS
       ".movement-border { color: white; background-color: purple; }\n"    /* 0x3f */
       ".movement-weird { color: white; background-color: black; }\n"      /* anything else */
       "";
+
+enum context : u8 {
+    CONTEXT_NONE,        // nothing loaded
+    CONTEXT_FSROOT_NONE, // fsroot loaded, but nothing else
+    CONTEXT_MAP_EDITOR,  // map bank loaded and map visible
+    CONTEXT_TILE_EDITOR, // tile set editor loaded
+};
