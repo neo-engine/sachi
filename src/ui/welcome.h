@@ -26,7 +26,7 @@ namespace UI {
             Gtk::TreeModelColumn<std::shared_ptr<Gdk::Pixbuf>> m_pixbuf;
         };
 
-        root* _rootWindow;
+        root& _rootWindow;
 
         recentFsRootModelColumn             _recentViewColumns;
         Gtk::IconView                       _recentFsRootIconView;
@@ -35,7 +35,7 @@ namespace UI {
         Gtk::ScrolledWindow                 _ivScrolledWindow;
 
       public:
-        welcome( root* p_parant );
+        welcome( root& p_parent );
 
         inline operator Gtk::Widget&( ) {
             return _ivScrolledWindow;

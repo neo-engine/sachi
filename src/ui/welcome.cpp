@@ -46,8 +46,7 @@ namespace UI {
         }
     }
 
-    welcome::welcome( root* p_root ) {
-        _rootWindow = p_root;
+    welcome::welcome( root& p_root ) : _rootWindow( p_root ) {
 
         _recentlyUsedFsRoots = Gtk::RecentManager::get_default( );
 

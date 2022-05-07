@@ -6,15 +6,20 @@
 #include <gtkmm/button.h>
 #include <gtkmm/label.h>
 
+#include "../../defines.h"
 #include "../../model.h"
 #include "mapBank.h"
 
 namespace UI {
+    class root;
+
     /*
      * @brief: The side panel widget used for loading the bank editor or other subtools.
      */
     class sideBar {
-        model& _model;
+        model&  _model;
+        root&   _rootWindow;
+        context _context = CONTEXT_NONE;
 
         Gtk::Box                     _lMainBox;
         std::shared_ptr<Gtk::Button> _collapseMapBanksButton; // collapse/show sidebar
@@ -44,13 +49,9 @@ namespace UI {
         std::shared_ptr<addMapBank> _addMapBank;
 
         std::map<u16, std::shared_ptr<mapBank>> _mapBanks; // bank -> bankinfo
-        int                                     _selectedBank = -1;
-        s16                                     _selectedMapX = -1, _selectedMapY = -1;
 
       public:
-        sideBar( );
-        virtual inline ~sideBar( ) {
-        }
+        sideBar( model& p_model, root& p_root );
 
         /*
          * @brief: Collapses/shows the sidebar.
@@ -67,82 +68,22 @@ namespace UI {
             return _lMainBox;
         }
 
-        inline auto selectedBank( ) const {
-            return _selectedBank;
-        }
-
-        inline void selectBank( int p_newSelection ) {
-            _selectedBank = p_newSelection;
-        }
-
-        inline auto selectedMapX( ) const {
-            return _selectedMapX;
-        }
-
-        inline auto selectedMapY( ) const {
-            return _selectedMapY;
-        }
-
-        inline void selectMap( s16 p_mapX, s16 p_mapY ) {
-            _selectedMapX = p_mapX;
-            _selectedMapY = p_mapY;
-        }
-
-        inline auto selectedSizeX( ) const {
-            return _mapBanks.at( selectedBank( ) ).getSizeX( );
-        }
-
-        inline auto selectedSizeY( ) const {
-            return _mapBanks.at( selectedBank( ) ).getSizeY( );
-        }
-
-        inline void selectedSetSizeX( u8 p_sx ) {
-            _mapBanks[ selectedBank( ) ].setSizeX( p_sx );
-            _mapBanks[ selectedBank( ) ].m_widget->setSizeX( p_sx );
-        }
-
-        inline void selectedSetSizeY( u8 p_sy ) {
-            _mapBanks[ selectedBank( ) ].setSizeY( p_sy );
-            _mapBanks[ selectedBank( ) ].m_widget->setSizeY( p_sy );
-        }
-
-        inline bool existsBank( u16 p_bank ) {
-            return _mapBanks.count( p_bank );
-        }
-
-        inline auto& bank( u16 p_bank ) {
-            return _mapBanks[ p_bank ];
-        }
-
-        inline auto& bank( ) {
-            return bank( selectedBank( ) );
-        }
-
-        inline auto& slice( u16 p_bank, u8 p_mapY, u8 p_mapX ) {
-            return bank( p_bank ).m_bank->m_slices[ p_mapY ][ p_mapX ];
-        }
-
-        inline auto& slice( ) {
-            return slice( selectedBank( ), selectedMapY( ), selectedMapX( ) );
+        inline void switchContext( context p_context ) {
+            _context = p_context;
+            redraw( );
         }
 
         /*
-         * @brief: Sets the status of the edit tile set widget to the specified status,
-         * resulting in the TS being highlighted in the sidebar.
+         * @brief: Redraws all existing widgets in the sidebar, updating their status to
+         * match the corresponding values in the model.
          */
-        void markTileSetsChanged( mapBank::status p_newStatus
-                                  = mapBank::status::STATUS_EDITED_UNSAVED );
+        void redraw( );
 
         /*
-         * @brief: Sets the status of the specified map bank to the specified status,
-         * resulting in the specified map bank being highlighted in the sidebar.
+         * @brief: Re-reads the model and reconstructs any mapBank widgets
          */
-        void markBankChanged( u16 p_bank, mapBank::status p_newStatus
-                                          = mapBank::status::STATUS_EDITED_UNSAVED );
+        void reinit( );
 
-        inline void markSelectedBankChanged( mapBank::status p_newStatus
-                                             = mapBank::status::STATUS_EDITED_UNSAVED ) {
-            markBankChanged( selectedBank( ), p_newStatus );
-        }
+        void addNewMapBank( u16 p_bank, u8 p_sizeY, u8 p_sizeX, status p_status );
     };
 } // namespace UI

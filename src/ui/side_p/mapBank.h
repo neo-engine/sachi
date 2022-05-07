@@ -33,7 +33,7 @@ namespace UI {
         Gtk::SpinButton                  _mapXEntry, _mapYEntry;
         Gtk::Button                      _loadMapButton{ "Load" };
 
-        mapBank( const std::string& p_yicon = "view-more-symbolic",
+        mapBank( model& p_model, const std::string& p_yicon = "view-more-symbolic",
                  const std::string& p_xicon = "content-loading-symbolic" );
 
       public:
@@ -41,6 +41,14 @@ namespace UI {
                  status p_initialStatus = STATUS_UNTOUCHED );
 
         virtual inline ~mapBank( ) {
+        }
+
+        virtual inline void redraw( ) {
+            setSelected( _model.selectedBank( ) == _bankName );
+            collapse( _model.m_settings.m_focusMode );
+            setSizeX( _model.sizeX( _bankName ) );
+            setSizeY( _model.sizeY( _bankName ) );
+            setStatus( _model.bankStatus( _bankName ) );
         }
 
         virtual inline void collapse( bool p_collapsed = true ) {
@@ -71,6 +79,7 @@ namespace UI {
         inline u16 getBankName( ) const {
             return _bankName;
         }
+
         inline void setBankName( u16 p_bankName ) {
             _bankName = p_bankName;
             _nameLabel.set_markup( "<span size=\"x-large\" weight=\"bold\">"
@@ -80,13 +89,16 @@ namespace UI {
         inline u8 getSizeX( ) const {
             return _sizeX;
         }
+
         inline void setSizeX( u8 p_sizeX ) {
             _sizeX = p_sizeX;
             _mapXAdj->set_upper( p_sizeX );
         }
+
         inline u8 getSizeY( ) const {
             return _sizeY;
         }
+
         inline void setSizeY( u8 p_sizeY ) {
             _sizeY = p_sizeY;
             _mapYAdj->set_upper( p_sizeY );
@@ -95,6 +107,7 @@ namespace UI {
         inline status getStatus( ) const {
             return _currentStatus;
         }
+
         inline void setStatus( status p_status ) {
             _nameBox.get_style_context( )->remove_class( "mapbank-saved" );
             _nameBox.get_style_context( )->remove_class( "mapbank-created" );
@@ -135,6 +148,10 @@ namespace UI {
         inline ~addMapBank( ) override {
         }
 
+        inline void redraw( ) override {
+            collapse( _model.m_settings.m_focusMode );
+        }
+
         inline void connect( const std::function<void( u16, u8, u8 )>& p_callback ) override {
             if( !p_callback ) { return; }
 
@@ -151,6 +168,11 @@ namespace UI {
         editTileSet( model& p_model );
 
         inline ~editTileSet( ) override {
+        }
+
+        inline void redraw( ) override {
+            collapse( _model.m_settings.m_focusMode );
+            setStatus( _model.tileStatus( ) );
         }
 
         inline void connect( const std::function<void( u8, u8 )>& p_callback ) {

@@ -2,8 +2,8 @@
 #include "mapBank.h"
 
 namespace UI {
-    mapBank::mapBank( const std::string& p_yicon, const std::string& p_xicon )
-        : _mapXAdj( Gtk::Adjustment::create( 0.0, 0.0, 0.0, 1.0, 5.0, 0.0 ) ),
+    mapBank::mapBank( model& p_model, const std::string& p_yicon, const std::string& p_xicon )
+        : _model( p_model ), _mapXAdj( Gtk::Adjustment::create( 0.0, 0.0, 0.0, 1.0, 5.0, 0.0 ) ),
           _mapYAdj( Gtk::Adjustment::create( 0.0, 0.0, 0.0, 1.0, 5.0, 0.0 ) ),
           _mapXEntry( _mapXAdj ), _mapYEntry( _mapYAdj ) {
         _loadMapButton.set_size_request( 70, 25 );
@@ -55,17 +55,18 @@ namespace UI {
         mainBox.append( _loadMapButton );
     }
 
-    mapBank::mapBank( u16 p_bankName, u8 p_sizeX, u8 p_sizeY, status p_initialStatus )
-        : mapBank( ) {
+    mapBank::mapBank( model& p_model, u16 p_bankName, u8 p_sizeX, u8 p_sizeY,
+                      status p_initialStatus )
+        : mapBank( p_model ) {
         setBankName( p_bankName );
         setSizeX( p_sizeX );
         setSizeY( p_sizeY );
         setStatus( p_initialStatus );
     }
 
-    addMapBank::addMapBank( )
+    addMapBank::addMapBank( model& p_model )
         //: mapBank( "go-bottom", "go-last" ),
-        : mapBank( "object-flip-vertical-symbolic", "object-flip-horizontal-symbolic" ),
+        : mapBank( p_model, "object-flip-vertical-symbolic", "object-flip-horizontal-symbolic" ),
           _nameAdj( Gtk::Adjustment::create( 10.0, 10.0, MAX_MAPBANK_NAME, 1.0, 10.0, 0.0 ) ),
           _nameEntry( _nameAdj ) {
         _nameLabel.set_markup( "<span size=\"xx-large\" weight=\"bold\">+</span>" );
@@ -98,7 +99,8 @@ namespace UI {
         _outerFrame.remove_css_class( "mapbank-selected" );
     }
 
-    editTileSet::editTileSet( ) : mapBank( "pan-up-symbolic", "pan-down-symbolic" ) {
+    editTileSet::editTileSet( model& p_model )
+        : mapBank( p_model, "pan-up-symbolic", "pan-down-symbolic" ) {
         _nameLabel.set_markup( "<span size=\"x-large\" weight=\"bold\">TS</span>" );
         _loadMapButton.set_label( "Edit" );
 

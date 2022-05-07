@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include <giomm/simpleactiongroup.h>
 #include <gtkmm/box.h>
 #include <gtkmm/label.h>
@@ -6,9 +7,9 @@
 
 #include "../defines.h"
 // #include "bank_ed/bankEditor.h"
-#include "headerBar.h"
-// #include "side_p/sideBar.h"
 #include "../model.h"
+#include "headerBar.h"
+#include "side_p/sideBar.h"
 #include "welcome.h"
 
 namespace UI {
@@ -27,19 +28,17 @@ namespace UI {
         std::shared_ptr<Gio::SimpleAction>      _saveExportmapAction;
 */
 
-        context _context;
-        model   _model;
+        context                _context;
+        std::unique_ptr<model> _model;
 
-        bool _fsRootLoaded  = false;
-        bool _focusMode     = false;
         bool _disableRedraw = true;
 
         std::shared_ptr<headerBar> _headerBar;
         std::shared_ptr<welcome>   _welcome;
 
-        Gtk::Box _mainBox; // main box containing all other widgets
-        // std::shared_ptr<sideBar> _sideBar;
-        Gtk::Label _loadMapLabel;
+        Gtk::Box                 _mainBox; // main box containing all other widgets
+        std::shared_ptr<sideBar> _sideBar;
+        Gtk::Label               _loadMapLabel;
         //        std::shared_ptr<bankEditor> _bankEditor;
 
       public:
@@ -55,7 +54,6 @@ namespace UI {
 
         void redraw( );
 
-      protected:
         // void initActions( );
         // void initEvents( );
 
@@ -64,13 +62,6 @@ namespace UI {
          * hides/shows the corresponding widgets.
          */
         void switchContext( context p_context );
-
-        /*
-         * @brief: Collapses/shows the sidebar.
-         */
-        //      inline void collapseMapBankBar( bool p_collapse = true ) {
-        //          if( _sideBar ) { _sideBar->collapse( p_collapse ); }
-        //      }
 
         /*
          * @brief: Adds the specified path to the list of recently used FSROOT paths.
@@ -85,5 +76,34 @@ namespace UI {
         inline void removeFsRootFromRecent( const std::string& p_path ) {
             if( _welcome ) { _welcome->removeFsRootFromRecent( p_path ); }
         }
+
+        /*
+         * @brief: Does nothing if p_bank is loaded, otherwise creates and loads a new
+         * bank.
+         */
+        void createMapBank( u16 p_bank, u8 p_sizeY, u8 p_sizeX );
+
+        /*
+         * @brief: Loads the specified map bank in the editor. Lazily reads the data from
+         * the FS, one map bank at a time.
+         */
+        void loadMapBank( u16 p_bank, bool p_redraw = false );
+
+        /*
+         * @brief: Loads the specified bank and map.
+         */
+        void loadMap( u16 p_bank, u8 p_mapY, u8 p_mapX );
+
+        /*
+         * @brief: Cleanup operations when the specified map gets unloaded (update map bank
+         * overview)
+         */
+        void onUnloadMap( u16 p_bank, u8 p_mapY, u8 p_mapX );
+
+        /*
+         * @brief: Loads the tile set editing UI and the combined tile set of p_ts1 and
+         * p_ts2 in particular.
+         */
+        void editTileSets( u8 p_ts1, u8 p_ts2 );
     };
 } // namespace UI

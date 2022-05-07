@@ -1,11 +1,12 @@
 #include <gtkmm/scrolledwindow.h>
 
 #include "../../defines.h"
+#include "../root.h"
 #include "../util.h"
 #include "sideBar.h"
 
 namespace UI {
-    sideBar::sideBar( ) {
+    sideBar::sideBar( model& p_model, root& p_root ) : _model( p_model ), _rootWindow( p_root ) {
         // main box
         _lMainBox = Gtk::Box( Gtk::Orientation::VERTICAL, MARGIN );
 
@@ -49,8 +50,12 @@ namespace UI {
             _sbTileSetBox.set_margin( MARGIN );
             _sbTileSetBox.set_vexpand( false );
 
-            _editTileSet = std::make_shared<editTileSet>( );
-            if( _editTileSet ) { _sbTileSetBox.append( *_editTileSet ); }
+            _editTileSet = std::make_shared<editTileSet>( p_model );
+            if( _editTileSet ) {
+                _editTileSet->connect(
+                    [ this ]( u8 p_ts1, u8 p_ts2 ) { _rootWindow.editTileSets( p_ts1, p_ts2 ); } );
+                _sbTileSetBox.append( *_editTileSet );
+            }
 
             _sbTileSetSel1 = 0;
             _sbTileSetSel2 = 1;
@@ -80,21 +85,25 @@ namespace UI {
             _mapBankBox.set_margin( MARGIN );
             _mapBankBox.set_vexpand( true );
 
-            _addMapBank = std::make_shared<addMapBank>( );
+            _addMapBank = std::make_shared<addMapBank>( p_model );
 
-            if( _addMapBank ) { _mapBankBox.append( *_addMapBank ); }
+            if( _addMapBank ) {
+                _addMapBank->connect( [ this ]( u16 p_bk, u8 p_y, u8 p_x ) {
+                    _rootWindow.createMapBank( p_bk, p_y, p_x );
+                } );
+                _mapBankBox.append( *_addMapBank );
+            }
 
             _mapBanks.clear( );
-            _selectedBank = -1;
         }
     }
 
     void sideBar::collapse( bool p_collapse ) {
         for( auto& i : _mapBanks ) {
-            if( i.second.m_widget ) { i.second.m_widget->collapse( p_collapse ); }
+            if( i.second ) { i.second->collapse( p_collapse ); }
         }
-        _addMapBank->collapse( p_collapse );
-        _editTileSet->collapse( p_collapse );
+        if( _addMapBank ) { _addMapBank->collapse( p_collapse ); }
+        if( _editTileSet ) { _editTileSet->collapse( p_collapse ); }
         if( p_collapse ) {
             auto icon = Gtk::Image( );
             icon.set_from_icon_name( "view-fullscreen-symbolic" );
@@ -118,15 +127,72 @@ namespace UI {
         _mapBankBarCollapsed = p_collapse;
     }
 
-    void sideBar::markTileSetsChanged( mapBank::status p_newStatus ) {
-        if( _editTileSet ) { _editTileSet->setStatus( p_newStatus ); }
-    }
+    void sideBar::redraw( ) {
+        collapse( _model.m_settings.m_focusMode );
 
-    void sideBar::markBankChanged( u16 p_bank, mapBank::status p_newStatus ) {
-        if( !_mapBanks.count( p_bank ) ) { return; }
-        if( _mapBanks[ p_bank ].m_widget ) {
-            _mapBanks[ p_bank ].m_widget->setStatus( p_newStatus );
+        for( auto& i : _mapBanks ) {
+            if( i.second ) {
+                i.second->redraw( );
+                if( i.first == _model.selectedBank( ) ) {
+                    i.second->select( );
+                } else {
+                    i.second->unselect( );
+                }
+            }
+        }
+        if( _addMapBank ) { _addMapBank->redraw( ); }
+        if( _editTileSet ) {
+            _editTileSet->redraw( );
+            if( _context == CONTEXT_TILE_EDITOR ) {
+                _editTileSet->select( );
+            } else {
+                _editTileSet->unselect( );
+            }
         }
     }
 
+    void sideBar::reinit( ) {
+        for( const auto& [ id, mb ] : _mapBanks ) {
+            if( !mb ) { continue; }
+            _mapBankBox.remove( *mb );
+        }
+        _mapBanks.clear( );
+
+        for( const auto& [ id, mb ] : _model.m_fsdata.m_mapBanks ) {
+            addNewMapBank( id, mb.getSizeY( ), mb.getSizeX( ), mb.getStatus( ) );
+        }
+    }
+
+    void sideBar::addNewMapBank( u16 p_bank, u8 p_sizeY, u8 p_sizeX, status p_status ) {
+        if( _mapBanks.count( p_bank ) ) { return; }
+        // if( !checkOrCreatePath( fs::path( MAP_PATH ) / std::to_string( p_bank ) ) ) {
+        //     fprintf( stderr, "[ERROR] Adding map bank %hu failed.\n", p_bank );
+        //     return;
+        // }
+
+        /*
+        fprintf( stderr, "[LOG] Adding map bank %hu with initial size %hhu rows, %hhu cols.\n",
+                 p_bank, p_sizeY + 1, p_sizeX + 1 );
+                 */
+
+        auto MB1 = std::make_shared<mapBank>( _model, p_bank, p_sizeX, p_sizeY, p_status );
+        MB1->connect( [ this ]( u16 p_bk, u8 p_y, u8 p_x ) {
+            if( _model.selectedBank( ) != -1 ) {
+                _rootWindow.onUnloadMap( _model.selectedBank( ), _model.selectedMapY( ),
+                                         _model.selectedMapX( ) );
+            }
+            _rootWindow.loadMap( p_bk, p_y, p_x );
+        } );
+        _mapBanks[ p_bank ] = MB1;
+
+        // keep the list sorted: insert after bank with largest id smaller than p_bank,
+        // i.e., after the element before lower_bound( p_bank )
+        auto ptr = _mapBanks.lower_bound( p_bank );
+        if( ptr == _mapBanks.end( ) || ptr == _mapBanks.begin( ) ) {
+            _mapBankBox.insert_child_after( *MB1, *_addMapBank );
+        } else {
+            --ptr;
+            _mapBankBox.insert_child_after( *MB1, *ptr->second );
+        }
+    }
 } // namespace UI

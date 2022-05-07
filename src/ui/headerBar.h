@@ -19,7 +19,7 @@ namespace UI {
         model&  _model;
         context _context = CONTEXT_NONE;
 
-        root* _rootWindow;
+        root& _rootWindow;
 
         Gtk::HeaderBar _headerBar;
 
@@ -31,7 +31,7 @@ namespace UI {
         Gtk::Label _titleLabel, _subtitleLabel;
 
       public:
-        headerBar( model& p_model, root* p_root );
+        headerBar( model& p_model, root& p_root );
 
         inline void switchContext( context p_context ) {
             _context = p_context;

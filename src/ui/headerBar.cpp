@@ -5,8 +5,8 @@
 #include "util.h"
 
 namespace UI {
-    headerBar::headerBar( model& p_model, root* p_root ) : _model( p_model ) {
-        _rootWindow = p_root;
+    headerBar::headerBar( model& p_model, root& p_root )
+        : _model( p_model ), _rootWindow( p_root ) {
 
         auto headerTitleBox = Gtk::Box( Gtk::Orientation::VERTICAL );
         headerTitleBox.append( _titleLabel );
@@ -88,18 +88,16 @@ namespace UI {
         }
 
         if( _model.m_settings.m_windowTitle != "" ) {
-            if( _rootWindow ) { _rootWindow->set_title( _model.m_settings.m_windowTitle ); }
+            _rootWindow.set_title( _model.m_settings.m_windowTitle );
         } else {
-            if( _rootWindow ) { _rootWindow->set_title( TITLE_STRING ); }
+            _rootWindow.set_title( TITLE_STRING );
         }
 
         if( _model.m_settings.m_mainTitle == "" ) {
             if( _model.m_settings.m_subTitle != "" ) {
                 _titleLabel.set_text( _model.m_settings.m_subTitle );
-            } else if( _rootWindow ) {
-                _titleLabel.set_text( _rootWindow->get_title( ) );
             } else {
-                _titleLabel.set_text( TITLE_STRING );
+                _titleLabel.set_text( _rootWindow.get_title( ) );
             }
             _subtitleLabel.hide( );
         } else {
