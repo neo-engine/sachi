@@ -17,12 +17,10 @@ namespace UI {
         _headerBar.set_title_widget( headerTitleBox );
         headerTitleBox.set_valign( Gtk::Align::CENTER );
 
-        _openButton = createButton( "", "_Load FSROOT…", [ & ]( ) {
-            // this->onFsRootOpenClick( );
-        } );
-        _saveButton = createButton( "", "_Save Changes", [ & ]( ) {
-            // this->onFsRootSaveClick( );
-        } );
+        _openButton
+            = createButton( "", "_Load FSROOT…", [ & ]( ) { _rootWindow.onFsRootOpenClick( ); } );
+        _saveButton
+            = createButton( "", "_Save Changes", [ & ]( ) { _rootWindow.onFsRootSaveClick( ); } );
 
         _openMenu = Gio::Menu::create( );
         _saveMenu = Gio::Menu::create( );
@@ -74,7 +72,10 @@ namespace UI {
         if( _saveButton ) { _saveButton->hide( ); }
 
         switch( _context ) {
-        case CONTEXT_FSROOT_NONE: setTitle( "", _model.m_fsdata.m_fsrootPath ); break;
+        case CONTEXT_FSROOT_NONE:
+            if( _saveButton ) { _saveButton->show( ); }
+            setTitle( "", _model.m_fsdata.m_fsrootPath );
+            break;
         case CONTEXT_MAP_EDITOR:
             if( _saveButton ) { _saveButton->show( ); }
             // populate open menu buttons

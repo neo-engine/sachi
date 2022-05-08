@@ -45,7 +45,7 @@ namespace UI {
 
         virtual inline void redraw( ) {
             setSelected( _model.selectedBank( ) == _bankName );
-            collapse( _model.m_settings.m_focusMode );
+            collapse( _model.m_settings.m_focusMode || _collapsed );
             setSizeX( _model.sizeX( _bankName ) );
             setSizeY( _model.sizeY( _bankName ) );
             setStatus( _model.bankStatus( _bankName ) );
@@ -59,6 +59,7 @@ namespace UI {
                 _entryBox.show( );
                 _loadMapButton.show( );
             }
+            _collapsed = p_collapsed;
         }
 
         inline bool getSelected( ) const {
@@ -149,7 +150,7 @@ namespace UI {
         }
 
         inline void redraw( ) override {
-            collapse( _model.m_settings.m_focusMode );
+            collapse( _model.m_settings.m_focusMode || _collapsed );
         }
 
         inline void connect( const std::function<void( u16, u8, u8 )>& p_callback ) override {
@@ -171,7 +172,7 @@ namespace UI {
         }
 
         inline void redraw( ) override {
-            collapse( _model.m_settings.m_focusMode );
+            collapse( _model.m_settings.m_focusMode || _collapsed );
             setStatus( _model.tileStatus( ) );
         }
 

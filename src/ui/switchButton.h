@@ -20,8 +20,9 @@ namespace UI {
             _modeToggles; // buttons to toggle current display mode
 
       public:
-        switchButton( const std::vector<std::string>& p_choices,
-                      std::function<void( u8 )> p_choiceChangedCallback, u8 p_defaultChoice = 0 );
+        switchButton( const std::vector<std::string>& p_choices, u8 p_defaultChoice = 0 );
+
+        void connect( const std::function<void( u8 )>& p_choiceChangedCallback );
 
         inline operator Gtk::Widget&( ) {
             return _buttonBox;

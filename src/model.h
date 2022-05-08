@@ -70,6 +70,7 @@ struct model {
         std::string                     m_fsrootPath;
         std::map<u16, mapBankContainer> m_mapBanks;
 
+        u8                                              m_tileSetMode = DATA::TILEMODE_DEFAULT;
         status                                          m_tileStatus;
         std::vector<Glib::ustring>                      m_mapBankStrList; // block set names
         std::vector<std::pair<DATA::computedBlock, u8>> m_currentBlocksets[ 2 ];
@@ -120,8 +121,11 @@ struct model {
 
     fsdata   m_fsdata;
     settings m_settings;
+    bool     m_good = false;
 
-    bool loadNewFsRoot( const std::string& p_path );
+    bool writeFsRoot( );
+
+    static model readFromPath( const std::string& p_path );
 
     void addNewMapBank( u16 p_bank, u8 p_sizeY, u8 p_sizeX, u8 p_mapMode = DATA::MAPMODE_COMBINED,
                         status p_status = STATUS_UNTOUCHED );
@@ -265,6 +269,18 @@ struct model {
      */
     inline void markTileSetsChanged( status p_newStatus = STATUS_EDITED_UNSAVED ) {
         m_fsdata.m_tileStatus = p_newStatus;
+    }
+
+    /*
+     * @brief: Sets the status of the specified map bank to the specified status,
+     * resulting in the specified map bank being highlighted in the sidebar.
+     */
+    inline void markBankChanged( u16 p_bank, status p_newStatus = STATUS_EDITED_UNSAVED ) {
+        bank( p_bank ).m_status = p_newStatus;
+    }
+
+    inline void markSelectedBankChanged( status p_newStatus = STATUS_EDITED_UNSAVED ) {
+        bank( ).m_status = p_newStatus;
     }
 
     inline status tileStatus( ) const {

@@ -9,6 +9,8 @@
 #include "../switchButton.h"
 
 namespace UI {
+    class root;
+
     /*
      * @brief: Widget for the map editor that allows editing blocks and other settings of
      * a single map slice.
@@ -23,7 +25,8 @@ namespace UI {
             MODE_EDIT_DATA,
         };
 
-        model _model;
+        model& _model;
+        root&  _rootWindow;
 
         mapDisplayMode _currentMapDisplayMode; // current widget stateg
 
@@ -34,20 +37,20 @@ namespace UI {
 
         Gtk::Box _mapContentMainBox{ Gtk::Orientation::HORIZONTAL };
         // left side
-        Gtk::Box                          _mapMainBox{ Gtk::Orientation::VERTICAL };
-        std::shared_ptr<MED::editableMap> _edMap;
+        Gtk::Box _mapMainBox{ Gtk::Orientation::VERTICAL };
+        // std::shared_ptr<MED::editableMap> _edMap;
         // std::shared_ptr<MED::wpokeData> _wpoke;
         // std::shared_ptr<MED::metaData> _meta;
-        std::shared_ptr<MED::actionBar> _actionBar;
+        // std::shared_ptr<MED::actionBar> _actionBar;
         // right side
-        Gtk::Box                               _sideBox{ Gtk::Orientation::VERTICAL };
-        std::shared_ptr<MED::blockSelector>    _blockPicker;
-        std::shared_ptr<MED::movementSelector> _mvmtPicker;
+        Gtk::Box _sideBox{ Gtk::Orientation::VERTICAL };
+        // std::shared_ptr<MED::blockSelector>    _blockPicker;
+        // std::shared_ptr<MED::movementSelector> _mvmtPicker;
         // std::shared_ptr<MED::evtPicker> _evtPicker;
         // std::shared_ptr<MED::locPicker> _locPicker;
 
       public:
-        mapEditor( model& p_model );
+        mapEditor( model& p_model, root& p_root );
 
         inline operator Gtk::Widget&( ) {
             return _mapEditorMainBox;

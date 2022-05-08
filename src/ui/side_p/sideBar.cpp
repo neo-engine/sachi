@@ -128,7 +128,7 @@ namespace UI {
     }
 
     void sideBar::redraw( ) {
-        collapse( _model.m_settings.m_focusMode );
+        collapse( _model.m_settings.m_focusMode || _mapBankBarCollapsed );
 
         for( auto& i : _mapBanks ) {
             if( i.second ) {
@@ -170,10 +170,8 @@ namespace UI {
         //     return;
         // }
 
-        /*
         fprintf( stderr, "[LOG] Adding map bank %hu with initial size %hhu rows, %hhu cols.\n",
                  p_bank, p_sizeY + 1, p_sizeX + 1 );
-                 */
 
         auto MB1 = std::make_shared<mapBank>( _model, p_bank, p_sizeX, p_sizeY, p_status );
         MB1->connect( [ this ]( u16 p_bk, u8 p_y, u8 p_x ) {

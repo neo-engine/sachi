@@ -7,13 +7,6 @@
 #include "maprender.h"
 
 namespace DATA {
-    struct blockSetInfo {
-        blockSet<1> m_blockSet;
-        tileSet<1>  m_tileSet;
-        palette     m_pals[ 8 * DAYTIMES ];
-        u8          m_stringListItem = 0;
-    };
-
     /*
      * @brief: Walks through the specified directory and its subdirectory to explore
      * how large a map bank is and whether its maps are distributed over subfolders.
