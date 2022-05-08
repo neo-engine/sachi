@@ -124,6 +124,9 @@ namespace UI {
                     && ( p_state & ( Gdk::ModifierType::CONTROL_MASK ) )
                            == Gdk::ModifierType::CONTROL_MASK ) {
                     _model.m_settings.m_focusMode = !_model.m_settings.m_focusMode;
+                    if( !_model.m_settings.m_focusMode && _sideBar ) {
+                        _sideBar->collapse( _model.m_settings.m_focusMode );
+                    }
                     redraw( );
                     return true;
                 }
@@ -291,6 +294,20 @@ namespace UI {
 
         switchContext( CONTEXT_MAP_EDITOR );
         redraw( );
+    }
+
+    void root::moveToMap( s8 p_dy, s8 p_dx ) {
+        if( !_model.selectedMapX( ) && p_dx < 0 ) { return; }
+        if( !_model.selectedMapY( ) && p_dy < 0 ) { return; }
+
+        if( int( _model.selectedMapY( ) + p_dy ) > int( MAX_MAPY ) ) { return; }
+        if( int( _model.selectedMapX( ) + p_dx ) > int( MAX_MAPY ) ) { return; }
+
+        onUnloadMap( _model.selectedBank( ), _model.selectedMapY( ), _model.selectedMapX( ) );
+
+        _model.selectMap( _model.selectedMapX( ) + p_dx, _model.selectedMapY( ) + p_dy );
+
+        loadMap( _model.selectedBank( ), _model.selectedMapY( ), _model.selectedMapX( ) );
     }
 
     void root::editTileSets( u8 p_ts1, u8 p_ts2 ) {

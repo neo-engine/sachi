@@ -210,10 +210,7 @@ struct model {
         return m_settings.m_selectedMapY;
     }
 
-    inline void selectMap( s16 p_mapX, s16 p_mapY ) {
-        m_settings.m_selectedMapX = p_mapX;
-        m_settings.m_selectedMapY = p_mapY;
-    }
+    void selectMap( s16 p_mapX, s16 p_mapY );
 
     inline auto selectedSizeX( ) const {
         return m_fsdata.m_mapBanks.at( selectedBank( ) ).getSizeX( );

@@ -93,6 +93,14 @@ namespace UI {
         void loadMap( u16 p_bank, u8 p_mapY, u8 p_mapX );
 
         /*
+         * @brief: Loads the map in the current bank that lies at the relative position
+         * (p_dx, p_dy). Does nothing if the new coordinates are (partially) negative or larger
+         * than 99; extends the map bank if the new coordinates lie outside of the current
+         * map bank bounds, otherwise.
+         */
+        void moveToMap( s8 p_dy, s8 p_dx );
+
+        /*
          * @brief: Cleanup operations when the specified map gets unloaded (update map bank
          * overview)
          */

@@ -568,3 +568,29 @@ bool model::writeFsRoot( ) {
     if( tileStatus( ) == STATUS_EDITED_UNSAVED ) { error |= writeTileSets( ); }
     return error;
 }
+
+void model::selectMap( s16 p_mapX, s16 p_mapY ) {
+    m_settings.m_selectedMapX = p_mapX;
+    m_settings.m_selectedMapY = p_mapY;
+
+    while( selectedMapY( ) > selectedSizeY( ) ) {
+        bank( ).m_info.m_sizeY++;
+        bank( ).m_bank.m_slices.push_back(
+            std::vector<DATA::mapSlice>( selectedSizeX( ) + 1, DATA::mapSlice( ) ) );
+        bank( ).m_bank.m_mapData.push_back(
+            std::vector<DATA::mapData>( selectedSizeX( ) + 1, DATA::mapData( ) ) );
+
+        bank( ).m_computedBank.push_back( std::vector<DATA::computedMapSlice>(
+            selectedSizeX( ) + 1, DATA::computedMapSlice( ) ) );
+        markSelectedBankChanged( );
+    }
+    while( selectedMapX( ) > selectedSizeX( ) ) {
+        bank( ).m_info.m_sizeX++;
+        for( u8 y{ 0 }; y <= selectedSizeY( ); ++y ) {
+            bank( ).m_bank.m_slices[ y ].push_back( DATA::mapSlice( ) );
+            bank( ).m_bank.m_mapData[ y ].push_back( DATA::mapData( ) );
+            bank( ).m_computedBank[ y ].push_back( DATA::computedMapSlice( ) );
+        }
+        markSelectedBankChanged( );
+    }
+}

@@ -1,11 +1,11 @@
 #include "mapEditor.h"
 #include "../../log.h"
 #include "../root.h"
+#include "map_ed/actionBar.h"
 
 namespace UI {
     mapEditor::mapEditor( model& p_model, root& p_root )
         : _model{ p_model }, _rootWindow{ p_root } {
-        _currentMapDisplayMode = MODE_EDIT_TILES;
 
         // set up boxes
         _mapEditorMainBox.set_margin( MARGIN );
@@ -33,8 +33,8 @@ namespace UI {
         // _edMap = std::make_shared<MED::editableMap>( p_model );
         // if( _edMap ) { _mapMainBox.append( *_edMap ); }
 
-        // _actionBar = std::make_shared<MED::actionBar>( p_model );
-        // if( _actionBar ) { _mapMainBox.append( *_actionBar ); }
+        _actionBar = std::make_shared<MED::actionBar>( p_model, p_root );
+        if( _actionBar ) { _mapMainBox.append( *_actionBar ); }
 
         // right side: blockPicker, movementPicker
         _mapContentMainBox.append( _sideBox );
@@ -45,13 +45,15 @@ namespace UI {
 
         // _mvmtPicker = std::make_shared<MED::movementSelector>( p_model );
         // if( _mvmtPicker ) { _sideBox.append( _mvmtPicker ); }
+
+        setNewMapEditMode( MODE_EDIT_TILES );
     }
 
     void mapEditor::redraw( ) {
         // if( _edMap ) { _edMap->redraw( ); }
         // if( _blockPicker ) { _blockPicker->redraw( ); }
         // if( _mvmtPicker ) { _mvmtPicker->redraw( ); }
-        // if( _actionBar ) { _actionBar->redraw( ); }
+        if( _actionBar ) { _actionBar->redraw( ); }
     }
 
     void mapEditor::setNewMapEditMode( mapDisplayMode p_newMode ) {
@@ -74,7 +76,6 @@ namespace UI {
             //     _edMap->show( );
             //     _edMap->setNewMapEditMode( _currentMapDisplayMode );
             // }
-            // if( _actionBar ) { _actionBar->setNewMapEditMode( _currentMapDisplayMode ); }
             // if( _blockPicker ) { _blockPicker->show( ); }
             break;
         case MODE_EDIT_MOVEMENT:
@@ -83,7 +84,6 @@ namespace UI {
             //      _edMap->show( );
             //      _edMap->setNewMapEditMode( _currentMapDisplayMode );
             // }
-            //  if( _actionBar ) { _actionBar->setNewMapEditMode( _currentMapDisplayMode ); }
             //  if( _mvmtPicker ) { _mvmtPicker->show( ); }
             break;
         case MODE_EDIT_LOCATIONS:
@@ -92,7 +92,6 @@ namespace UI {
             //    _edMap->show( );
             //   _edMap->setNewMapEditMode( _currentMapDisplayMode );
             // }
-            // if( _actionBar ) { _actionBar->setNewMapEditMode( _currentMapDisplayMode ); }
             // TODO
             break;
         case MODE_EDIT_EVENTS:
@@ -101,17 +100,15 @@ namespace UI {
             //     _edMap->show( );
             //     _edMap->setNewMapEditMode( _currentMapDisplayMode );
             // }
-            // if( _actionBar ) { _actionBar->setNewMapEditMode( _currentMapDisplayMode ); }
             // TODO
             break;
         case MODE_EDIT_PKMN:
-            //  if( _actionBar ) { _actionBar->setNewMapEditMode( _currentMapDisplayMode ); }
             // TODO
             break;
         case MODE_EDIT_DATA:
-            // if( _actionBar ) { _actionBar->setNewMapEditMode( _currentMapDisplayMode ); }
             // TODO
             break;
         }
+        if( _actionBar ) { _actionBar->setNewMapEditMode( _currentMapDisplayMode ); }
     }
 } // namespace UI

@@ -11,11 +11,16 @@
 namespace UI {
     class root;
 
+    namespace MED {
+        class actionBar;
+    }
+
     /*
      * @brief: Widget for the map editor that allows editing blocks and other settings of
      * a single map slice.
      */
     class mapEditor {
+      public:
         enum mapDisplayMode : u8 {
             MODE_EDIT_TILES,
             MODE_EDIT_MOVEMENT,
@@ -25,6 +30,7 @@ namespace UI {
             MODE_EDIT_DATA,
         };
 
+      private:
         model& _model;
         root&  _rootWindow;
 
@@ -36,12 +42,14 @@ namespace UI {
         std::shared_ptr<switchButton> _mapEditorModeToggles;
 
         Gtk::Box _mapContentMainBox{ Gtk::Orientation::HORIZONTAL };
+
         // left side
         Gtk::Box _mapMainBox{ Gtk::Orientation::VERTICAL };
         // std::shared_ptr<MED::editableMap> _edMap;
         // std::shared_ptr<MED::wpokeData> _wpoke;
         // std::shared_ptr<MED::metaData> _meta;
-        // std::shared_ptr<MED::actionBar> _actionBar;
+        std::shared_ptr<MED::actionBar> _actionBar;
+
         // right side
         Gtk::Box _sideBox{ Gtk::Orientation::VERTICAL };
         // std::shared_ptr<MED::blockSelector>    _blockPicker;
