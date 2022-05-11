@@ -1,23 +1,44 @@
 #pragma once
 #include <memory>
-#include <vector>
 
 #include <gtkmm/box.h>
-#include <gtkmm/togglebutton.h>
+
+#include "../../defines.h"
+#include "../../model.h"
+#include "../switchButton.h"
 
 namespace UI {
+    class root;
+
     /*
      * @brief: Widget for map bank settings.
      */
     class bankSettings {
-        Gtk::Box _mapSettingsBox{ Gtk::Orientation::VERTICAL };
-        std::vector<std::shared_ptr<Gtk::ToggleButton>> _mapBankSettingsMapModeToggles;
+        model& _model;
+        root&  _rootWindow;
+
+        Gtk::Box                      _mapSettingsBox{ Gtk::Orientation::VERTICAL };
+        std::shared_ptr<switchButton> _mapBankSettingsMapModeToggles;
 
       public:
-        bankSettings( );
+        bankSettings( model& p_model, root& p_root );
 
         inline operator Gtk::Widget&( ) {
             return _mapSettingsBox;
         }
+
+        inline void hide( ) {
+            _mapSettingsBox.hide( );
+        }
+
+        inline void show( ) {
+            _mapSettingsBox.show( );
+        }
+
+        inline bool isVisible( ) {
+            return _mapSettingsBox.is_visible( );
+        }
+
+        void redraw( );
     };
 } // namespace UI

@@ -14,6 +14,7 @@ namespace UI {
      * @brief: Widget for selecting a single option from a set of options.
      */
     class switchButton {
+
         u8       _currentSelection = 0;
         Gtk::Box _buttonBox{ Gtk::Orientation::HORIZONTAL };
         std::vector<std::shared_ptr<Gtk::ToggleButton>>
@@ -30,6 +31,14 @@ namespace UI {
 
         inline u8 currentChoice( ) const {
             return _currentSelection;
+        }
+
+        inline void choose( u8 p_choice ) {
+            if( p_choice > _modeToggles.size( ) || !_modeToggles[ p_choice ] ) { return; }
+
+            for( u8 i{ 0 }; i < _modeToggles.size( ); ++i ) {
+                _modeToggles[ i ]->set_active( i == p_choice );
+            }
         }
     };
 } // namespace UI

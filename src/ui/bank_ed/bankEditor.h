@@ -6,7 +6,7 @@
 
 #include "../../model.h"
 //#include "bankOverview.h"
-//#include "bankSettings.h"
+#include "bankSettings.h"
 #include "mapEditor.h"
 
 namespace UI {
@@ -23,7 +23,7 @@ namespace UI {
 
         std::shared_ptr<mapEditor> _mapEditor;
         // std::shared_ptr<bankOverview> _bankOverview;
-        // std::shared_ptr<bankSettings> _bankSettings;
+        std::shared_ptr<bankSettings> _bankSettings;
 
       public:
         bankEditor( model& p_model, root& p_root );
