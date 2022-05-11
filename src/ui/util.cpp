@@ -22,10 +22,14 @@ namespace UI {
             hbox.append( label );
         }
 
-        // auto resultButton = Gtk::make_managed<Gtk::Button>( );
         auto resultButton = std::make_shared<Gtk::Button>( );
         resultButton->set_child( hbox );
-        resultButton->signal_clicked( ).connect( p_callback, false );
+        resultButton->signal_clicked( ).connect(
+            [ = ]( ) {
+                p_callback( );
+                resultButton->grab_focus( );
+            },
+            false );
         return resultButton;
     }
 } // namespace UI

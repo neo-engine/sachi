@@ -4,6 +4,7 @@
 #include "map_ed/actionBar.h"
 #include "map_ed/blockSelector.h"
 #include "map_ed/editableMap.h"
+#include "map_ed/movementSelector.h"
 
 namespace UI {
     mapEditor::mapEditor( model& p_model, root& p_root )
@@ -40,13 +41,12 @@ namespace UI {
 
         // right side: blockPicker, movementPicker
         _mapContentMainBox.append( _sideBox );
-        // _sideBox.set_expand( );
 
         _blockPicker = std::make_shared<MED::blockSelector>( p_model, p_root );
         if( _blockPicker ) { _sideBox.append( *_blockPicker ); }
 
-        // _mvmtPicker = std::make_shared<MED::movementSelector>( p_model );
-        // if( _mvmtPicker ) { _sideBox.append( _mvmtPicker ); }
+        _mvmtPicker = std::make_shared<MED::movementSelector>( p_model, p_root );
+        if( _mvmtPicker ) { _sideBox.append( *_mvmtPicker ); }
 
         setNewMapEditMode( MODE_EDIT_TILES );
     }
@@ -55,7 +55,7 @@ namespace UI {
         if( _model.selectedBank( ) == -1 ) { return; }
 
         if( _blockPicker ) { _blockPicker->redraw( ); }
-        // if( _mvmtPicker ) { _mvmtPicker->redraw( ); }
+        if( _mvmtPicker ) { _mvmtPicker->redraw( ); }
         if( _actionBar ) { _actionBar->redraw( ); }
         if( _edMap ) { _edMap->redraw( ); }
     }
@@ -77,7 +77,6 @@ namespace UI {
                 _edMap->setNewMapEditMode( _currentMapDisplayMode );
             }
         }
-        // if( _mvmtPicker ) { _mvmtPicker->hide( ); }
 
         if( _currentMapDisplayMode != MODE_EDIT_TILES ) {
             if( _blockPicker && _blockPicker->isVisible( ) ) { _blockPicker->hide( ); }
@@ -86,9 +85,9 @@ namespace UI {
         }
 
         if( _currentMapDisplayMode != MODE_EDIT_MOVEMENT ) {
-            //            if( _mvmtPicker && _mvmtPicker->isVisible( ) ) { _mvmtPicker->hide( ); }
+            if( _mvmtPicker && _mvmtPicker->isVisible( ) ) { _mvmtPicker->hide( ); }
         } else {
-            //            if( _mvmtPicker && !_mvmtPicker->isVisible( ) ) { _mvmtPicker->show( ); }
+            if( _mvmtPicker && !_mvmtPicker->isVisible( ) ) { _mvmtPicker->show( ); }
         }
 
         if( _actionBar ) { _actionBar->setNewMapEditMode( _currentMapDisplayMode ); }
