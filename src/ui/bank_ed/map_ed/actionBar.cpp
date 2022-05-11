@@ -66,6 +66,7 @@ namespace UI::MED {
             auto value                       = _mapEditorSettings1.get_value_as_int( );
             _model.m_settings.m_blockSpacing = value;
             _rootWindow.redraw( );
+            _mapEditorSettings1.grab_focus( );
         } );
         _mapEditorSettings1.set_margin_start( MARGIN );
         _mapEditorSettings1.set_width_chars( 1 );
@@ -79,6 +80,7 @@ namespace UI::MED {
             auto value                     = _mapEditorSettings2.get_value_as_int( );
             _model.m_settings.m_blockScale = value;
             _rootWindow.redraw( );
+            _mapEditorSettings2.grab_focus( );
         } );
 
         _mapEditorSettings3 = Gtk::SpinButton( abSAdj3 );
@@ -90,6 +92,7 @@ namespace UI::MED {
             auto value                         = _mapEditorSettings3.get_value_as_int( );
             _model.m_settings.m_currentDayTime = value;
             _rootWindow.redraw( );
+            _mapEditorSettings3.grab_focus( );
         } );
 
         auto abSl1 = Gtk::Image( );
@@ -162,6 +165,7 @@ namespace UI::MED {
         _mapEditorSettings4.signal_value_changed( ).connect( [ & ]( ) {
             _model.m_settings.m_blockSetWidth = _mapEditorSettings4.get_value_as_int( );
             _rootWindow.redraw( );
+            _mapEditorSettings4.grab_focus( );
         } );
 
         _mapEditorSettings5 = Gtk::SpinButton( abEAdj2 );
@@ -170,7 +174,9 @@ namespace UI::MED {
         _mapEditorSettings5.set_max_width_chars( 1 );
         _mapEditorSettings5.signal_value_changed( ).connect( [ & ]( ) {
             _model.m_settings.m_adjacentBlocks = _mapEditorSettings5.get_value_as_int( );
+            printf( "val changed %d\n", _model.m_settings.m_adjacentBlocks );
             _rootWindow.redraw( );
+            _mapEditorSettings5.grab_focus( );
         } );
 
         _mapEditorSettings6 = Gtk::SpinButton( abEAdj3 );
@@ -181,6 +187,7 @@ namespace UI::MED {
         _mapEditorSettings6.signal_value_changed( ).connect( [ & ]( ) {
             _model.m_settings.m_neighborSpacing = _mapEditorSettings6.get_value_as_int( );
             _rootWindow.redraw( );
+            _mapEditorSettings6.grab_focus( );
         } );
 
         auto abEl1 = Gtk::Image( );
@@ -205,33 +212,38 @@ namespace UI::MED {
         _mapEditorActionBar.show( );
     }
 
-    void actionBar::redraw( ) {
-        _abEb1.hide( );
-        _abEb2.hide( );
-        _abEb3.hide( );
-        _abSb1.hide( );
-        _abSb2.hide( );
-        _abSb3.hide( );
+    bool actionBar::isVisible( ) {
+        return _mapEditorActionBar.is_visible( );
+    }
 
+    void actionBar::redraw( ) {
         switch( _currentMode ) {
         case mapEditor::MODE_EDIT_TILES:
-            _abEb1.show( );
-            _abEb2.show( );
-            _abEb3.show( );
-            _abSb1.show( );
-            _abSb2.show( );
-            _abSb3.show( );
+            if( !_abEb1.is_visible( ) ) { _abEb1.show( ); }
+            if( !_abEb2.is_visible( ) ) { _abEb2.show( ); }
+            if( !_abEb3.is_visible( ) ) { _abEb3.show( ); }
+            if( !_abSb1.is_visible( ) ) { _abSb1.show( ); }
+            if( !_abSb2.is_visible( ) ) { _abSb2.show( ); }
+            if( !_abSb3.is_visible( ) ) { _abSb3.show( ); }
             break;
         case mapEditor::MODE_EDIT_MOVEMENT:
         case mapEditor::MODE_EDIT_LOCATIONS:
         case mapEditor::MODE_EDIT_EVENTS:
-            _abEb2.show( );
-            _abEb3.show( );
-            _abSb1.show( );
-            _abSb2.show( );
-            _abSb3.show( );
+            if( _abEb1.is_visible( ) ) { _abEb1.hide( ); }
+            if( !_abEb2.is_visible( ) ) { _abEb2.show( ); }
+            if( !_abEb3.is_visible( ) ) { _abEb3.show( ); }
+            if( !_abSb1.is_visible( ) ) { _abSb1.show( ); }
+            if( !_abSb2.is_visible( ) ) { _abSb2.show( ); }
+            if( !_abSb3.is_visible( ) ) { _abSb3.show( ); }
             break;
-        default: break;
+        default:
+            if( _abEb1.is_visible( ) ) { _abEb1.hide( ); }
+            if( _abEb2.is_visible( ) ) { _abEb2.hide( ); }
+            if( _abEb3.is_visible( ) ) { _abEb3.hide( ); }
+            if( _abSb1.is_visible( ) ) { _abSb1.hide( ); }
+            if( _abSb2.is_visible( ) ) { _abSb2.hide( ); }
+            if( _abSb3.is_visible( ) ) { _abSb3.hide( ); }
+            break;
         }
     }
 

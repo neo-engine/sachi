@@ -111,10 +111,7 @@ struct model {
         u16  m_blockSetWidth   = 8;
         u8   m_adjacentBlocks  = 8;
 
-        u16                m_currentlySelectedBlockIdx;
         DATA::mapBlockAtom m_currentlySelectedBlock = DATA::mapBlockAtom( );
-        // std::vector<std::vector<lookupMapSlice>>
-        //    m_currentMap; // main map and parts of the adjacent maps
 
         std::string m_windowTitle, m_mainTitle, m_subTitle;
     };
@@ -137,6 +134,8 @@ struct model {
     inline void selectBank( int p_newSelection ) {
         m_settings.m_selectedBank = p_newSelection;
     }
+
+    void setTileSet( u8 p_tsIdx, u8 p_newTileSet );
 
     /*
      * @brief: Creates a new block/tile/palette set with the specified index.
@@ -282,5 +281,9 @@ struct model {
 
     inline status tileStatus( ) const {
         return m_fsdata.m_tileStatus;
+    }
+
+    inline void updateSelectedBlock( DATA::mapBlockAtom p_block ) {
+        m_settings.m_currentlySelectedBlock = p_block;
     }
 };

@@ -1,44 +1,28 @@
 #pragma once
-/*
-#include <map>
+
 #include <memory>
-#include <set>
-#include <tuple>
-
-#include <giomm/menu.h>
-#include <giomm/menuitem.h>
-#include <giomm/simpleactiongroup.h>
-#include <gtkmm/box.h>
-#include <gtkmm/button.h>
-#include <gtkmm/centerbox.h>
 #include <gtkmm/dialog.h>
-#include <gtkmm/dropdown.h>
-#include <gtkmm/filechooserdialog.h>
-#include <gtkmm/frame.h>
-#include <gtkmm/grid.h>
-#include <gtkmm/iconview.h>
-#include <gtkmm/label.h>
-#include <gtkmm/liststore.h>
-#include <gtkmm/menubutton.h>
-#include <gtkmm/notebook.h>
-#include <gtkmm/popovermenu.h>
-#include <gtkmm/recentmanager.h>
-#include <gtkmm/scrolledwindow.h>
-#include <gtkmm/stringlist.h>
-#include <gtkmm/togglebutton.h>
-#include <gtkmm/window.h>
-*/
-
-#include "../../data/maprender.h"
-#include "../editableBlock.h"
-#include "mapBankOverview.h"
+#include "../../../data/maprender.h"
+#include "../../../model.h"
+#include "../../editableBlock.h"
+#include "../mapEditor.h"
 #include "mapSlice.h"
+
+namespace UI {
+    class root;
+}
 
 namespace UI::MED {
     /*
      * @brief: A Dialog window displaying block stamp data
      */
     class blockStamp {
+        model&     _model;
+        root&      _rootWindow;
+        mapEditor& _mapEditor;
+
+        mapEditor::mapDisplayMode _currentMapDisplayMode;
+
         std::vector<DATA::mapBlockAtom> _blockStampData;
         std::shared_ptr<Gtk::Dialog>    _blockStampDialog;
 
@@ -47,14 +31,47 @@ namespace UI::MED {
         bool           _blockStampDialogInvalid = true;
 
       public:
-        blockStamp( );
+        blockStamp( model& p_model, root& p_root, mapEditor& p_parent );
 
         std::shared_ptr<Gtk::Dialog> getDialog( ) {
             return _blockStampDialog;
         }
 
+        void update( const std::vector<DATA::mapBlockAtom>& p_blockData, u16 p_width );
+
         void reset( );
 
         void create( );
+
+        inline void setNewMapEditMode( mapEditor::mapDisplayMode p_newMode ) {
+            _currentMapDisplayMode = p_newMode;
+            redraw( );
+        }
+
+        void redraw( );
+
+        inline bool isValid( ) const {
+            return !_blockStampDialogInvalid;
+        }
+
+        inline u16 sizeX( ) const {
+            if( !isValid( ) ) { return 0; }
+            return _blockStampWidth;
+        }
+
+        inline u16 sizeY( ) const {
+            if( !isValid( ) ) { return 0; }
+            return _blockStampData.size( ) / _blockStampWidth;
+        }
+
+        const DATA::mapBlockAtom& at( u16 p_x, u16 p_y ) const {
+            auto pos{ _blockStampWidth * p_y + p_x };
+            return _blockStampData[ pos ];
+        }
+
+        DATA::mapBlockAtom& at( u16 p_x, u16 p_y ) {
+            auto pos{ _blockStampWidth * p_y + p_x };
+            return _blockStampData[ pos ];
+        }
     };
 } // namespace UI::MED

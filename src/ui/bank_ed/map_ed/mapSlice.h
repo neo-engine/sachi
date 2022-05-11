@@ -10,8 +10,8 @@
 #include <gtkmm/overlay.h>
 #include <gtkmm/widget.h>
 
-#include "../../data/maprender.h"
-#include "../../defines.h"
+#include "../../../data/maprender.h"
+#include "../../../defines.h"
 #include "block.h"
 
 namespace UI::MED {
@@ -197,7 +197,7 @@ namespace UI::MED {
         }
 
         inline std::shared_ptr<Gdk::Pixbuf> computeImageData( u16 p_blockIdx ) override {
-            return UI::block::createImage( _blocks[ p_blockIdx ].first, _pals, _currentDaytime );
+            return block::createImage( _blocks[ p_blockIdx ].first, _pals, _currentDaytime );
         }
 
         inline u8 computeMovementData( u16 p_blockIdx ) override {

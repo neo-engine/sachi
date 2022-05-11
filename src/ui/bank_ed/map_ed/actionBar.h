@@ -47,6 +47,7 @@ namespace UI::MED {
 
         void show( );
         void hide( );
+        bool isVisible( );
 
         void setNewMapEditMode( mapEditor::mapDisplayMode p_newMode );
 

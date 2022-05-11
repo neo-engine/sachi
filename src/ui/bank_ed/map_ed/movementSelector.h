@@ -19,5 +19,17 @@ namespace UI::MED {
         inline operator Gtk::Widget&( ) {
             return _movementFrame;
         }
+
+        inline void hide( ) {
+            _movementFrame.hide( );
+        }
+
+        inline void show( ) {
+            _movementFrame.show( );
+        }
+
+        inline bool isVisible( ) {
+            return _movementFrame.is_visible( );
+        }
     };
 } // namespace UI::MED

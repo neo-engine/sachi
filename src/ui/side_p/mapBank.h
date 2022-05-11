@@ -43,6 +43,11 @@ namespace UI {
         virtual inline ~mapBank( ) {
         }
 
+        virtual inline void setSelectedMap( u8 p_x, u8 p_y ) {
+            _mapXEntry.set_value( p_x );
+            _mapYEntry.set_value( p_y );
+        }
+
         virtual inline void redraw( ) {
             setSelected( _model.selectedBank( ) == _bankName );
             collapse( _model.m_settings.m_focusMode || _collapsed );

@@ -1,6 +1,6 @@
 #include <gdkmm/pixbuf.h>
 
-#include "../../data/bitmap.h"
+#include "../../../data/bitmap.h"
 #include "block.h"
 
 namespace UI::MED {

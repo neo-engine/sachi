@@ -594,3 +594,16 @@ void model::selectMap( s16 p_mapX, s16 p_mapY ) {
         markSelectedBankChanged( );
     }
 }
+
+void model::setTileSet( u8 p_tsIdx, u8 p_newTileSet ) {
+    auto& cs = slice( );
+
+    if( p_tsIdx == 0 && cs.m_data.m_tIdx1 != p_newTileSet ) {
+        cs.m_data.m_tIdx1 = p_newTileSet;
+        markSelectedBankChanged( );
+    }
+    if( p_tsIdx == 1 && cs.m_data.m_tIdx2 != p_newTileSet ) {
+        cs.m_data.m_tIdx2 = p_newTileSet;
+        markSelectedBankChanged( );
+    }
+}

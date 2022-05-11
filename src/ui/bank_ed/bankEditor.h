@@ -40,6 +40,10 @@ namespace UI {
             _mapNotebook.show( );
         }
 
+        inline bool isVisible( ) {
+            return _mapNotebook.is_visible( );
+        }
+
         inline void redraw( ) {
             if( _mapEditor ) { _mapEditor->redraw( ); }
             //    if( _bankOverview ) { _bankOverview->redraw( ); }

@@ -135,6 +135,7 @@ namespace UI {
                 i.second->redraw( );
                 if( i.first == _model.selectedBank( ) ) {
                     i.second->select( );
+                    i.second->setSelectedMap( _model.selectedMapX( ), _model.selectedMapY( ) );
                 } else {
                     i.second->unselect( );
                 }

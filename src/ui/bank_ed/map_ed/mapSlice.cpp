@@ -27,8 +27,12 @@ namespace UI::MED {
         if( _currentSelectionIndex != -1 ) {
             _images[ _currentSelectionIndex ]->remove_overlay( _selectionBox );
         }
-        if( p_blockIdx >= 0 ) { _images[ p_blockIdx ]->add_overlay( _selectionBox ); }
-        _currentSelectionIndex = p_blockIdx;
+        if( p_blockIdx >= 0 && p_blockIdx < _images.size( ) ) {
+            _images[ p_blockIdx ]->add_overlay( _selectionBox );
+        }
+        if( p_blockIdx >= -1 && p_blockIdx < _images.size( ) ) {
+            _currentSelectionIndex = p_blockIdx;
+        }
 
         _selectionBox.get_style_context( )->add_class( "mapblock-selected" );
     }
