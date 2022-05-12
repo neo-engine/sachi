@@ -1,42 +1,46 @@
 #pragma once
-#include <functional>
 #include <memory>
-#include <vector>
 
 #include <gtkmm/box.h>
+#include <gtkmm/button.h>
 #include <gtkmm/frame.h>
 #include <gtkmm/spinbutton.h>
 
+#include "../../../model.h"
+#include "../mapEditor.h"
+
+namespace UI {
+    class root;
+}
+
 namespace UI::BOV {
     /*
-     * @brief: Main widget of the bank editor.
+     * @brief: map slice navigation / map slice display setiings bar
      */
     class actionBar {
-        static constexpr u8 NUM_SETTINGS    = 3;
-        static constexpr u8 SETTING_SPACING = 0;
-        static constexpr u8 SETTING_SCALE   = 1;
-        static constexpr u8 SETTING_DAYTIME = 2;
+        model& _model;
+        root&  _rootWindow;
 
-        Gtk::Frame _outerFrame;
+        Gtk::Frame      _mapBankOverviewActionBar;
+        Gtk::SpinButton _mapBankOverviewSettings1;
+        Gtk::SpinButton _mapBankOverviewSettings2;
+        Gtk::SpinButton _mapBankOverviewSettings3;
 
-        Gtk::SpinButton _settings[ NUM_SETTINGS ];
-
-        u8 _settingValue[ NUM_SETTINGS ] = { 2, 3, 0 };
+        Gtk::Box _abSlBO1; // map grid settings box, contains _mapBankOverviewSettings1
+        Gtk::Box _abSlBO2; // scale settings box, contains _mapBankOverviewSettings2
+        Gtk::Box _abSlBO3; // daytime settings box, contains _mapBankOverviewSettings3
 
       public:
-        actionBar( );
+        actionBar( model& p_model, root& p_rootWindow );
 
         inline operator Gtk::Widget&( ) {
-            return _outerFrame;
+            return _mapBankOverviewActionBar;
         }
 
-        void setCurrentDaytime( u8 p_daytime, bool p_propagate = false );
+        void show( );
+        void hide( );
+        bool isVisible( );
 
-        inline void connect( u8 p_setting, std::function<void( u8 )> p_callback ) {
-            _settings[ p_setting ].signal_value_changed( ).connect( [ & ]( ) {
-                auto value = _settings[ p_setting ].get_value_as_int( );
-                p_callback( value );
-            } );
-        }
+        void redraw( );
     };
-} // namespace UI::BOV
+} // namespace UI::MED

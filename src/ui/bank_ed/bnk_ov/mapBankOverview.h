@@ -9,8 +9,8 @@
 #include <gtkmm/overlay.h>
 #include <gtkmm/widget.h>
 
-#include "../../data/maprender.h"
-#include "../../defines.h"
+#include "../../../data/maprender.h"
+#include "../../../defines.h"
 
 namespace UI::BOV {
     class mapBankOverview : public Gtk::Widget {

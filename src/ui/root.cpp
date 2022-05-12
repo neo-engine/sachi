@@ -253,6 +253,7 @@ namespace UI {
         }
 
         _model.selectBank( p_bank );
+        _model.m_settings.m_overviewNeedsRedraw = true;
 
         if( p_redraw ) { redraw( ); }
     }
@@ -273,10 +274,9 @@ namespace UI {
         _model.bank( p_bank ).m_computedBank[ p_mapY ][ p_mapX ].m_computedBlocks
             = _model.slice( p_bank, p_mapY, p_mapX ).compute( &bs, &ts );
 
-        if( p_bank == _model.selectedBank( ) ) {
-            // _mapBankOverview.replaceMap( _model.bank( p_bank ).m_computedBank[ p_mapY ][ p_mapX
-            // ],
-            //                              p_mapY, p_mapX );
+        if( p_bank == _model.selectedBank( ) && _bankEditor ) {
+            _bankEditor->replaceOverviewMap( _model.bank( ).m_computedBank[ p_mapY ][ p_mapX ],
+                                             p_mapY, p_mapX );
         }
     }
 

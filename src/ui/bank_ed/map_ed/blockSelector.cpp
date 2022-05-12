@@ -62,7 +62,7 @@ namespace UI::MED {
 
         _ts1widget.connectClick(
             [ this ]( mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY ) {
-                // p_root.onTSClicked( p_button, p_blockX, p_blockY, 0 );
+                onTSClicked( p_button, p_blockX, p_blockY, 0 );
             } );
 
         auto meScrolledWindow2 = Gtk::ScrolledWindow( );
@@ -75,7 +75,7 @@ namespace UI::MED {
 
         _ts2widget.connectClick(
             [ this ]( mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY ) {
-                //  p_root.onTSClicked( p_button, p_blockX, p_blockY, 1 );
+                onTSClicked( p_button, p_blockX, p_blockY, 1 );
             } );
     }
 

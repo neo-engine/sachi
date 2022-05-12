@@ -12,7 +12,7 @@
 
 #include "../../../data/maprender.h"
 #include "../../../defines.h"
-#include "block.h"
+#include "../block.h"
 
 namespace UI::MED {
     class mapSlice : public Gtk::Widget {

@@ -89,8 +89,8 @@ namespace UI::MED {
         _mapEditorSettings3.set_width_chars( 1 );
         _mapEditorSettings3.set_max_width_chars( 1 );
         _mapEditorSettings3.signal_value_changed( ).connect( [ & ]( ) {
-            auto value                         = _mapEditorSettings3.get_value_as_int( );
-            _model.m_settings.m_currentDayTime = value;
+            auto value                              = _mapEditorSettings3.get_value_as_int( );
+            _model.m_settings.m_currentDayTime      = value;
             _rootWindow.redraw( );
             _mapEditorSettings3.grab_focus( );
         } );

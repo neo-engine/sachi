@@ -582,6 +582,7 @@ void model::selectMap( s16 p_mapX, s16 p_mapY ) {
 
         bank( ).m_computedBank.push_back( std::vector<DATA::computedMapSlice>(
             selectedSizeX( ) + 1, DATA::computedMapSlice( ) ) );
+        m_settings.m_overviewNeedsRedraw = true;
         markSelectedBankChanged( );
     }
     while( selectedMapX( ) > selectedSizeX( ) ) {
@@ -591,6 +592,7 @@ void model::selectMap( s16 p_mapX, s16 p_mapY ) {
             bank( ).m_bank.m_mapData[ y ].push_back( DATA::mapData( ) );
             bank( ).m_computedBank[ y ].push_back( DATA::computedMapSlice( ) );
         }
+        m_settings.m_overviewNeedsRedraw = true;
         markSelectedBankChanged( );
     }
 }

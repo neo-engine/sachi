@@ -1,6 +1,6 @@
 #include <cstring>
 
-#include "block.h"
+#include "../block.h"
 #include "mapSlice.h"
 
 namespace UI::MED {
@@ -24,13 +24,14 @@ namespace UI::MED {
     }
 
     void mapSlice::selectBlock( s16 p_blockIdx ) {
-        if( _currentSelectionIndex != -1 ) {
+        if( _currentSelectionIndex > -1 && _currentSelectionIndex < (int) _images.size( )
+            && _images[ _currentSelectionIndex ] ) {
             _images[ _currentSelectionIndex ]->remove_overlay( _selectionBox );
         }
-        if( p_blockIdx >= 0 && p_blockIdx < _images.size( ) ) {
+        if( p_blockIdx >= 0 && p_blockIdx < (int) _images.size( ) ) {
             _images[ p_blockIdx ]->add_overlay( _selectionBox );
         }
-        if( p_blockIdx >= -1 && p_blockIdx < _images.size( ) ) {
+        if( p_blockIdx >= -1 && p_blockIdx < (int) _images.size( ) ) {
             _currentSelectionIndex = p_blockIdx;
         }
 

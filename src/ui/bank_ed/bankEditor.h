@@ -5,7 +5,7 @@
 #include <gtkmm/notebook.h>
 
 #include "../../model.h"
-//#include "bankOverview.h"
+#include "bankOverview.h"
 #include "bankSettings.h"
 #include "mapEditor.h"
 
@@ -21,8 +21,8 @@ namespace UI {
 
         Gtk::Notebook _mapNotebook; // main container for anything map bank related
 
-        std::shared_ptr<mapEditor> _mapEditor;
-        // std::shared_ptr<bankOverview> _bankOverview;
+        std::shared_ptr<mapEditor>    _mapEditor;
+        std::shared_ptr<bankOverview> _bankOverview;
         std::shared_ptr<bankSettings> _bankSettings;
 
       public:
@@ -46,8 +46,13 @@ namespace UI {
 
         inline void redraw( ) {
             if( _mapEditor ) { _mapEditor->redraw( ); }
-            //    if( _bankOverview ) { _bankOverview->redraw( ); }
-            //    if( _bankSettings ) { _bankSettings->redraw( ); }
+            if( _bankOverview ) { _bankOverview->redraw( ); }
+            if( _bankSettings ) { _bankSettings->redraw( ); }
+        }
+
+        inline void replaceOverviewMap( const DATA::computedMapSlice& p_map, u8 p_mapY,
+                                        u8 p_mapX ) {
+            if( _bankOverview ) { _bankOverview->replaceOverviewMap( p_map, p_mapY, p_mapX ); }
         }
     };
 } // namespace UI

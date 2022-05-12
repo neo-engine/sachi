@@ -4,8 +4,8 @@
 
 #include <gdkmm/pixbuf.h>
 
-#include "../../../data/maprender.h"
-#include "../../../defines.h"
+#include "../../data/maprender.h"
+#include "../../defines.h"
 
 namespace UI::MED {
     class block {

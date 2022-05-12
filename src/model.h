@@ -111,6 +111,11 @@ struct model {
         u16  m_blockSetWidth   = 8;
         u8   m_adjacentBlocks  = 8;
 
+        u8   m_bankOverviewScale   = 3;
+        u8   m_bankOverviewSpacing = 2;
+        u8   m_bankOverviewDayTime = 0;
+        bool m_overviewNeedsRedraw = false;
+
         DATA::mapBlockAtom m_currentlySelectedBlock = DATA::mapBlockAtom( );
 
         std::string m_windowTitle, m_mainTitle, m_subTitle;
