@@ -174,6 +174,9 @@ namespace UI {
         _bankEditor = std::make_shared<bankEditor>( _model, *this );
         if( _bankEditor ) { _mainBox.append( *_bankEditor ); }
 
+        _tileSetEditor = std::make_shared<tileSetEditor>( _model, *this );
+        if( _tileSetEditor ) { _mainBox.append( *_tileSetEditor ); }
+
         initEvents( );
 
         switchContext( CONTEXT_NONE );
@@ -203,6 +206,7 @@ namespace UI {
         _saveExportmapAction->set_enabled( false );
 
         _loadMapLabel.hide( );
+        if( _tileSetEditor ) { _tileSetEditor->hide( ); }
         if( _bankEditor ) { _bankEditor->hide( ); }
         if( _welcome ) { _welcome->hide( ); }
         _mainBox.hide( );
@@ -228,6 +232,7 @@ namespace UI {
             break;
         case CONTEXT_TILE_EDITOR:
             _mainBox.show( );
+            if( _tileSetEditor ) { _tileSetEditor->show( ); }
 
             // TODO: actions
 
@@ -245,6 +250,7 @@ namespace UI {
         if( _headerBar ) { _headerBar->redraw( ); }
         if( _sideBar ) { _sideBar->redraw( ); }
         if( _bankEditor ) { _bankEditor->redraw( ); }
+        if( _tileSetEditor ) { _tileSetEditor->redraw( ); }
     }
 
     void root::loadMapBank( u16 p_bank, bool p_redraw ) {
@@ -347,6 +353,7 @@ namespace UI {
             &_model.m_fsdata.m_blockSets[ p_ts2 ].m_blockSet, &ts );
 
         switchContext( CONTEXT_TILE_EDITOR );
+        redraw( );
     }
 
     void root::createMapBank( u16 p_bank, u8 p_sizeY, u8 p_sizeX ) {
