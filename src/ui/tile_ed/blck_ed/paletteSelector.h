@@ -10,8 +10,8 @@
 
 #include "../../../data/maprender.h"
 #include "../../../model.h"
-#include "../../pure/editableBlock.h"
-#include "../../pure/mapSlice.h"
+#include "../../editableBlock.h"
+#include "mapSlice.h"
 
 namespace UI {
     class root;
@@ -59,7 +59,7 @@ namespace UI::MED {
          * @brief: Looks up the computed image data of the block sets.
          */
         inline std::shared_ptr<Gdk::Pixbuf> blockSetLookup( u16 p_blockIdx ) {
-            if( p_blockIdx >= DATA::MAX_BLOCKS_PER_TILE_SET ) {
+            if( p_blockIdx > DATA::MAX_BLOCKS_PER_TILE_SET ) {
                 p_blockIdx -= DATA::MAX_BLOCKS_PER_TILE_SET;
                 return _ts2widget.getImageData( p_blockIdx );
             } else {

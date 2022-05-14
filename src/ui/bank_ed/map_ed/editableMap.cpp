@@ -1,8 +1,8 @@
 #include <queue>
 #include "editableMap.h"
 #include "../../../defines.h"
+#include "../../pure/mapSlice.h"
 #include "../../root.h"
-#include "mapSlice.h"
 
 namespace UI::MED {
     editableMap::editableMap( model& p_model, root& p_root, mapEditor& p_parent )

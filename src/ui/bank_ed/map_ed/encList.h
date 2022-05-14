@@ -4,8 +4,8 @@
 #include <gtkmm/frame.h>
 #include <gtkmm/label.h>
 
-#include "../../defines.h"
-#include "../fsImage.h"
+#include "../../../defines.h"
+#include "../../pure/fsImage.h"
 #include "encData.h"
 
 namespace UI::MED {

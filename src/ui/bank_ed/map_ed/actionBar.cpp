@@ -1,28 +1,10 @@
-/*
-#include <cstring>
-#include <filesystem>
-#include <queue>
-
-#include <gtkmm/actionbar.h>
-#include <gtkmm/cssprovider.h>
-#include <gtkmm/eventcontrollerkey.h>
-#include <gtkmm/frame.h>
-#include <gtkmm/headerbar.h>
-#include <gtkmm/image.h>
-#include <gtkmm/label.h>
-#include <gtkmm/messagedialog.h>
-#include <gtkmm/multiselection.h>
-#include <gtkmm/notebook.h>
-#include <gtkmm/paned.h>
-#include <gtkmm/signallistitemfactory.h>
-*/
 #include <gtkmm/centerbox.h>
 #include <gtkmm/grid.h>
 #include <gtkmm/scrolledwindow.h>
 
 #include "../../../defines.h"
+#include "../../pure/util.h"
 #include "../../root.h"
-#include "../../util.h"
 #include "../mapEditor.h"
 #include "actionBar.h"
 
@@ -89,8 +71,8 @@ namespace UI::MED {
         _mapEditorSettings3.set_width_chars( 1 );
         _mapEditorSettings3.set_max_width_chars( 1 );
         _mapEditorSettings3.signal_value_changed( ).connect( [ & ]( ) {
-            auto value                              = _mapEditorSettings3.get_value_as_int( );
-            _model.m_settings.m_currentDayTime      = value;
+            auto value                         = _mapEditorSettings3.get_value_as_int( );
+            _model.m_settings.m_currentDayTime = value;
             _rootWindow.redraw( );
             _mapEditorSettings3.grab_focus( );
         } );

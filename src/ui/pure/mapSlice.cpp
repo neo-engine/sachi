@@ -1,9 +1,8 @@
 #include <cstring>
 
-#include "../block.h"
 #include "mapSlice.h"
 
-namespace UI::MED {
+namespace UI {
     std::string toHexString( u8 p_value ) {
         char buffer[ 10 ];
         snprintf( buffer, 5, "%hhX", p_value );
@@ -218,4 +217,14 @@ namespace UI::MED {
         if( _height * _blocksPerRow < _blocks.size( ) ) { ++_height; }
     }
 
-} // namespace UI::MED
+    void tileSetMapSlice::set( const DATA::tileSet<1>& p_tiles, DATA::palette p_pals[ 5 * 16 ],
+                               u16 p_tilesPerRow ) {
+        _tiles       = p_tiles;
+        _tilesPerRow = p_tilesPerRow;
+        std::memcpy( _pals, p_pals, sizeof( _pals ) );
+        if( !_tilesPerRow ) { _tilesPerRow = DATA::SIZE; }
+        _height = DATA::MAX_TILES_PER_TILE_SET / _tilesPerRow;
+        if( _height * _tilesPerRow < DATA::MAX_TILES_PER_TILE_SET ) { ++_height; }
+    }
+
+} // namespace UI

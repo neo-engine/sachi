@@ -1,6 +1,6 @@
 #include <cstring>
 
-#include "../block.h"
+#include "../../pure/util.h"
 #include "mapBankOverview.h"
 
 namespace UI::BOV {

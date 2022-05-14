@@ -10,11 +10,11 @@
 #include <gtkmm/overlay.h>
 #include <gtkmm/widget.h>
 
-#include "../../../data/maprender.h"
-#include "../../../defines.h"
-#include "../block.h"
+#include "../../data/maprender.h"
+#include "../../defines.h"
+#include "util.h"
 
-namespace UI::MED {
+namespace UI {
     class mapSlice : public Gtk::Widget {
       public:
         enum clickType {
@@ -215,6 +215,13 @@ namespace UI::MED {
             _currentDaytime = p_currentDaytime;
         }
 
+        inline const DATA::computedBlock& getBlockData( u16 p_blockIdx ) const {
+            return _blocks[ p_blockIdx ].first;
+        }
+        inline const DATA::computedBlock& getBlockData( u16 p_blockX, u16 p_blockY ) const {
+            return getBlockData( p_blockY * getWidth( ) + p_blockX );
+        }
+
         void updateBlock( const DATA::computedBlock& p_block, u16 p_x, u16 p_y );
         void updateBlockMovement( u8 p_movement, u16 p_x, u16 p_y );
 
@@ -222,4 +229,71 @@ namespace UI::MED {
                   DATA::palette p_pals[ 5 * 16 ], u16 p_blocksPerRow = DATA::SIZE );
     };
 
-} // namespace UI::MED
+    /*
+     * @brief: A concrete mapSlice widget that renders a tile set
+     */
+    class tileSetMapSlice : public mapSlice {
+      private:
+        DATA::tileSet<1> _tiles;
+        DATA::palette    _pals[ 16 * 5 ] = { 0 };
+
+        u16 _tilesPerRow;
+        u16 _height;
+        u8  _currentDaytime = 0;
+        u8  _selectedPal    = 0;
+
+        inline u16 getWidth( ) const override {
+            return _tilesPerRow;
+        }
+        inline u16 getHeight( ) const override {
+            return _height;
+        }
+
+        inline std::shared_ptr<Gdk::Pixbuf> computeImageData( u16 p_blockIdx ) override {
+            return tile::createImage( _tiles.m_tiles[ p_blockIdx ],
+                                      _pals[ 16 * _currentDaytime + _selectedPal ], false, false );
+        }
+
+        inline u8 computeMovementData( u16 ) override {
+            return 0;
+        }
+
+      public:
+        inline void setOverlayHidden( bool = true ) override {
+            return;
+        }
+
+        inline tileSetMapSlice( ) : mapSlice( ) {
+        }
+
+        inline virtual ~tileSetMapSlice( ) {
+            mapSlice::~mapSlice( );
+        }
+
+        inline void setDaytime( u8 p_currentDaytime ) {
+            _currentDaytime = p_currentDaytime;
+        }
+
+        inline void setPal( u8 p_pal ) {
+            _selectedPal = p_pal;
+        }
+
+        inline void updateTile( const DATA::tile& p_tile, u16 p_x, u16 p_y ) {
+            auto pos              = p_x + p_y * _tilesPerRow;
+            _tiles.m_tiles[ pos ] = p_tile;
+            redrawBlock( pos );
+        }
+
+        inline const DATA::tile& getTileData( u16 p_tileIdx ) const {
+            return _tiles.m_tiles[ p_tileIdx ];
+        }
+
+        inline const DATA::tile& getTileData( u16 p_tileX, u16 p_tileY ) const {
+            return getTileData( p_tileY * getWidth( ) + p_tileX );
+        }
+
+        void set( const DATA::tileSet<1>& p_tiles, DATA::palette p_pals[ 5 * 16 ],
+                  u16 p_tilesPerRow = DATA::SIZE );
+    };
+
+} // namespace UI

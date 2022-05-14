@@ -2,8 +2,8 @@
 #include <gtkmm/scrolledwindow.h>
 
 #include "../../../defines.h"
+#include "../../pure/util.h"
 #include "../../root.h"
-#include "../../util.h"
 #include "../mapEditor.h"
 #include "actionBar.h"
 

@@ -6,7 +6,7 @@
 
 #include "../../defines.h"
 #include "../../model.h"
-#include "../switchButton.h"
+#include "../pure/switchButton.h"
 
 namespace UI {
     class root;

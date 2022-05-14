@@ -7,8 +7,8 @@
 #include "../data/fs/util.h"
 #include "../defines.h"
 #include "../log.h"
+#include "pure/util.h"
 #include "root.h"
-#include "util.h"
 
 namespace UI {
     void root::initActions( ) {
@@ -234,6 +234,7 @@ namespace UI {
             _mainBox.show( );
             if( _tileSetEditor ) { _tileSetEditor->show( ); }
 
+            _saveFsrootAction->set_enabled( true );
             // TODO: actions
 
             break;
@@ -293,6 +294,9 @@ namespace UI {
         if( !_model.bank( ).m_loaded ) { return; }
 
         _model.selectMap( p_mapX, p_mapY );
+        _model.m_settings.m_tseBS1 = _model.slice( ).m_data.m_tIdx1;
+        _model.m_settings.m_tseBS2 = _model.slice( ).m_data.m_tIdx2;
+
         _headerBar->setTitle( "",
                               std::to_string( p_bank ) + "/" + std::to_string( p_mapY ) + "_"
                                   + std::to_string( p_mapX ) + ".map",
@@ -340,17 +344,8 @@ namespace UI {
         if( !_model.m_fsdata.m_blockSetNames.count( p_ts1 ) ) { _model.createBlockSet( p_ts1 ); }
         if( !_model.m_fsdata.m_blockSetNames.count( p_ts2 ) ) { _model.createBlockSet( p_ts2 ); }
 
-        // compute block set
-
-        auto ts = DATA::tileSet<2>( );
-        _model.buildTileSet( &ts, p_ts1, p_ts2 );
-        DATA::palette pals[ 16 * 5 ] = { 0 };
-        _model.buildPalette( pals, p_ts1, p_ts2 );
-
-        _model.m_fsdata.m_currentBlocksets[ 0 ] = DATA::mapBlockAtom::computeBlockSet(
-            &_model.m_fsdata.m_blockSets[ p_ts1 ].m_blockSet, &ts );
-        _model.m_fsdata.m_currentBlocksets[ 1 ] = DATA::mapBlockAtom::computeBlockSet(
-            &_model.m_fsdata.m_blockSets[ p_ts2 ].m_blockSet, &ts );
+        _model.m_settings.m_tseBS1 = p_ts1;
+        _model.m_settings.m_tseBS2 = p_ts2;
 
         switchContext( CONTEXT_TILE_EDITOR );
         redraw( );

@@ -1,8 +1,8 @@
 #include <gtkmm/scrolledwindow.h>
 
 #include "../../defines.h"
+#include "../pure/util.h"
 #include "../root.h"
-#include "../util.h"
 #include "sideBar.h"
 
 namespace UI {
@@ -144,6 +144,7 @@ namespace UI {
         if( _addMapBank ) { _addMapBank->redraw( ); }
         if( _editTileSet ) {
             _editTileSet->redraw( );
+            _editTileSet->setSelectedMap( _model.m_settings.m_tseBS2, _model.m_settings.m_tseBS1 );
             if( _context == CONTEXT_TILE_EDITOR ) {
                 _editTileSet->select( );
             } else {

@@ -7,9 +7,9 @@
 #include <gtkmm/scrolledwindow.h>
 
 #include "../../../model.h"
+#include "../../pure/mapSlice.h"
 #include "../mapEditor.h"
 #include "blockStamp.h"
-#include "mapSlice.h"
 
 namespace UI {
     class root;

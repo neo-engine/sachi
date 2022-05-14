@@ -4,7 +4,7 @@
 #include <gtkmm/notebook.h>
 
 #include "../../model.h"
-// #include "blockEditor.h"
+#include "blockEditor.h"
 #include "tileSetSettings.h"
 
 namespace UI {
@@ -19,7 +19,7 @@ namespace UI {
 
         Gtk::Notebook _tseNotebook; // main container for anything tse bank related
 
-        // std::shared_ptr<blockEditor>     _blockEditor;
+        std::shared_ptr<blockEditor>     _blockEditor;
         std::shared_ptr<tileSetSettings> _tileSetSettings;
 
       public:
@@ -42,7 +42,7 @@ namespace UI {
         }
 
         inline void redraw( ) {
-            // if( _blockEditor ) { _blockEditor->redraw( ); }
+            if( _blockEditor ) { _blockEditor->redraw( ); }
             if( _tileSetSettings ) { _tileSetSettings->redraw( ); }
         }
     };

@@ -1,10 +1,8 @@
 #pragma once
 #include <gtkmm/frame.h>
 
-// #include "../../../data/maprender.h"
-// #include "../../editableBlock.h"
 #include "../../../model.h"
-#include "mapSlice.h"
+#include "../../pure/mapSlice.h"
 
 namespace UI {
     class root;

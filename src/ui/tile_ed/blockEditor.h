@@ -6,78 +6,80 @@
 
 #include "../../defines.h"
 #include "../../model.h"
-#include "../switchButton.h"
+#include "../pure/switchButton.h"
 
 namespace UI {
     class root;
 
-    namespace MED {
+    namespace TED {
         class actionBar;
         class blockSelector;
-        class movementSelector;
-        class editableMap;
-    } // namespace MED
+        class tileSelector;
+        /*
+        class paletteSelector;
+        class paletteInformation;
+        class tileCanvas;
+        class paletteEditor;
+        */
+    } // namespace TED
 
     /*
      * @brief: Widget for the map editor that allows editing blocks and other settings of
      * a single map slice.
      */
-    class mapEditor {
+    class blockEditor {
       public:
-        enum mapDisplayMode : u8 {
-            MODE_EDIT_TILES,
-            MODE_EDIT_MOVEMENT,
-            MODE_EDIT_LOCATIONS,
-            MODE_EDIT_EVENTS,
-            MODE_EDIT_PKMN,
-            MODE_EDIT_DATA,
+        enum tseDisplayMode : u8 {
+            TSEMODE_EDIT_BLOCKS,
+            TSEMODE_EDIT_TILES,
+            TSEMODE_EDIT_PALETTES,
         };
 
       private:
         model& _model;
         root&  _rootWindow;
 
-        mapDisplayMode _currentMapDisplayMode; // current widget stateg
+        tseDisplayMode _currentDisplayMode;
 
         // sub widgets
-        Gtk::Box _mapEditorMainBox{ Gtk::Orientation::VERTICAL };
+        Gtk::Box _mainBox{ Gtk::Orientation::VERTICAL };
 
-        std::shared_ptr<switchButton> _mapEditorModeToggles;
+        std::shared_ptr<switchButton>   _modeToggles;
+        Gtk::Box                        _contentMainBox{ Gtk::Orientation::HORIZONTAL };
+        std::shared_ptr<TED::actionBar> _actionBar;
 
-        Gtk::Box _mapContentMainBox{ Gtk::Orientation::HORIZONTAL };
+        // column 1: block selector
+        Gtk::Box                            _col1MainBox{ Gtk::Orientation::VERTICAL };
+        std::shared_ptr<TED::blockSelector> _blockPicker;
 
-        // left side
-        Gtk::Box                          _mapMainBox{ Gtk::Orientation::VERTICAL };
-        std::shared_ptr<MED::editableMap> _edMap;
-        // std::shared_ptr<MED::wpokeData> _wpoke;
-        // std::shared_ptr<MED::metaData> _meta;
-        std::shared_ptr<MED::actionBar> _actionBar;
+        // column 2: block info / tile selector
+        Gtk::Box                           _col2MainBox{ Gtk::Orientation::VERTICAL };
+        std::shared_ptr<TED::tileSelector> _tilePicker;
 
-        // right side
-        Gtk::Box _sideBox{ Gtk::Orientation::VERTICAL };
+        // column 3: tile editor
+        Gtk::Box _col3MainBox{ Gtk::Orientation::VERTICAL };
+        // std::shared_ptr<TED::tileCanvas>    _tileCanvas;
 
-        std::shared_ptr<MED::blockSelector>    _blockPicker;
-        std::shared_ptr<MED::movementSelector> _mvmtPicker;
-        // std::shared_ptr<MED::evtPicker> _evtPicker;
-        // std::shared_ptr<MED::locPicker> _locPicker;
+        // column 4: palette selector
+        Gtk::Box _col4MainBox{ Gtk::Orientation::VERTICAL };
+        // std::shared_ptr<TED::paletteSelector>    _palPicker;
+
+        // column 5: palette editor
+        Gtk::Box _col5MainBox{ Gtk::Orientation::VERTICAL };
+        // std::shared_ptr<TED::paletteEditor>    _palEditor;
 
       public:
-        mapEditor( model& p_model, root& p_root );
+        blockEditor( model& p_model, root& p_root );
 
         inline operator Gtk::Widget&( ) {
-            return _mapEditorMainBox;
+            return _mainBox;
         }
 
         void redraw( );
 
         /*
-         * @brief: Sets the mode of the map editor (edit blocks, movements, events, etc)
+         * @brief: Sets the mode of the tile set editor
          */
-        void setNewMapEditMode( mapDisplayMode p_newMode );
-
-        /*
-         * @brief: Looks up the computed image data of the block sets.
-         */
-        std::shared_ptr<Gdk::Pixbuf> blockSetLookup( u16 p_blockIdx );
+        void setNewEditMode( tseDisplayMode p_newMode );
     };
 } // namespace UI

@@ -2,7 +2,7 @@
 
 #include "headerBar.h"
 #include "root.h"
-#include "util.h"
+#include "pure/util.h"
 
 namespace UI {
     headerBar::headerBar( model& p_model, root& p_root )

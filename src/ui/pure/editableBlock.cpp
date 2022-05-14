@@ -6,6 +6,7 @@
 #include <gtkmm/stringlist.h>
 
 #include "editableBlock.h"
+#include "util.h"
 
 namespace UI {
     std::vector<Glib::ustring> MAJOR_BEHAVES = { "00 None",
@@ -522,30 +523,15 @@ namespace UI {
                                                  "FE",
                                                  "FF" };
 
-    const DATA::palette DUMMY_PAL[ 5 * 16 ] = { };
-
-    std::shared_ptr<Gtk::Image> createImage( const DATA::computedBlockAtom& p_tile,
-                                             const DATA::palette p_pals[ 5 * 16 ] = DUMMY_PAL,
-                                             u8                  p_daytime        = 0 ) {
-        auto btm = new DATA::bitmap( DATA::TILE_SIZE, DATA::TILE_SIZE );
-
-        DATA::renderTile( &p_tile.m_tile, &p_pals[ 16 * p_daytime + p_tile.m_palno ],
-                          p_tile.m_vflip, p_tile.m_hflip, btm );
-
-        //    btm->writeToFile( ( "/tmp/" + std::to_string( cnt++ ) + ".png" ).c_str( ) );
-
-        auto pixbuf = btm->pixbuf( );
-        auto res    = std::make_shared<Gtk::Image>( );
-        res->set( pixbuf );
-
-        delete btm;
-        return res;
-    }
-
     editableTiles::editableTiles( ) {
+        _clickEvent = Gtk::GestureClick::create( );
+        _clickEvent->set_propagation_phase( Gtk::PropagationPhase::CAPTURE );
+        _clickEvent->set_button( 0 );
+        add_controller( _clickEvent );
+
         for( u8 y = 0; y < DATA::BLOCK_SIZE / DATA::TILE_SIZE; ++y ) {
             for( u8 x = 0; x < DATA::BLOCK_SIZE / DATA::TILE_SIZE; ++x ) {
-                auto im = createImage( _tiles[ y ][ x ] );
+                auto im = tile::createImage( _tiles[ y ][ x ] );
                 im->set_size_request( DATA::TILE_SIZE, DATA::TILE_SIZE );
                 im->set_parent( *this );
                 _images.push_back( im );
@@ -570,7 +556,7 @@ namespace UI {
         if( imidx < _images.size( ) ) {
             auto& oim = _images[ imidx ];
             oim->unparent( );
-            oim = createImage( p_tile, _pals, _daytime );
+            oim = tile::createImage( p_tile, _pals, _daytime );
             oim->set_size_request( DATA::TILE_SIZE, DATA::TILE_SIZE );
             oim->set_parent( *this );
         }
@@ -652,13 +638,6 @@ namespace UI {
 
         _palette.set_model( sl );
 
-        _palette.property_selected_item( ).signal_changed( ).connect( [ this ]( ) {
-            if( _noTrigger || _palette.get_selected( ) == GTK_INVALID_LIST_POSITION ) { return; }
-
-            _tile.m_palno = _palette.get_selected( );
-            redraw( _pals, _daytime );
-        } );
-
         auto mainBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
 
         _outerFrame.set_child( mainBox );
@@ -674,11 +653,14 @@ namespace UI {
         mainBox.set_hexpand( true );
 
         lbox.set_spacing( MARGIN );
+        lbox.append( _imageBox );
 
-        _tileImage = createImage( _tile );
-        lbox.append( *_tileImage );
+        _tileImage = tile::createImage( _tile );
+        _imageBox.append( *_tileImage );
         _tileImage->set_size_request( _mapScale * DATA::TILE_SIZE, _mapScale * DATA::TILE_SIZE );
+        _tileImage->queue_resize( );
 
+        _imageBox.set_halign( Gtk::Align::CENTER );
         rbox.set_valign( Gtk::Align::CENTER );
         rbox.set_hexpand( true );
 
@@ -691,19 +673,9 @@ namespace UI {
 
         rhbox.append( _flipX );
         _flipX.set_label( "X Flip" );
-        _flipX.property_active( ).signal_changed( ).connect( [ this ]( ) {
-            if( _noTrigger ) { return; }
-            _tile.m_vflip = _flipX.get_active( );
-            redraw( _pals, _daytime );
-        } );
 
         rhbox.append( _flipY );
         _flipY.set_label( "Y Flip" );
-        _flipY.property_active( ).signal_changed( ).connect( [ this ]( ) {
-            if( _noTrigger ) { return; }
-            _tile.m_hflip = _flipY.get_active( );
-            redraw( _pals, _daytime );
-        } );
 
         _tileName.set_margin_bottom( MARGIN );
 
@@ -721,18 +693,27 @@ namespace UI {
         _flipY.set_active( p_tile.m_hflip );
         _palette.set_selected( p_tile.m_palno );
 
+        char buffer[ 50 ];
+        snprintf( buffer, 49, "Tile 0x%03hX / %04hu", _currentTileIdx, _currentTileIdx );
+        _tileName.set_text( std::string( buffer ) );
+
         _noTrigger = false;
     }
 
     void tileInfo::redraw( DATA::palette p_pals[ 5 * 16 ], u8 p_daytime ) {
+        _imageBox.remove( *_tileImage );
         std::memcpy( _pals, p_pals, sizeof( _pals ) );
         _daytime   = p_daytime;
-        _tileImage = createImage( _tile, p_pals, p_daytime );
+        _tileImage = tile::createImage( _tile, p_pals, p_daytime );
+        _tileImage->set_size_request( _mapScale * DATA::TILE_SIZE, _mapScale * DATA::TILE_SIZE );
+        _tileImage->queue_resize( );
+        _imageBox.append( *_tileImage );
     }
 
     void tileInfo::setScale( u16 p_scale ) {
         _mapScale = p_scale;
         _tileImage->set_size_request( _mapScale * DATA::TILE_SIZE, _mapScale * DATA::TILE_SIZE );
+        _tileImage->queue_resize( );
     }
 
     editableBlock::editableBlock( ) {
@@ -763,7 +744,7 @@ namespace UI {
         mainBox.append( lbox );
         mainBox.append( rbox );
 
-        for( u8 i = 0; i < DATA::BLOCK_LAYERS; ++i ) {
+        for( u8 i{ 0 }; i < DATA::BLOCK_LAYERS; ++i ) {
             auto f = Gtk::Frame( );
             if( i == 0 ) {
                 f.set_label( "Top" );
@@ -816,14 +797,14 @@ namespace UI {
     }
 
     void editableBlock::setScale( u16 p_scale ) {
-        for( u8 i = 0; i < DATA::BLOCK_LAYERS; ++i ) { _tiles[ i ].setScale( p_scale ); }
+        for( u8 i{ 0 }; i < DATA::BLOCK_LAYERS; ++i ) { _tiles[ i ].setScale( p_scale ); }
     }
     void editableBlock::setSpacing( u16 p_blockSpacing ) {
-        for( u8 i = 0; i < DATA::BLOCK_LAYERS; ++i ) { _tiles[ i ].setSpacing( p_blockSpacing ); }
+        for( u8 i{ 0 }; i < DATA::BLOCK_LAYERS; ++i ) { _tiles[ i ].setSpacing( p_blockSpacing ); }
     }
 
     void editableBlock::redraw( DATA::palette p_pals[ 5 * 16 ], u8 p_daytime ) {
-        for( u8 i = 0; i < DATA::BLOCK_LAYERS; ++i ) { _tiles[ i ].redraw( p_pals, p_daytime ); }
+        for( u8 i{ 0 }; i < DATA::BLOCK_LAYERS; ++i ) { _tiles[ i ].redraw( p_pals, p_daytime ); }
     }
 
 } // namespace UI

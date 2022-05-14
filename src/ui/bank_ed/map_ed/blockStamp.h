@@ -4,9 +4,9 @@
 #include <gtkmm/dialog.h>
 #include "../../../data/maprender.h"
 #include "../../../model.h"
-#include "../../editableBlock.h"
+#include "../../pure/editableBlock.h"
+#include "../../pure/mapSlice.h"
 #include "../mapEditor.h"
-#include "mapSlice.h"
 
 namespace UI {
     class root;

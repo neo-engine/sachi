@@ -70,12 +70,11 @@ struct model {
         std::string                     m_fsrootPath;
         std::map<u16, mapBankContainer> m_mapBanks;
 
-        u8                                              m_tileSetMode = DATA::TILEMODE_DEFAULT;
-        status                                          m_tileStatus;
-        std::vector<Glib::ustring>                      m_mapBankStrList; // block set names
-        std::vector<std::pair<DATA::computedBlock, u8>> m_currentBlocksets[ 2 ];
-        std::map<u8, blockSetInfo>                      m_blockSets;
-        std::set<u8>                                    m_blockSetNames;
+        u8                         m_tileSetMode = DATA::TILEMODE_DEFAULT;
+        status                     m_tileStatus;
+        std::vector<Glib::ustring> m_mapBankStrList; // block set names
+        std::map<u8, blockSetInfo> m_blockSets;
+        std::set<u8>               m_blockSetNames;
 
         inline std::string mapPath( ) const {
             return m_fsrootPath + "/MAPS/";
@@ -119,6 +118,18 @@ struct model {
         DATA::mapBlockAtom m_currentlySelectedBlock = DATA::mapBlockAtom( );
 
         std::string m_windowTitle, m_mainTitle, m_subTitle;
+
+        u8   m_tseBS1 = 0, m_tseBS2 = 1;
+        u16  m_tseSelectedBlock   = 0;
+        u16  m_tseSelectedTile    = 0;
+        u8   m_tseSelectedPalette = 0;
+        bool m_tseFlipX           = false;
+        bool m_tseFlipY           = false;
+        u8   m_tseScale           = 2;
+        u8   m_tseSpacing         = 0;
+        u8   m_tseDayTime         = 0;
+        u16  m_tseBlockSetWidth   = 8;
+        u16  m_tseTileSetWidth    = 16;
     };
 
     fsdata   m_fsdata;

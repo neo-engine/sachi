@@ -4,7 +4,7 @@
 
 #include <gtkmm/box.h>
 
-#include "../switchButton.h"
+#include "../pure/switchButton.h"
 #include "bnk_ov/actionBar.h"
 #include "bnk_ov/mapBankOverview.h"
 

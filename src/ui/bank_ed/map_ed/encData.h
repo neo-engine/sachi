@@ -7,8 +7,8 @@
 #include <gtkmm/label.h>
 #include <gtkmm/spinbutton.h>
 
-#include "../../defines.h"
-#include "../fsImage.h"
+#include "../../../defines.h"
+#include "../../pure/fsImage.h"
 
 namespace UI::MED {
     /*

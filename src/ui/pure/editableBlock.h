@@ -10,8 +10,8 @@
 #include <gtkmm/label.h>
 #include <gtkmm/widget.h>
 
-#include "../data/maprender.h"
-#include "../defines.h"
+#include "../../data/maprender.h"
+#include "../../defines.h"
 
 namespace UI {
     class editableTiles : public Gtk::Widget {
@@ -48,11 +48,10 @@ namespace UI {
 
         void setTile( u8 p_x, u8 p_y, const DATA::computedBlockAtom& p_tile );
 
-        virtual inline void
-        connectClick( const std::function<void( clickType, u16, u16 )>& p_callback ) {
+        virtual inline void connectClick( std::function<void( clickType, u16, u16 )> p_callback ) {
             _clickEvent->signal_pressed( ).connect(
-                [ this, p_callback ]( int p_numPresses, double p_x, double p_y ) {
-                    if( !_clickEvent->get_current_button( ) || p_numPresses <= 1 ) { return; }
+                [ this, p_callback ]( int, double p_x, double p_y ) {
+                    if( !_clickEvent->get_current_button( ) ) { return; }
                     auto blockwd = _mapScale * DATA::TILE_SIZE + _mapSpacing;
                     p_callback( (clickType) _clickEvent->get_current_button( ),
                                 int( p_x / blockwd ), int( p_y / blockwd ) );
@@ -84,6 +83,8 @@ namespace UI {
         DATA::computedBlockAtom     _tile;
         std::shared_ptr<Gtk::Image> _tileImage = nullptr;
 
+        Gtk::Box _imageBox;
+
         u16           _mapScale       = 4;
         u8            _daytime        = 0;
         DATA::palette _pals[ 5 * 16 ] = { };
@@ -95,6 +96,25 @@ namespace UI {
         tileInfo( );
 
         virtual inline ~tileInfo( ) {
+        }
+
+        virtual inline void connect( const std::function<void( u8 )>&   p_palChange,
+                                     const std::function<void( bool )>& p_fxChange,
+                                     const std::function<void( bool )>& p_fyChange ) {
+            _palette.property_selected_item( ).signal_changed( ).connect( [ =, this ]( ) {
+                if( _noTrigger || _palette.get_selected( ) == GTK_INVALID_LIST_POSITION ) {
+                    return;
+                }
+                p_palChange( _palette.get_selected( ) );
+            } );
+            _flipX.property_active( ).signal_changed( ).connect( [ =, this ]( ) {
+                if( _noTrigger ) { return; }
+                p_fxChange( _flipX.get_active( ) );
+            } );
+            _flipY.property_active( ).signal_changed( ).connect( [ =, this ]( ) {
+                if( _noTrigger ) { return; }
+                p_fyChange( _flipY.get_active( ) );
+            } );
         }
 
         void setTile( const DATA::computedBlockAtom& p_tile, u16 p_tileIdx );

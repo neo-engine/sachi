@@ -7,7 +7,7 @@
 #include <gtkmm/box.h>
 #include <gtkmm/togglebutton.h>
 
-#include "../defines.h"
+#include "../../defines.h"
 
 namespace UI {
     /*
