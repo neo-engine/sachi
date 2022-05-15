@@ -1,9 +1,11 @@
-#include "blockEditor.h"
+#include <gtkmm/scrolledwindow.h>
+
 #include "../../log.h"
 #include "../root.h"
 #include "blck_ed/actionBar.h"
 #include "blck_ed/blockSelector.h"
 #include "blck_ed/tileSelector.h"
+#include "blockEditor.h"
 
 namespace UI {
     blockEditor::blockEditor( model& p_model, root& p_root )
@@ -24,8 +26,12 @@ namespace UI {
 
         // set up main box
 
+        Gtk::ScrolledWindow sb{ };
+        sb.set_child( _contentMainBox );
+        sb.set_expand( );
+
         _contentMainBox.set_margin_top( MARGIN );
-        _mainBox.append( _contentMainBox );
+        _mainBox.append( sb );
 
         _contentMainBox.append( _col1MainBox );
         _col1MainBox.set_expand( );

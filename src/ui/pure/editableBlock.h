@@ -3,7 +3,6 @@
 #include <functional>
 
 #include <gtkmm/checkbutton.h>
-#include <gtkmm/dropdown.h>
 #include <gtkmm/frame.h>
 #include <gtkmm/gestureclick.h>
 #include <gtkmm/image.h>
@@ -12,6 +11,7 @@
 
 #include "../../data/maprender.h"
 #include "../../defines.h"
+#include "dropDown.h"
 
 namespace UI {
     class editableTiles : public Gtk::Widget {
@@ -75,10 +75,10 @@ namespace UI {
      */
     class tileInfo {
       protected:
-        Gtk::Frame       _outerFrame;
-        Gtk::DropDown    _palette;
-        Gtk::CheckButton _flipX, _flipY;
-        Gtk::Label       _tileName;
+        Gtk::Frame                _outerFrame;
+        std::shared_ptr<dropDown> _palette;
+        Gtk::CheckButton          _flipX, _flipY;
+        Gtk::Label                _tileName;
 
         DATA::computedBlockAtom     _tile;
         std::shared_ptr<Gtk::Image> _tileImage = nullptr;
@@ -101,12 +101,12 @@ namespace UI {
         virtual inline void connect( const std::function<void( u8 )>&   p_palChange,
                                      const std::function<void( bool )>& p_fxChange,
                                      const std::function<void( bool )>& p_fyChange ) {
-            _palette.property_selected_item( ).signal_changed( ).connect( [ =, this ]( ) {
-                if( _noTrigger || _palette.get_selected( ) == GTK_INVALID_LIST_POSITION ) {
-                    return;
-                }
-                p_palChange( _palette.get_selected( ) );
-            } );
+            if( _palette ) {
+                _palette->connect( [ =, this ]( u64 p_newPal ) {
+                    if( _noTrigger ) { return; }
+                    p_palChange( p_newPal );
+                } );
+            }
             _flipX.property_active( ).signal_changed( ).connect( [ =, this ]( ) {
                 if( _noTrigger ) { return; }
                 p_fxChange( _flipX.get_active( ) );
@@ -141,13 +141,15 @@ namespace UI {
      */
     class editableBlock {
       protected:
-        Gtk::Frame    _outerFrame;
-        Gtk::DropDown _majorBehave;
-        Gtk::DropDown _minorBehave;
-        Gtk::Label    _blockName;
+        Gtk::Frame                _outerFrame;
+        std::shared_ptr<dropDown> _majorBehave;
+        std::shared_ptr<dropDown> _minorBehave;
+        Gtk::Label                _blockName;
 
         bool _noTrigger       = false;
         u16  _currentBlockIdx = 0;
+
+        u8 _scale = 1;
 
         editableTiles _tiles[ DATA::BLOCK_LAYERS ];
 
@@ -165,24 +167,18 @@ namespace UI {
                                      const std::function<void( u8 )>& p_minBehave ) {
             if( !p_majBehave || !p_minBehave ) { return; }
 
-            _majorBehave.property_selected_item( ).signal_changed( ).connect(
-                [ this, p_majBehave ]( ) {
-                    if( _majorBehave.get_selected( ) == GTK_INVALID_LIST_POSITION || _noTrigger ) {
-                        return;
-                    }
-                    try {
-                        p_majBehave( _majorBehave.get_selected( ) );
-                    } catch( ... ) { return; }
+            if( _majorBehave ) {
+                _majorBehave->connect( [ this, p_majBehave ]( u64 p_newVal ) {
+                    if( _noTrigger ) { return; }
+                    p_majBehave( p_newVal );
                 } );
-            _minorBehave.property_selected_item( ).signal_changed( ).connect(
-                [ this, p_minBehave ]( ) {
-                    if( _minorBehave.get_selected( ) == GTK_INVALID_LIST_POSITION || _noTrigger ) {
-                        return;
-                    }
-                    try {
-                        p_minBehave( _minorBehave.get_selected( ) );
-                    } catch( ... ) { return; }
+            }
+            if( _minorBehave ) {
+                _minorBehave->connect( [ this, p_minBehave ]( u64 p_newVal ) {
+                    if( _noTrigger ) { return; }
+                    p_minBehave( p_newVal );
                 } );
+            }
         }
 
         virtual inline void
