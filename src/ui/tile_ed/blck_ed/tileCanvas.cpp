@@ -1,5 +1,7 @@
-#include "tileCanvas.h"
+#include <queue>
+
 #include "../../root.h"
+#include "tileCanvas.h"
 
 namespace UI::TED {
     tileCanvas::tileCanvas( model& p_model, root& p_root )
@@ -93,7 +95,7 @@ namespace UI::TED {
         auto& tdata = ( _model.m_settings.m_tseSelectedTile < DATA::MAX_TILES_PER_TILE_SET )
                           ? _model.m_fsdata.m_blockSets[ _model.m_settings.m_tseBS1 ]
                                 .m_tileSet.m_tiles[ _model.m_settings.m_tseSelectedTile ]
-                          : _model.m_fsdata.m_blockSets[ _model.m_settings.m_tseBS1 ]
+                          : _model.m_fsdata.m_blockSets[ _model.m_settings.m_tseBS2 ]
                                 .m_tileSet.m_tiles[ _model.m_settings.m_tseSelectedTile
                                                     - DATA::MAX_TILES_PER_TILE_SET ];
 
@@ -101,6 +103,25 @@ namespace UI::TED {
         default:
         case mapSlice::LEFT: { // change tile color to selected color
             tdata.set( p_tileX, p_tileY, _model.m_settings.m_tseSelectedPalIdx );
+            _model.markTileSetsChanged( );
+            break;
+        }
+        case mapSlice::MIDDLE: {
+            auto oldcl{ tdata.at( p_tileX, p_tileY ) };
+
+            std::queue<std::pair<u8, u8>> q;
+            q.push( { p_tileX, p_tileY } );
+            while( !q.empty( ) ) {
+                auto [ cx, cy ] = q.front( );
+                q.pop( );
+                tdata.set( cx, cy, _model.m_settings.m_tseSelectedPalIdx );
+                for( s8 x{ -1 }; x <= 1; ++x ) {
+                    for( s8 y{ -1 }; y <= 1; ++y ) {
+                        if( cx + x < 0 || cx + x > 8 || cy + y < 0 || cy + y > 8 ) { continue; }
+                        if( tdata.at( cx + x, cy + y ) == oldcl ) { q.push( { cx + x, cy + y } ); }
+                    }
+                }
+            }
             _model.markTileSetsChanged( );
             break;
         }

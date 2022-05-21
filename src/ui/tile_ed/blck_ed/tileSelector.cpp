@@ -99,9 +99,20 @@ namespace UI::TED {
         }
     }
 
-    void tileSelector::onTSClicked( mapSlice::clickType, u16 p_tileX, u16 p_tileY, u8 p_ts ) {
+    void tileSelector::onTSClicked( mapSlice::clickType p_ct, u16 p_tileX, u16 p_tileY, u8 p_ts ) {
         u16 tile = p_tileY * _model.m_settings.m_tseTileSetWidth + p_tileX;
-        _model.m_settings.m_tseSelectedTile = tile + p_ts * DATA::MAX_TILES_PER_TILE_SET;
+
+        if( p_ct == mapSlice::MIDDLE ) {
+            auto& tiledata = ( p_ts == 0 )
+                                 ? _model.m_fsdata.m_blockSets[ _model.m_settings.m_tseBS1 ]
+                                       .m_tileSet.m_tiles[ tile ]
+                                 : _model.m_fsdata.m_blockSets[ _model.m_settings.m_tseBS2 ]
+                                       .m_tileSet.m_tiles[ tile ];
+            tiledata       = tileDataLookup( _model.m_settings.m_tseSelectedTile );
+            _model.markTileSetsChanged( );
+        } else {
+            _model.m_settings.m_tseSelectedTile = tile + p_ts * DATA::MAX_TILES_PER_TILE_SET;
+        }
         _rootWindow.redraw( );
     }
 } // namespace UI::TED

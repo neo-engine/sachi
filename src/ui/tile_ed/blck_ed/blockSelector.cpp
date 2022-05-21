@@ -134,9 +134,27 @@ namespace UI::TED {
         }
     }
 
-    void blockSelector::onTSClicked( mapSlice::clickType, u16 p_blockX, u16 p_blockY, u8 p_ts ) {
+    void blockSelector::onTSClicked( mapSlice::clickType p_ct, u16 p_blockX, u16 p_blockY,
+                                     u8 p_ts ) {
         u16 block = p_blockY * _model.m_settings.m_blockSetWidth + p_blockX;
-        _model.m_settings.m_tseSelectedBlock = block + p_ts * DATA::MAX_BLOCKS_PER_TILE_SET;
+
+        if( p_ct == mapSlice::MIDDLE ) {
+            auto& blockdata = ( p_ts == 0 )
+                                  ? _model.m_fsdata.m_blockSets[ _model.m_settings.m_tseBS1 ]
+                                        .m_blockSet.m_blocks[ block ]
+                                  : _model.m_fsdata.m_blockSets[ _model.m_settings.m_tseBS2 ]
+                                        .m_blockSet.m_blocks[ block ];
+            blockdata = ( _model.m_settings.m_tseSelectedBlock < DATA::MAX_BLOCKS_PER_TILE_SET )
+                            ? _model.m_fsdata.m_blockSets[ _model.m_settings.m_tseBS1 ]
+                                  .m_blockSet.m_blocks[ _model.m_settings.m_tseSelectedBlock ]
+                            : _model.m_fsdata.m_blockSets[ _model.m_settings.m_tseBS2 ]
+                                  .m_blockSet.m_blocks[ _model.m_settings.m_tseSelectedBlock
+                                                        - DATA::MAX_BLOCKS_PER_TILE_SET ];
+            _model.markTileSetsChanged( );
+        } else {
+            _model.m_settings.m_tseSelectedBlock = block + p_ts * DATA::MAX_BLOCKS_PER_TILE_SET;
+        }
+
         _rootWindow.redraw( );
     }
 
