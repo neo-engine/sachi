@@ -122,7 +122,9 @@ struct model {
         u8   m_tseBS1 = 0, m_tseBS2 = 1;
         u16  m_tseSelectedBlock   = 0;
         u16  m_tseSelectedTile    = 0;
+        u16  m_tseSelectedTileIdx = 0;
         u8   m_tseSelectedPalette = 0;
+        u8   m_tseSelectedPalIdx  = 0;
         bool m_tseFlipX           = false;
         bool m_tseFlipY           = false;
         u8   m_tseScale           = 2;
@@ -130,6 +132,7 @@ struct model {
         u8   m_tseDayTime         = 0;
         u16  m_tseBlockSetWidth   = 8;
         u16  m_tseTileSetWidth    = 16;
+        bool m_tseTileOverlay     = true;
     };
 
     fsdata   m_fsdata;

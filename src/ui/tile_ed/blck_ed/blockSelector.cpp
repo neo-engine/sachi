@@ -5,8 +5,8 @@ namespace UI::TED {
     blockSelector::blockSelector( model& p_model, root& p_root )
         : _model{ p_model }, _rootWindow{ p_root } {
 
-        _blockSetFrame = Gtk::Frame( "Blocks" );
-        _blockSetFrame.set_label_align( Gtk::Align::CENTER );
+        //_blockSetFrame = Gtk::Frame( "Blocks" );
+        //_blockSetFrame.set_label_align( Gtk::Align::CENTER );
         _blockSetFrame.set_child( _mapEditorBlockSetBox );
 
         _mapEditorBlockSetBox.set_vexpand( );

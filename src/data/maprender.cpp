@@ -30,8 +30,8 @@ namespace DATA {
     }
 
     void tile::dump( ) const {
-        for( u8 i = 0; i < 4; ++i ) {
-            for( u8 j = 0; j < 8; ++j ) { fprintf( stderr, "%02x", m_tile[ 8 * i + j ] ); }
+        for( u8 i{ 0 }; i < 4; ++i ) {
+            for( u8 j{ 0 }; j < 8; ++j ) { fprintf( stderr, "%02x", m_tile[ 8 * i + j ] ); }
             fprintf( stderr, "\n" );
         }
         fprintf( stderr, "\n" );
@@ -41,32 +41,18 @@ namespace DATA {
                      bitmap* p_out, u32 p_x, u32 p_y, u16 p_scale ) {
         // a tile is a 8 by 8 pixel palette indexed image; each pixel occupies 4 bits
 
-        for( u8 x = 0; x < 8 / p_scale; x += p_scale ) {
-            for( u8 y = 0; y < 8 / p_scale; y += p_scale ) {
-                u8 px = x, py = y;
+        for( u8 x{ 0 }; x < 8 / p_scale; x += p_scale ) {
+            for( u8 y{ 0 }; y < 8 / p_scale; y += p_scale ) {
+                u8 px{ x }, py{ y };
                 if( p_flipX ) { px = 7 - x; }
                 if( p_flipY ) { py = 7 - y; }
 
                 // get palette idx for this pixel
-                u8 idx = p_tile->m_tile[ 4 * py + px / 2 ];
-                if( !p_flipX ) {
-                    if( x & 1 ) {
-                        idx >>= 4;
-                    } else {
-                        idx &= 15;
-                    }
-                } else {
-                    if( x & 1 ) {
-                        idx &= 15;
-                    } else {
-                        idx >>= 4;
-                    }
-                }
-
+                u8 idx = p_tile->at( px, py );
                 if( !idx ) { continue; } // first pal entry is "transparent"
 
                 // get color for the palette idx
-                u16 color = p_pal->m_pal[ idx ];
+                u16 color{ p_pal->m_pal[ idx ] };
 
                 ( *p_out )( p_x + x / p_scale, p_y + y / p_scale )
                     = pixel( red( color ), green( color ), blue( color ) );

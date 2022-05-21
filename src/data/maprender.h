@@ -27,9 +27,34 @@ namespace DATA {
     constexpr palette DEFAULT_PALETTE = { { 0 } };
 
     struct tile {
-        u8 m_tile[ 32 ];
+        u8 m_tile[ TILE_SIZE * TILE_SIZE / 2 ];
 
         void dump( ) const;
+
+        inline u8 at( u8 p_x, u8 p_y ) const {
+            u8 cl = m_tile[ TILE_SIZE * p_y / 2 + p_x / 2 ];
+
+            if( p_x & 1 ) {
+                cl >>= 4;
+            } else {
+                cl &= 0xF;
+            }
+            return cl;
+        }
+
+        inline void set( u8 p_x, u8 p_y, u8 p_color ) {
+            u8 cl = m_tile[ TILE_SIZE * p_y / 2 + p_x / 2 ];
+
+            if( p_x & 1 ) {
+                p_color = ( p_color & 0xF ) << 4;
+                cl      = ( cl & 0x0F ) | p_color;
+            } else {
+                p_color = p_color & 0xF;
+                cl      = ( cl & 0xF0 ) | p_color;
+            }
+
+            m_tile[ TILE_SIZE * p_y / 2 + p_x / 2 ] = cl;
+        }
     };
     template <u16 t_size = 2>
     struct tileSet {

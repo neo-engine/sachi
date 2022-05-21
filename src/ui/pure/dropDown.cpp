@@ -63,8 +63,7 @@ namespace UI {
         _dropDown.signal_clicked( ).connect(
             [ this ]( ) {
                 _popoverButtons[ _currentSelection ]->grab_focus( );
-                _popover.show( );
-                //    _popoverButtons[ _currentSelection ]->grab_focus( );
+                _popover.popup( );
             },
             false );
         _sw.set_size_request( 70, 400 );

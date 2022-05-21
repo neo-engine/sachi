@@ -4,6 +4,7 @@
 #include "../root.h"
 #include "blck_ed/actionBar.h"
 #include "blck_ed/blockSelector.h"
+#include "blck_ed/tileCanvas.h"
 #include "blck_ed/tileSelector.h"
 #include "blockEditor.h"
 
@@ -45,6 +46,8 @@ namespace UI {
 
         _contentMainBox.append( _col3MainBox );
         _col3MainBox.set_expand( );
+        _tileCanvas = std::make_shared<TED::tileCanvas>( p_model, p_root );
+        if( _tileCanvas ) { _col3MainBox.append( *_tileCanvas ); }
 
         _contentMainBox.append( _col4MainBox );
         _col4MainBox.set_expand( );
@@ -63,6 +66,7 @@ namespace UI {
         if( _actionBar ) { _actionBar->redraw( ); }
         if( _blockPicker ) { _blockPicker->redraw( ); }
         if( _tilePicker ) { _tilePicker->redraw( ); }
+        if( _tileCanvas ) { _tileCanvas->redraw( ); }
     }
 
     void blockEditor::setNewEditMode( tseDisplayMode p_newMode ) {

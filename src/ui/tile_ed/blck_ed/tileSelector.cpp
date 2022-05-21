@@ -5,8 +5,8 @@ namespace UI::TED {
     tileSelector::tileSelector( model& p_model, root& p_root )
         : _model{ p_model }, _rootWindow{ p_root } {
 
-        _tileSetFrame = Gtk::Frame( "Tiles" );
-        _tileSetFrame.set_label_align( Gtk::Align::CENTER );
+        // _tileSetFrame = Gtk::Frame( "Tiles" );
+        // _tileSetFrame.set_label_align( Gtk::Align::CENTER );
         _tileSetFrame.set_child( _mainBox );
 
         _mainBox.set_margin( MARGIN );

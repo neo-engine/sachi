@@ -19,7 +19,7 @@ namespace UI {
 
 namespace UI::TED {
     /*
-     * @brief: Widget to select a block from a blockset
+     * @brief: Widget to select a tile from a tileset
      */
     class tileSelector {
         model& _model;

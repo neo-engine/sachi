@@ -46,6 +46,8 @@ namespace UI {
       public:
         static constexpr DATA::palette DUMMY_PAL[ 5 * 16 ] = { };
 
+        static std::shared_ptr<Gdk::Pixbuf> createImage( u16 p_color );
+
         static std::shared_ptr<Gdk::Pixbuf> createImage( const DATA::tile&    p_tile,
                                                          const DATA::palette& p_palette,
                                                          bool p_flipX, bool p_flipY );

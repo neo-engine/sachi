@@ -47,6 +47,10 @@ namespace UI {
         virtual u8                           computeMovementData( u16 p_blockIdx ) = 0;
         virtual void updateBlockMovement( u8 p_oldValue, u8 p_movement, u16 p_x, u16 p_y );
 
+        virtual inline bool colorMovement( ) const {
+            return true;
+        }
+
       public:
         inline mapSlice( ) {
             _clickEvent = Gtk::GestureClick::create( );
@@ -294,6 +298,110 @@ namespace UI {
 
         void set( const DATA::tileSet<1>& p_tiles, DATA::palette p_pals[ 5 * 16 ],
                   u16 p_tilesPerRow = DATA::SIZE );
+    };
+
+    /*
+     * @brief: A concrete mapSlice widget that renders a single tile (with every pixel
+     * seperate)
+     */
+    class tileSlice : public mapSlice {
+      public:
+        static constexpr u8 TILE_SIZE = 8;
+
+      private:
+        DATA::tile    _tile;
+        DATA::palette _pals[ 16 * 5 ] = { 0 };
+
+        u8 _currentDaytime = 0;
+        u8 _selectedPal    = 0;
+
+        inline u16 getWidth( ) const override {
+            return TILE_SIZE;
+        }
+        inline u16 getHeight( ) const override {
+            return TILE_SIZE;
+        }
+
+        inline std::shared_ptr<Gdk::Pixbuf> computeImageData( u16 p_blockIdx ) override {
+            return tile::createImage( _pals[ 16 * _currentDaytime + _selectedPal ]
+                                          .m_pal[ computeMovementData( p_blockIdx ) ] );
+        }
+
+        inline u8 computeMovementData( u16 p_blockidx ) override {
+            auto x{ p_blockidx % getWidth( ) };
+            auto y{ p_blockidx / getWidth( ) };
+
+            return _tile.at( x, y );
+        }
+
+        inline bool colorMovement( ) const override {
+            return false;
+        }
+
+      public:
+        inline tileSlice( ) : mapSlice( ) {
+        }
+
+        inline virtual ~tileSlice( ) {
+            mapSlice::~mapSlice( );
+        }
+
+        inline void setDaytime( u8 p_currentDaytime ) {
+            _currentDaytime = p_currentDaytime;
+        }
+
+        inline void setPal( u8 p_pal ) {
+            _selectedPal = p_pal;
+        }
+
+        inline void updatePixel( u8 p_color, u16 p_x, u16 p_y ) {
+            p_color &= 0xF;
+            _tile.set( p_x, p_y, p_color );
+            redrawBlock( p_y * getWidth( ) + p_x );
+        }
+
+        void set( const DATA::tile& p_tile, DATA::palette p_pals[ 5 * 16 ] );
+    };
+
+    /*
+     * @brief: A concrete mapSlice widget that renders a vector of colors.
+     */
+    class colorSlice : public mapSlice {
+      private:
+        std::vector<u16> _data;
+
+        u16 _colorsPerRow;
+        u16 _height;
+
+        inline u16 getWidth( ) const override {
+            return _colorsPerRow;
+        }
+        inline u16 getHeight( ) const override {
+            return _height;
+        }
+
+        inline std::shared_ptr<Gdk::Pixbuf> computeImageData( u16 p_blockIdx ) override {
+            return tile::createImage( _data[ p_blockIdx ] );
+        }
+
+        inline u8 computeMovementData( u16 p_blockidx ) override {
+            // return _data[ p_blockidx ];
+            return p_blockidx;
+        }
+
+        inline bool colorMovement( ) const override {
+            return false;
+        }
+
+      public:
+        inline colorSlice( ) : mapSlice( ) {
+        }
+
+        inline virtual ~colorSlice( ) {
+            mapSlice::~mapSlice( );
+        }
+
+        void set( const std::vector<u16>& p_colors, u16 p_colorsPerRow = 0 );
     };
 
 } // namespace UI

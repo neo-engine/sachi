@@ -72,4 +72,14 @@ namespace UI {
         return res;
     }
 
+    std::shared_ptr<Gdk::Pixbuf> tile::createImage( u16 p_color ) {
+        auto btm         = new DATA::bitmap( 1, 1 );
+        ( *btm )( 0, 0 ) = DATA::pixel( red( p_color ), green( p_color ), blue( p_color ) );
+        //    btm->writeToFile( ( "/tmp/" + std::to_string( cnt++ ) + ".png" ).c_str( ) );
+
+        auto pixbuf = btm->pixbuf( );
+        delete btm;
+        return pixbuf;
+    }
+
 } // namespace UI

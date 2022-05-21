@@ -15,10 +15,10 @@ namespace UI {
         class actionBar;
         class blockSelector;
         class tileSelector;
+        class tileCanvas;
         /*
         class paletteSelector;
         class paletteInformation;
-        class tileCanvas;
         class paletteEditor;
         */
     } // namespace TED
@@ -57,8 +57,8 @@ namespace UI {
         std::shared_ptr<TED::tileSelector> _tilePicker;
 
         // column 3: tile editor
-        Gtk::Box _col3MainBox{ Gtk::Orientation::VERTICAL };
-        // std::shared_ptr<TED::tileCanvas>    _tileCanvas;
+        Gtk::Box                         _col3MainBox{ Gtk::Orientation::VERTICAL };
+        std::shared_ptr<TED::tileCanvas> _tileCanvas;
 
         // column 4: palette selector
         Gtk::Box _col4MainBox{ Gtk::Orientation::VERTICAL };
