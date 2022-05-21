@@ -212,7 +212,7 @@ bool model::checkOrLoadBank( int p_bank, bool p_forceRead ) {
 
 bool model::readTileSets( ) {
     // first check if a combined file exists
-    bool error = false;
+    bool error{ false };
 
     FILE* f;
     auto  pth = fs::path( m_fsdata.mapPath( ) ) / "tileset.tsb";
@@ -283,7 +283,7 @@ bool model::readTileSets( ) {
             auto palpath
                 = fs::path( m_fsdata.palettePath( ) ) / ( std::to_string( bsname ) + ".p2l" );
             f = fopen( palpath.c_str( ), "r" );
-            if( !DATA::readPal( f, res.m_pals, 8 * 5 ) ) {
+            if( !DATA::readPal( f, res.m_pals, 8 * DAYTIMES ) ) {
                 message_error( "readTileSets",
                                ( "Reading palette "s ) + std::to_string( bsname ) + " failed." );
                 // continue;
@@ -309,8 +309,8 @@ bool model::readTileSets( ) {
 }
 
 void model::buildBlockSet( DATA::blockSet<2>* p_out, s8 p_ts1, s8 p_ts2 ) {
-    u8 ts1 = 0;
-    u8 ts2 = 0;
+    u8 ts1{ 0 };
+    u8 ts2{ 0 };
     if( p_ts1 != -1 ) {
         ts1 = p_ts1;
     } else {
@@ -329,8 +329,8 @@ void model::buildBlockSet( DATA::blockSet<2>* p_out, s8 p_ts1, s8 p_ts2 ) {
 }
 
 void model::buildTileSet( DATA::tileSet<2>* p_out, s8 p_ts1, s8 p_ts2 ) {
-    u8 ts1 = 0;
-    u8 ts2 = 0;
+    u8 ts1{ 0 };
+    u8 ts2{ 0 };
     if( p_ts1 != -1 ) {
         ts1 = p_ts1;
     } else {
@@ -348,9 +348,9 @@ void model::buildTileSet( DATA::tileSet<2>* p_out, s8 p_ts1, s8 p_ts2 ) {
                  sizeof( DATA::tile ) * DATA::MAX_TILES_PER_TILE_SET );
 }
 
-void model::buildPalette( DATA::palette p_out[ 5 * 16 ], s8 p_ts1, s8 p_ts2 ) {
-    u8 ts1 = 0;
-    u8 ts2 = 0;
+void model::buildPalette( DATA::palette p_out[ DAYTIMES * 16 ], s8 p_ts1, s8 p_ts2 ) {
+    u8 ts1{ 0 };
+    u8 ts2{ 0 };
     if( p_ts1 != -1 ) {
         ts1 = p_ts1;
     } else {
@@ -361,11 +361,13 @@ void model::buildPalette( DATA::palette p_out[ 5 * 16 ], s8 p_ts1, s8 p_ts2 ) {
     } else {
         ts2 = slice( ).m_data.m_tIdx2;
     }
-    for( u8 dt = 0; dt < DAYTIMES; ++dt ) {
+    for( u8 dt{ 0 }; dt < DAYTIMES; ++dt ) {
         std::memcpy( &p_out[ 16 * dt ], &m_fsdata.m_blockSets[ ts1 ].m_pals[ 8 * dt ],
-                     sizeof( DATA::palette ) * 8 );
+                     sizeof( DATA::palette ) * 6 );
         std::memcpy( &p_out[ 16 * dt + 6 ], &m_fsdata.m_blockSets[ ts2 ].m_pals[ 8 * dt ],
                      sizeof( DATA::palette ) * 8 );
+        std::memcpy( &p_out[ 16 * dt + 14 ], &m_fsdata.m_blockSets[ ts1 ].m_pals[ 8 * dt + 6 ],
+                     sizeof( DATA::palette ) * 2 );
     }
 }
 
@@ -424,7 +426,7 @@ bool model::writeMapSlice( u16 p_bank, u8 p_mapX, u8 p_mapY, std::string p_path,
 
 bool model::writeTileSets( ) {
     if( m_fsdata.m_blockSetNames.empty( ) ) { return true; }
-    bool error = false;
+    bool error{ false };
 
     switch( m_fsdata.m_tileSetMode ) {
     default: {
@@ -499,7 +501,7 @@ bool model::writeMapBank( u16 p_bank ) {
 
     message_log( "writeMapBank", "Saving map bank " + std::to_string( p_bank ) + ".",
                  LOGLEVEL_STATUS );
-    bool            error = false;
+    bool            error{ false };
     std::error_code ec;
 
     auto path = fs::path( m_fsdata.mapPath( ) ) / fs::path( std::to_string( p_bank ) + ".bank" );
@@ -557,7 +559,7 @@ bool model::writeMapBank( u16 p_bank ) {
 }
 
 bool model::writeFsRoot( ) {
-    bool error = false;
+    bool error{ false };
     for( const auto& [ bank, info ] : m_fsdata.m_mapBanks ) {
         if( info.getStatus( ) == STATUS_NEW || info.getStatus( ) == STATUS_EDITED_UNSAVED ) {
             // something changed here, save the maps

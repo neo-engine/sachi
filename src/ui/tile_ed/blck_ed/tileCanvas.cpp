@@ -13,7 +13,7 @@ namespace UI::TED {
         _mainBox.set_margin( MARGIN );
         _mainBox.set_vexpand( );
 
-        auto f2{ Gtk::Frame( "Pal" ) };
+        auto f2{ Gtk::Frame( ) };
         f2.set_child( _pal );
 
         auto meScrolledWindow1 = Gtk::ScrolledWindow( );

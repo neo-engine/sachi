@@ -16,11 +16,7 @@ namespace UI {
         class blockSelector;
         class tileSelector;
         class tileCanvas;
-        /*
-        class paletteSelector;
-        class paletteInformation;
         class paletteEditor;
-        */
     } // namespace TED
 
     /*
@@ -60,13 +56,9 @@ namespace UI {
         Gtk::Box                         _col3MainBox{ Gtk::Orientation::VERTICAL };
         std::shared_ptr<TED::tileCanvas> _tileCanvas;
 
-        // column 4: palette selector
-        Gtk::Box _col4MainBox{ Gtk::Orientation::VERTICAL };
-        // std::shared_ptr<TED::paletteSelector>    _palPicker;
-
-        // column 5: palette editor
-        Gtk::Box _col5MainBox{ Gtk::Orientation::VERTICAL };
-        // std::shared_ptr<TED::paletteEditor>    _palEditor;
+        // column 4: palette editor
+        Gtk::Box                            _col4MainBox{ Gtk::Orientation::VERTICAL };
+        std::shared_ptr<TED::paletteEditor> _paletteEditor;
 
       public:
         blockEditor( model& p_model, root& p_root );

@@ -4,6 +4,7 @@
 #include "../root.h"
 #include "blck_ed/actionBar.h"
 #include "blck_ed/blockSelector.h"
+#include "blck_ed/paletteEditor.h"
 #include "blck_ed/tileCanvas.h"
 #include "blck_ed/tileSelector.h"
 #include "blockEditor.h"
@@ -51,9 +52,8 @@ namespace UI {
 
         _contentMainBox.append( _col4MainBox );
         _col4MainBox.set_expand( );
-
-        _contentMainBox.append( _col5MainBox );
-        _col5MainBox.set_expand( );
+        _paletteEditor = std::make_shared<TED::paletteEditor>( p_model, p_root );
+        if( _paletteEditor ) { _col4MainBox.append( *_paletteEditor ); }
 
         _actionBar = std::make_shared<TED::actionBar>( p_model, p_root );
         if( _actionBar ) { _mainBox.append( *_actionBar ); }
@@ -67,6 +67,7 @@ namespace UI {
         if( _blockPicker ) { _blockPicker->redraw( ); }
         if( _tilePicker ) { _tilePicker->redraw( ); }
         if( _tileCanvas ) { _tileCanvas->redraw( ); }
+        if( _paletteEditor ) { _paletteEditor->redraw( ); }
     }
 
     void blockEditor::setNewEditMode( tseDisplayMode p_newMode ) {
@@ -79,10 +80,9 @@ namespace UI {
             if( !_col2MainBox.is_visible( ) ) { _col2MainBox.show( ); }
             if( _col3MainBox.is_visible( ) ) { _col3MainBox.hide( ); }
             if( _col4MainBox.is_visible( ) ) { _col4MainBox.hide( ); }
-            if( _col5MainBox.is_visible( ) ) { _col5MainBox.hide( ); }
             _col2MainBox.set_margin_start( MARGIN );
             _col3MainBox.set_margin_start( 0 );
-            _col5MainBox.set_margin_start( 0 );
+            _col4MainBox.set_margin_start( 0 );
             break;
 
         case TSEMODE_EDIT_TILES:
@@ -90,21 +90,19 @@ namespace UI {
             if( !_col2MainBox.is_visible( ) ) { _col2MainBox.show( ); }
             if( !_col3MainBox.is_visible( ) ) { _col3MainBox.show( ); }
             if( _col4MainBox.is_visible( ) ) { _col4MainBox.hide( ); }
-            if( _col5MainBox.is_visible( ) ) { _col5MainBox.hide( ); }
             _col2MainBox.set_margin_start( 0 );
             _col3MainBox.set_margin_start( MARGIN );
-            _col5MainBox.set_margin_start( 0 );
+            _col4MainBox.set_margin_start( 0 );
             break;
 
         case TSEMODE_EDIT_PALETTES:
             if( _col1MainBox.is_visible( ) ) { _col1MainBox.hide( ); }
-            if( _col2MainBox.is_visible( ) ) { _col2MainBox.hide( ); }
+            if( !_col2MainBox.is_visible( ) ) { _col2MainBox.show( ); }
             if( _col3MainBox.is_visible( ) ) { _col3MainBox.hide( ); }
             if( !_col4MainBox.is_visible( ) ) { _col4MainBox.show( ); }
-            if( !_col5MainBox.is_visible( ) ) { _col5MainBox.show( ); }
             _col2MainBox.set_margin_start( 0 );
             _col3MainBox.set_margin_start( 0 );
-            _col5MainBox.set_margin_start( MARGIN );
+            _col4MainBox.set_margin_start( MARGIN );
             break;
         }
         if( _actionBar ) { _actionBar->setNewEditMode( p_newMode ); }
