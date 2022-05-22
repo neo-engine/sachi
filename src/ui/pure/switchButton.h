@@ -17,8 +17,8 @@ namespace UI {
 
         u8       _currentSelection = 0;
         Gtk::Box _buttonBox{ Gtk::Orientation::HORIZONTAL };
-        std::vector<std::shared_ptr<Gtk::ToggleButton>>
-            _modeToggles; // buttons to toggle current display mode
+
+        std::vector<std::shared_ptr<Gtk::ToggleButton>> _toggles;
 
       public:
         switchButton( const std::vector<std::string>& p_choices, u8 p_defaultChoice = 0 );
@@ -34,10 +34,10 @@ namespace UI {
         }
 
         inline void choose( u8 p_choice ) {
-            if( p_choice > _modeToggles.size( ) || !_modeToggles[ p_choice ] ) { return; }
+            if( p_choice > _toggles.size( ) || !_toggles[ p_choice ] ) { return; }
 
-            for( u8 i{ 0 }; i < _modeToggles.size( ); ++i ) {
-                _modeToggles[ i ]->set_active( i == p_choice );
+            for( u8 i{ 0 }; i < _toggles.size( ); ++i ) {
+                _toggles[ i ]->set_active( i == p_choice );
             }
         }
     };

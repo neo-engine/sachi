@@ -278,6 +278,14 @@ struct model {
         return slice( selectedBank( ), selectedMapY( ), selectedMapX( ) );
     }
 
+    inline auto& mapData( u16 p_bank, u8 p_mapY, u8 p_mapX ) {
+        return bank( p_bank ).m_bank.m_mapData[ p_mapY ][ p_mapX ];
+    }
+
+    inline auto& mapData( ) {
+        return mapData( selectedBank( ), selectedMapY( ), selectedMapX( ) );
+    }
+
     /*
      * @brief: Sets the status of the edit tile set widget to the specified status,
      * resulting in the TS being highlighted in the sidebar.

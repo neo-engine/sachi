@@ -288,7 +288,7 @@ namespace DATA {
         SANDSTORM       = 8,
         FOG             = 9,
         DENSE_MIST      = 0xa,
-        CLOUDY          = 0xb, // Dark Forest clouds
+        CLOUDY          = 0xb,
         HEAVY_SUNLIGHT  = 0xc,
         HEAVY_RAIN      = 0xd,
         UNDERWATER      = 0xe,

@@ -4,6 +4,7 @@
 #include "map_ed/actionBar.h"
 #include "map_ed/blockSelector.h"
 #include "map_ed/editableMap.h"
+#include "map_ed/mapSettings.h"
 #include "map_ed/movementSelector.h"
 
 namespace UI {
@@ -36,6 +37,9 @@ namespace UI {
         _edMap = std::make_shared<MED::editableMap>( p_model, p_root, *this );
         if( _edMap ) { _mapMainBox.append( *_edMap ); }
 
+        _meta = std::make_shared<MED::mapSettings>( p_model, p_root );
+        if( _meta ) { _mapMainBox.append( *_meta ); }
+
         _actionBar = std::make_shared<MED::actionBar>( p_model, p_root );
         if( _actionBar ) { _mapMainBox.append( *_actionBar ); }
 
@@ -58,6 +62,7 @@ namespace UI {
         if( _mvmtPicker ) { _mvmtPicker->redraw( ); }
         if( _actionBar ) { _actionBar->redraw( ); }
         if( _edMap ) { _edMap->redraw( ); }
+        if( _meta ) { _meta->redraw( ); }
     }
 
     void mapEditor::setNewMapEditMode( mapDisplayMode p_newMode ) {
@@ -88,6 +93,12 @@ namespace UI {
             if( _mvmtPicker && _mvmtPicker->isVisible( ) ) { _mvmtPicker->hide( ); }
         } else {
             if( _mvmtPicker && !_mvmtPicker->isVisible( ) ) { _mvmtPicker->show( ); }
+        }
+
+        if( _currentMapDisplayMode != MODE_EDIT_DATA ) {
+            if( _meta && _meta->isVisible( ) ) { _meta->hide( ); }
+        } else {
+            if( _meta && !_meta->isVisible( ) ) { _meta->show( ); }
         }
 
         if( _actionBar ) { _actionBar->setNewMapEditMode( _currentMapDisplayMode ); }
