@@ -15,7 +15,7 @@ namespace UI {
         _entry.set_alignment( Gtk::Align::CENTER );
         _entry.set_max_length( 4 );
         _entry.set_placeholder_text( "0000" );
-        _entry.set_editable( false );
+        //        _entry.set_editable( false );
 
         _colorButton.set_use_alpha( false );
     }
@@ -31,27 +31,32 @@ namespace UI {
                 g{ std::min( 31, 1 + c.get_green_u( ) * 31 / 65535 ) },
                 b{ std::min( 31, 1 + c.get_blue_u( ) * 31 / 65535 ) };
 
+            auto oc{ get( ) };
             set( r, g, b );
-            p_choiceChangedCallback( get( ) );
+            if( get( ) != oc ) { p_choiceChangedCallback( get( ) ); }
 
             _lock = false;
         } );
 
-        /*
         _entry.signal_changed( ).connect( [ this, p_choiceChangedCallback ]( ) {
             if( _lock ) { return; }
             _lock = true;
+            char buffer[ 10 ];
+            snprintf( buffer, 5, "%04X", _color );
 
-            try {
-                auto c{ std::stoi( _entry.get_text( ), nullptr, 16 ) };
-                fprintf( stderr, "%i\n", c );
-                set( c );
-            } catch( ... ) { return; }
-            p_choiceChangedCallback( get( ) );
-
+            if( _entry.get_text( ) == "" ) {
+                _entry.set_text( buffer );
+            } else {
+                try {
+                    auto c{ std::stoi( _entry.get_text( ), nullptr, 16 ) };
+                    if( c != _color ) {
+                        set( c );
+                        p_choiceChangedCallback( get( ) );
+                    }
+                } catch( ... ) { _entry.set_text( buffer ); }
+            }
             _lock = false;
         } );
-        */
     }
 
     void editableColor::set( u16 p_color ) {

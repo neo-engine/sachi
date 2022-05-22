@@ -521,7 +521,13 @@ namespace UI::MED {
                     }
 
                     for( s8 i{ -1 }; i <= 1; ++i ) {
-                        for( s8 j{ -1 }; j <= 1; ++j ) { bqueue.push( { cy + i, cx + j } ); }
+                        for( s8 j{ -1 }; j <= 1; ++j ) {
+                            if( cy + i < 0 || cy + i >= DATA::SIZE || cx + j < 0
+                                || cx + j >= DATA::SIZE ) {
+                                continue;
+                            }
+                            bqueue.push( { cy + i, cx + j } );
+                        }
                     }
                 }
                 _model.markSelectedBankChanged( );
