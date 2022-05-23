@@ -107,4 +107,8 @@ namespace DATA {
                                                        p_palOut );
     }
 
+    bool readPictureData( unsigned int* p_imgOut, unsigned short* p_palOut, const char* p_path ) {
+        return readData<unsigned int, unsigned short>( p_path, 12288, p_imgOut, 256, p_palOut );
+    }
+
 } // namespace DATA

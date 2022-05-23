@@ -5,6 +5,7 @@
 
 #include "../../../defines.h"
 #include "../../../model.h"
+#include "../../pure/battleBG.h"
 #include "../../pure/dropDown.h"
 #include "../../pure/multiButton.h"
 
@@ -25,7 +26,7 @@ namespace UI::MED {
         std::shared_ptr<multiButton> _mapMode;
         std::shared_ptr<dropDown>    _mapWeather;
 
-        // std::shared_ptr<battleBG> _battleBG, _surfBG;
+        std::shared_ptr<battleBG> _battleBG, _surfBG;
 
       public:
         mapSettings( model& p_model, root& p_root );

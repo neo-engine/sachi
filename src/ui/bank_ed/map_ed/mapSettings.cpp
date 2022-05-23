@@ -1,6 +1,7 @@
 #include <gtkmm/centerbox.h>
 #include <gtkmm/frame.h>
 #include <gtkmm/label.h>
+#include <gtkmm/scrolledwindow.h>
 #include <gtkmm/separator.h>
 
 #include "../../../data/maprender.h"
@@ -12,19 +13,23 @@ namespace UI::MED {
     mapSettings::mapSettings( model& p_model, root& p_root )
         : _model{ p_model }, _rootWindow{ p_root } {
 
-        _mainBox.set_margin( MARGIN );
+        Gtk::ScrolledWindow sw{ };
+        _mainBox.append( sw );
+        Gtk::Box mbox{ Gtk::Orientation::VERTICAL };
+        mbox.set_vexpand( );
+        sw.set_child( mbox );
+        sw.set_policy( Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC );
 
-        auto shbox1f1 = Gtk::Frame( );
+        auto shbox1f1 = Gtk::Frame{ };
         shbox1f1.set_label_align( Gtk::Align::CENTER );
 
-        auto sboxv1 = Gtk::Box( Gtk::Orientation::VERTICAL );
+        auto sboxv1 = Gtk::Box{ Gtk::Orientation::VERTICAL };
         shbox1f1.set_child( sboxv1 );
         sboxv1.set_margin_start( MARGIN );
-        sboxv1.set_margin_end( MARGIN );
 
-        auto shbox1 = Gtk::CenterBox( );
+        auto shbox1 = Gtk::CenterBox{ };
         shbox1.set_hexpand( true );
-        auto shbox1l = Gtk::Label( "Map Mode" );
+        auto shbox1l = Gtk::Label{ "Map Mode" };
         shbox1.set_start_widget( shbox1l );
         shbox1.set_margin( MARGIN );
 
@@ -63,11 +68,12 @@ namespace UI::MED {
 
         sboxv1.append( shbox1 );
         Gtk::Separator s1{ };
+        s1.set_margin_end( MARGIN );
         sboxv1.append( s1 );
 
-        auto shbox2 = Gtk::CenterBox( );
+        auto shbox2 = Gtk::CenterBox{ };
         shbox2.set_hexpand( true );
-        auto shbox2l = Gtk::Label( "Map Weather" );
+        auto shbox2l = Gtk::Label{ "Map Weather" };
         shbox2.set_start_widget( shbox2l );
         shbox2.set_margin( MARGIN );
 
@@ -107,7 +113,46 @@ namespace UI::MED {
         }
 
         sboxv1.append( shbox2 );
-        _mainBox.append( shbox1f1 );
+        mbox.append( shbox1f1 );
+
+        auto shbox1f2 = Gtk::Frame{ };
+        // shbox1f2.set_vexpand( );
+        shbox1f2.set_margin_top( MARGIN );
+
+        auto sboxh1 = Gtk::Box{ Gtk::Orientation::HORIZONTAL };
+        shbox1f2.set_child( sboxh1 );
+        sboxh1.set_margin( MARGIN );
+
+        _battleBG = std::make_shared<battleBG>( "Battle BG" );
+        if( _battleBG ) {
+            ( (Gtk::Widget&) ( *_battleBG ) ).set_hexpand( );
+            sboxh1.append( *_battleBG );
+            _battleBG->connect( [ this ]( u8 p_bg, u8 p_p1, u8 p_p2 ) {
+                _model.mapData( ).m_battleBG    = p_bg;
+                _model.mapData( ).m_battlePlat1 = p_p1;
+                _model.mapData( ).m_battlePlat2 = p_p2;
+                _model.markSelectedBankChanged( );
+                _rootWindow.redraw( );
+            } );
+        }
+        Gtk::Separator s2{ };
+        s2.set_margin( MARGIN );
+        sboxh1.append( s2 );
+
+        _surfBG = std::make_shared<battleBG>( "Water Battle BG" );
+        if( _surfBG ) {
+            ( (Gtk::Widget&) ( *_surfBG ) ).set_hexpand( );
+            sboxh1.append( *_surfBG );
+            _surfBG->connect( [ this ]( u8 p_bg, u8 p_p1, u8 p_p2 ) {
+                _model.mapData( ).m_surfBattleBG    = p_bg;
+                _model.mapData( ).m_surfBattlePlat1 = p_p1;
+                _model.mapData( ).m_surfBattlePlat2 = p_p2;
+                _model.markSelectedBankChanged( );
+                _rootWindow.redraw( );
+            } );
+        }
+
+        mbox.append( shbox1f2 );
     }
 
     void mapSettings::redraw( ) {
@@ -118,6 +163,17 @@ namespace UI::MED {
         if( !v ) { v = 1; }
         if( _mapMode ) { _mapMode->choose( v ); }
         if( _mapWeather ) { _mapWeather->choose( _model.mapData( ).m_weather ); }
+
+        if( _battleBG ) {
+            _battleBG->set( _model.m_fsdata.battleBGPath( ), _model.m_fsdata.battlePlatPath( ),
+                            _model.mapData( ).m_battleBG, _model.mapData( ).m_battlePlat1,
+                            _model.mapData( ).m_battlePlat2 );
+        }
+        if( _surfBG ) {
+            _surfBG->set( _model.m_fsdata.battleBGPath( ), _model.m_fsdata.battlePlatPath( ),
+                          _model.mapData( ).m_surfBattleBG, _model.mapData( ).m_surfBattlePlat1,
+                          _model.mapData( ).m_surfBattlePlat2 );
+        }
     }
 
 } // namespace UI::MED

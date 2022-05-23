@@ -37,6 +37,16 @@ namespace DATA {
         return true;
     }
 
+    template <typename T1, typename T2>
+    bool readData( const char* p_path, T1 p_dataCnt1, T1* p_data1, T2 p_dataCnt2, T2* p_data2 ) {
+        FILE* fd = fopen( p_path, "rb" );
+        if( !fd ) return false;
+        read( fd, p_data1, sizeof( T1 ), p_dataCnt1 );
+        read( fd, p_data2, sizeof( T2 ), p_dataCnt2 );
+        fclose( fd );
+        return true;
+    }
+
     size_t write( FILE* p_stream, const void* p_buffer, size_t p_size, size_t p_count );
     bool   writeNop( FILE* p_file, u32 p_cnt );
 
@@ -55,6 +65,7 @@ namespace DATA {
 
     bool readPictureData( unsigned int* p_imgOut, unsigned short* p_palOut, const char* p_path,
                           const char* p_name );
+    bool readPictureData( unsigned int* p_imgOut, unsigned short* p_palOut, const char* p_path );
 
     bool writeTiles( FILE* p_file, const tile* p_tileSet, u16 p_startIdx = 0, u16 p_size = 512 );
     bool writePal( FILE* p_file, const palette* p_palette, u8 p_count = 6 );

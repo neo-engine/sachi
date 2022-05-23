@@ -127,5 +127,7 @@ namespace DATA {
         std::shared_ptr<Gdk::Pixbuf> pixbuf( ) const;
 
         void updatePixbuf( std::shared_ptr<Gdk::Pixbuf>& p_out ) const;
+
+        static bitmap* fromBGImage( const char* p_path );
     };
 } // namespace DATA

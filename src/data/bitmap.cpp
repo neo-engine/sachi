@@ -5,6 +5,7 @@
 #include <png.h>
 
 #include "bitmap.h"
+#include "fs/util.h"
 
 namespace DATA {
 
@@ -95,9 +96,9 @@ namespace DATA {
         m_pixels = std::vector<std::vector<pixel>>( m_width,
                                                     std::vector<pixel>( m_height, { 0, 0, 0 } ) );
 
-        for( size_t y = 0; y < m_height; y++ ) {
+        for( size_t y{ 0 }; y < m_height; y++ ) {
             png_bytep row = row_pointers[ y ];
-            for( size_t x = 0; x < m_width; x++ ) {
+            for( size_t x{ 0 }; x < m_width; x++ ) {
                 png_bytep px = &( row[ x * 4 ] );
                 if( px[ 3 ] )
                     m_pixels[ x ][ y ] = { px[ 0 ], px[ 1 ], px[ 2 ], 0 };
@@ -105,6 +106,34 @@ namespace DATA {
                     m_pixels[ x ][ y ] = { 0, 0, 0, 1 };
             }
         }
+    }
+
+    unsigned int   TEMP[ 12288 ]   = { 0 };
+    unsigned short TEMP_PAL[ 256 ] = { 0 };
+    bitmap*        bitmap::fromBGImage( const char* p_path ) {
+        auto res = new bitmap{ 256, 192 };
+        if( !readPictureData( TEMP, TEMP_PAL, p_path ) ) { std::memset( TEMP, 0, sizeof( TEMP ) ); }
+
+        u8* ptr = reinterpret_cast<u8*>( TEMP );
+
+        auto pos{ 0 };
+        for( auto y{ 0 }; y < 192; ++y ) {
+            for( auto x{ 0 }; x < 256; ++x, ++pos ) {
+                auto colidx{ ptr[ pos ] };
+                auto col{ TEMP_PAL[ colidx ] };
+                //                printf( "\x1b[48;2;%u;%u;%um \x1b[0;00m", red( col ), green( col
+                //                ), blue( col ) );
+                if( colidx ) {
+                    ( *res )( x, y ) = pixel( red( col ), green( col ), blue( col ) );
+                } else {
+                    ( *res )( x, y ) = pixel{ 0, 0, 0, 255 };
+                }
+            }
+            //            printf( "\n" );
+        }
+
+        // res->writeToFile( "test.png" );
+        return res;
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -136,7 +165,7 @@ namespace DATA {
 
     std::shared_ptr<Gdk::Pixbuf> bitmap::pixbuf( ) const {
         u8* linbuffer = new u8[ m_height * m_width * 3 + 10 ];
-        u16 cnt       = 0;
+        u32 cnt       = 0;
         for( u16 y = 0; y < m_height; ++y ) {
             for( u16 x = 0; x < m_width; ++x ) {
                 auto px            = m_pixels[ x ][ y ];

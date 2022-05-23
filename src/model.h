@@ -95,6 +95,14 @@ struct model {
         inline std::string mapDataPath( ) const {
             return m_fsrootPath + "/DATA/MAP_DATA/";
         }
+
+        inline std::string battleBGPath( ) const {
+            return m_fsrootPath + "/PICS/BATTLE_BACK/";
+        }
+
+        inline std::string battlePlatPath( ) const {
+            return m_fsrootPath + "/PICS/SPRITES/PLAT/plat";
+        }
     };
     struct settings {
         int m_selectedBank = -1;
