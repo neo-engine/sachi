@@ -30,8 +30,8 @@ namespace UI {
         std::shared_ptr<Gtk::Adjustment> _bg, _p1, _p2;
         Gtk::SpinButton                  _bgE, _p1E, _p2E;
 
-        fsImage<imageType::IT_BG_IMAGE> _bgI;
-        // fsImage<imageType::IT_SPRITE_PLATFORM> _p1I, _p2I;
+        fsImage<imageType::IT_BG_IMAGE>        _bgI;
+        fsImage<imageType::IT_SPRITE_PLATFORM> _p1I, _p2I;
 
       public:
         battleBG( const std::string& p_name );

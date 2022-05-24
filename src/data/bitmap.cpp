@@ -18,8 +18,8 @@ namespace DATA {
     bitmap::bitmap( size_t p_width, size_t p_height ) {
         m_width  = p_width;
         m_height = p_height;
-        m_pixels = std::vector<std::vector<pixel>>( p_width,
-                                                    std::vector<pixel>( p_height, { 0, 0, 0 } ) );
+        m_pixels = std::vector<std::vector<pixel>>(
+            p_width, std::vector<pixel>( p_height, { 0, 0, 0, 255 } ) );
     }
 
     bitmap::bitmap( const char* p_path ) {
@@ -93,26 +93,30 @@ namespace DATA {
 
         fclose( fd );
 
-        m_pixels = std::vector<std::vector<pixel>>( m_width,
-                                                    std::vector<pixel>( m_height, { 0, 0, 0 } ) );
+        m_pixels = std::vector<std::vector<pixel>>(
+            m_width, std::vector<pixel>( m_height, { 0, 0, 0, 255 } ) );
 
         for( size_t y{ 0 }; y < m_height; y++ ) {
             png_bytep row = row_pointers[ y ];
             for( size_t x{ 0 }; x < m_width; x++ ) {
                 png_bytep px = &( row[ x * 4 ] );
-                if( px[ 3 ] )
-                    m_pixels[ x ][ y ] = { px[ 0 ], px[ 1 ], px[ 2 ], 0 };
-                else
-                    m_pixels[ x ][ y ] = { 0, 0, 0, 1 };
+                if( px[ 3 ] ) {
+                    m_pixels[ x ][ y ] = { px[ 0 ], px[ 1 ], px[ 2 ], 255 };
+                } else {
+                    m_pixels[ x ][ y ] = { 0, 0, 0, 0 };
+                }
             }
         }
     }
 
     unsigned int   TEMP[ 12288 ]   = { 0 };
     unsigned short TEMP_PAL[ 256 ] = { 0 };
-    bitmap*        bitmap::fromBGImage( const char* p_path ) {
-        auto res = new bitmap{ 256, 192 };
-        if( !readPictureData( TEMP, TEMP_PAL, p_path ) ) { std::memset( TEMP, 0, sizeof( TEMP ) ); }
+    bitmap         bitmap::fromBGImage( const char* p_path ) {
+        auto res = bitmap{ 256, 192 };
+        if( !readPictureData( TEMP, TEMP_PAL, p_path ) ) {
+            std::memset( TEMP, 0, sizeof( TEMP ) );
+            std::memset( TEMP_PAL, 0, sizeof( TEMP_PAL ) );
+        }
 
         u8* ptr = reinterpret_cast<u8*>( TEMP );
 
@@ -124,9 +128,9 @@ namespace DATA {
                 //                printf( "\x1b[48;2;%u;%u;%um \x1b[0;00m", red( col ), green( col
                 //                ), blue( col ) );
                 if( colidx ) {
-                    ( *res )( x, y ) = pixel( red( col ), green( col ), blue( col ) );
+                    res( x, y ) = pixel( red( col ), green( col ), blue( col ), 255 );
                 } else {
-                    ( *res )( x, y ) = pixel{ 0, 0, 0, 255 };
+                    res( x, y ) = pixel{ 0, 0, 0, 0 };
                 }
             }
             //            printf( "\n" );
@@ -134,6 +138,86 @@ namespace DATA {
 
         // res->writeToFile( "test.png" );
         return res;
+    }
+
+    void bitmap::addFromSprite( unsigned* p_imgData, unsigned short* p_palData, size_t p_width,
+                                size_t p_height, size_t p_x, size_t p_y ) {
+
+        u8* ptr = reinterpret_cast<u8*>( p_imgData );
+
+        u8* image_data = new u8[ p_width * p_height / 2 ];
+
+        size_t i{ 0 };
+        for( size_t tiley{ 0 }; tiley < p_height / 8; ++tiley ) {
+            for( size_t tilex{ 0 }; tilex < p_width / 8; ++tilex ) {
+                int shift = tilex * ( -28 ); // TODO: WTF?
+                for( u8 y{ 0 }; y < 8; ++y ) {
+                    for( u8 x{ 0 }; x < 8; x += 2, ++i ) {
+                        u16 cur = ptr[ i ];
+
+                        image_data[ i + shift ] = cur;
+                    }
+                    shift += 4 * ( p_width / 8 - 1 );
+                }
+            }
+        }
+
+        for( size_t x{ 0 }, y{ 0 }, r{ 0 }; x < p_width * p_height / 2; ++x ) {
+            auto c1{ p_palData[ image_data[ x ] & 0xF ] };
+            if( c1 ) {
+                ( *this )( p_x + r++, p_y + y ) = pixel( red( c1 ), green( c1 ), blue( c1 ) );
+            } else {
+                ( *this )( p_x + r++, p_y + y ) = { 0, 0, 0, 0 };
+            }
+            auto c2{ p_palData[ image_data[ x ] >> 4 ] };
+            if( c2 ) {
+                ( *this )( p_x + r++, p_y + y ) = pixel( red( c2 ), green( c2 ), blue( c2 ) );
+            } else {
+                ( *this )( p_x + r++, p_y + y ) = { 0, 0, 0, 0 };
+            }
+            if( ( x & ( p_width / 2 - 1 ) ) == p_width / 2 - 1 ) {
+                ++y;
+                r = 0;
+            }
+        }
+
+        delete[] image_data;
+    }
+
+    bitmap bitmap::fromSprite( const char* p_path, size_t p_width, size_t p_height ) {
+        if( !readData<unsigned short, unsigned int>( p_path, 16, TEMP_PAL, p_width * p_height / 8,
+                                                     TEMP ) ) {
+            std::memset( TEMP, 0, sizeof( TEMP ) );
+            std::memset( TEMP_PAL, 0, sizeof( TEMP_PAL ) );
+        }
+
+        auto res = bitmap{ p_width, p_height };
+        res.addFromSprite( TEMP, TEMP_PAL, p_width, p_height );
+        return res;
+    }
+
+    bitmap bitmap::fromPlatformSprite( const char* p_path ) {
+        if( !readData<unsigned short, unsigned int>( p_path, 16, TEMP_PAL, 128 * 64 / 8, TEMP ) ) {
+            std::memset( TEMP, 0, sizeof( TEMP ) );
+            std::memset( TEMP_PAL, 0, sizeof( TEMP_PAL ) );
+        }
+        auto res = bitmap{ 128, 64 };
+        res.addFromSprite( TEMP, TEMP_PAL, 64, 64 );
+        res.addFromSprite( TEMP + 64 * 64 / 8, TEMP_PAL, 64, 64, 64 );
+        return res;
+    }
+
+    void bitmap::crop( u16 p_cx, u16 p_cy, u16 p_cw, u16 p_ch ) {
+        auto pixels
+            = std::vector<std::vector<pixel>>( p_cw, std::vector<pixel>( p_ch, { 0, 0, 0, 255 } ) );
+
+        for( u16 x{ 0 }; x < p_cw; ++x ) {
+            for( u16 y{ 0 }; y < p_ch; ++y ) { pixels[ x ][ y ] = ( *this )( x + p_cx, y + p_cy ); }
+        }
+
+        m_width  = p_cw;
+        m_height = p_ch;
+        m_pixels = std::move( pixels );
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -144,9 +228,9 @@ namespace DATA {
         if( p_x >= m_width || p_y >= m_height ) {
             std::fprintf( stderr,
                           "[ERROR] Index out of range while trying to get pixel at ( %lu|%lu )!\n"
-                          "Returning default pixel value instead.",
+                          "Returning default pixel value instead.\n",
                           p_x, p_y );
-            static pixel defPixel = { 0, 0, 0 };
+            static pixel defPixel = { 0, 0, 0, 0 };
             return defPixel;
         }
         return m_pixels[ p_x ][ p_y ];
@@ -155,16 +239,16 @@ namespace DATA {
         if( p_x >= m_width || p_y >= m_height ) {
             std::fprintf( stderr,
                           "[ERROR] Index out of range while trying to get pixel at ( %lu|%lu )!\n"
-                          "Returning default pixel value instead.",
+                          "Returning default pixel value instead.\n",
                           p_x, p_y );
-            static pixel defPixel = { 0, 0, 0 };
+            static pixel defPixel = { 0, 0, 0, 0 };
             return defPixel;
         }
         return m_pixels[ p_x ][ p_y ];
     }
 
     std::shared_ptr<Gdk::Pixbuf> bitmap::pixbuf( ) const {
-        u8* linbuffer = new u8[ m_height * m_width * 3 + 10 ];
+        u8* linbuffer = new u8[ m_height * m_width * 4 + 10 ];
         u32 cnt       = 0;
         for( u16 y = 0; y < m_height; ++y ) {
             for( u16 x = 0; x < m_width; ++x ) {
@@ -172,10 +256,11 @@ namespace DATA {
                 linbuffer[ cnt++ ] = px.m_red;
                 linbuffer[ cnt++ ] = px.m_green;
                 linbuffer[ cnt++ ] = px.m_blue;
+                linbuffer[ cnt++ ] = px.m_transparent;
             }
         }
-        auto res = Gdk::Pixbuf::create_from_data( linbuffer, Gdk::Colorspace::RGB, false, 8,
-                                                  m_width, m_height, m_width * 3 );
+        auto res = Gdk::Pixbuf::create_from_data( linbuffer, Gdk::Colorspace::RGB, true, 8, m_width,
+                                                  m_height, m_width * 4 );
         return res;
     }
 

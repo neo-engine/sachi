@@ -1,5 +1,6 @@
 #include <gtkmm/centerbox.h>
 #include <gtkmm/image.h>
+#include <gtkmm/overlay.h>
 #include <gtkmm/scrolledwindow.h>
 #include "battleBG.h"
 
@@ -16,9 +17,23 @@ namespace UI {
         auto box3 = Gtk::CenterBox{ };
         auto box4 = Gtk::CenterBox{ };
 
-        Gtk::ScrolledWindow sw{ };
-        sw.set_policy( Gtk::PolicyType::NEVER, Gtk::PolicyType::NEVER );
-        sw.set_child( _bgI );
+        Gtk::Box sw{ };
+
+        Gtk::Overlay ov{ };
+        ov.set_child( _bgI );
+        ov.add_overlay( _p1I );
+        ov.add_overlay( _p2I );
+
+        _p2I.set_margin_top( 72 );
+        _p2I.set_margin_start( 128 );
+
+        _p1I.setScale( 2 );
+        _p1I.set_margin_top( 98 );
+        _p1I.set_margin_start( -22 );
+
+        ov.set_clip_overlay( _bgI );
+
+        sw.append( ov );
         sw.set_halign( Gtk::Align::CENTER );
         sw.set_valign( Gtk::Align::CENTER );
 
@@ -65,12 +80,12 @@ namespace UI {
         }
         if( _plat1 != p_p1 ) {
             _p1E.set_value( p_p1 );
-            // _p1I.load( p_platPath + std::to_string( p_p1 ) + ".raw" );
+            _p1I.load( p_platPath + std::to_string( p_p1 ) + ".raw", 26, 0, 128 - 26, 48 );
             _plat1 = p_p1;
         }
         if( _plat2 != p_p2 ) {
             _p2E.set_value( p_p2 );
-            // _p2I.load( p_platPath + std::to_string( p_p2 ) + ".raw" );
+            _p2I.load( p_platPath + std::to_string( p_p2 ) + ".raw" );
             _plat2 = p_p2;
         }
 

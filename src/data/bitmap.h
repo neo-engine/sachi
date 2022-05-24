@@ -10,12 +10,12 @@ namespace DATA {
      * @brief Struct to store the RGB values of a pixel.
      */
     struct pixel {
-        u8 m_red;         ///< R value
-        u8 m_green;       ///< G value
-        u8 m_blue;        ///< B value
-        u8 m_transparent; ///< pixel is transparent
+        u8 m_red;               ///< R value
+        u8 m_green;             ///< G value
+        u8 m_blue;              ///< B value
+        u8 m_transparent = 255; ///< A value
 
-        constexpr pixel( u8 p_red, u8 p_green, u8 p_blue, u8 p_transparent = 0 )
+        constexpr pixel( u8 p_red, u8 p_green, u8 p_blue, u8 p_transparent = 255 )
             : m_red( p_red ), m_green( p_green ), m_blue( p_blue ), m_transparent( p_transparent ) {
         }
 
@@ -109,11 +109,17 @@ namespace DATA {
     struct bitmap {
       private:
         std::vector<std::vector<pixel>> m_pixels; ///< The raw data
+
+        void addFromSprite( unsigned* p_imgData, unsigned short* p_palData, size_t p_width,
+                            size_t p_height, size_t p_x = 0, size_t p_y = 0 );
+
       public:
         size_t m_width;  ///< The image width
         size_t m_height; ///< The image height
         bitmap( size_t p_width, size_t p_height );
         bitmap( const char* p_path );
+
+        void crop( u16 p_cx, u16 p_cy, u16 p_cw, u16 p_ch );
 
         pixel& operator( )( size_t p_x, size_t p_y );
         pixel  operator( )( size_t p_x, size_t p_y ) const;
@@ -128,6 +134,10 @@ namespace DATA {
 
         void updatePixbuf( std::shared_ptr<Gdk::Pixbuf>& p_out ) const;
 
-        static bitmap* fromBGImage( const char* p_path );
+        static bitmap fromBGImage( const char* p_path );
+
+        static bitmap fromPlatformSprite( const char* p_path );
+
+        static bitmap fromSprite( const char* p_path, size_t p_width, size_t p_height );
     };
 } // namespace DATA

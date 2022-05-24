@@ -55,7 +55,7 @@ namespace DATA {
                 u16 color{ p_pal->m_pal[ idx ] };
 
                 ( *p_out )( p_x + x / p_scale, p_y + y / p_scale )
-                    = pixel( red( color ), green( color ), blue( color ) );
+                    = pixel( red( color ), green( color ), blue( color ), 255 );
             }
         }
     }

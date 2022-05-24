@@ -27,6 +27,8 @@ namespace UI {
         u16                          _scale = 1;
         std::shared_ptr<Gdk::Pixbuf> _data;
 
+        u16 _cropx = 0, _cropy = 0;
+
       public:
         inline fsImage( ) {
             _image.set_parent( *this );
@@ -36,35 +38,52 @@ namespace UI {
             _image.unparent( );
         }
 
-        inline void load( const std::string& p_path ) {
+        inline void load( const std::string& p_path, u16 p_cx = 0, u16 p_cy = 0, u16 p_cw = 0,
+                          u16 p_ch = 0 ) {
             if( t_type == imageType::IT_BG_IMAGE ) {
                 auto btm = DATA::bitmap::fromBGImage( p_path.c_str( ) );
-                _data    = btm->pixbuf( );
-                delete btm;
+                if( p_ch && p_cw ) {
+                    btm.crop( p_cx, p_cy, p_cw, p_ch );
+                    _cropx = 256 - p_cw;
+                    _cropy = 192 - p_ch;
+                }
+                _data = btm.pixbuf( );
                 _image.set( _data );
+                return;
+            }
+            if( t_type == imageType::IT_SPRITE_PLATFORM ) {
+                auto btm = DATA::bitmap::fromPlatformSprite( p_path.c_str( ) );
+                if( p_ch && p_cw ) {
+                    btm.crop( p_cx, p_cy, p_cw, p_ch );
+                    _cropx = 128 - p_cw;
+                    _cropy = 64 - p_ch;
+                }
+                _data = btm.pixbuf( );
+                _image.set( _data );
+                return;
             }
         }
 
         inline u16 getWidth( ) const {
             switch( t_type ) {
-            case imageType::IT_SPRITE_ICON_16x16: return 16;
-            case imageType::IT_SPRITE_ICON_32x32: return 32;
-            case imageType::IT_SPRITE_ICON_64x64: return 64;
-            case imageType::IT_SPRITE_PKMN: return 96;
-            case imageType::IT_SPRITE_PLATFORM: return 128;
-            case imageType::IT_BG_IMAGE: return 256;
+            case imageType::IT_SPRITE_ICON_16x16: return 16 - _cropx;
+            case imageType::IT_SPRITE_ICON_32x32: return 32 - _cropx;
+            case imageType::IT_SPRITE_ICON_64x64: return 64 - _cropx;
+            case imageType::IT_SPRITE_PKMN: return 96 - _cropx;
+            case imageType::IT_SPRITE_PLATFORM: return 128 - _cropx;
+            case imageType::IT_BG_IMAGE: return 256 - _cropx;
             }
             return 0;
         }
 
         inline u16 getHeight( ) const {
             switch( t_type ) {
-            case imageType::IT_SPRITE_ICON_16x16: return 16;
-            case imageType::IT_SPRITE_ICON_32x32: return 32;
-            case imageType::IT_SPRITE_ICON_64x64: return 64;
-            case imageType::IT_SPRITE_PKMN: return 96;
-            case imageType::IT_SPRITE_PLATFORM: return 32;
-            case imageType::IT_BG_IMAGE: return 192;
+            case imageType::IT_SPRITE_ICON_16x16: return 16 - _cropy;
+            case imageType::IT_SPRITE_ICON_32x32: return 32 - _cropy;
+            case imageType::IT_SPRITE_ICON_64x64: return 64 - _cropy;
+            case imageType::IT_SPRITE_PKMN: return 96 - _cropy;
+            case imageType::IT_SPRITE_PLATFORM: return 64 - _cropy;
+            case imageType::IT_BG_IMAGE: return 192 - _cropy;
             }
             return 0;
         }
