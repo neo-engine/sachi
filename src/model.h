@@ -7,9 +7,31 @@
 
 #include <gtkmm/stringlist.h>
 
+#include "data/fs.h"
 #include "data/maprender.h"
 
 enum status { STATUS_UNTOUCHED, STATUS_NEW, STATUS_EDITED_UNSAVED, STATUS_SAVED };
+
+constexpr u16 OTLENGTH            = 8;
+constexpr u16 SPECIES_NAMELENGTH  = 30;
+constexpr u16 PKMN_NAMELENGTH     = 15;
+constexpr u16 FORME_NAMELENGTH    = 30;
+constexpr u16 ITEM_NAMELENGTH     = 20;
+constexpr u16 ITEM_DSCRLENGTH     = 200;
+constexpr u16 MOVE_NAMELENGTH     = 20;
+constexpr u16 MOVE_DSCRLENGTH     = 200;
+constexpr u16 ABILITY_NAMELENGTH  = 20;
+constexpr u16 TCLASS_NAMELENGTH   = 30;
+constexpr u16 ABILITY_DSCRLENGTH  = 200;
+constexpr u16 LOCATION_NAMELENGTH = 25;
+constexpr u16 BGM_NAMELENGTH      = 25;
+constexpr u16 DEXENTRY_NAMELENGTH = 200;
+
+constexpr u16 UISTRING_LEN    = 250;
+constexpr u16 MAPSTRING_LEN   = 800;
+constexpr u16 BADGENAME_LEN   = 50;
+constexpr u16 ACHIEVEMENT_LEN = 100;
+constexpr u16 PKMNPHRS_LEN    = 150;
 
 struct model {
     struct fsdata {
@@ -76,6 +98,12 @@ struct model {
         std::map<u8, blockSetInfo> m_blockSets;
         std::set<u8>               m_blockSetNames;
 
+        DATA::fsdataInfo m_fsInfo;
+
+        inline std::string fsinfoPath( ) const {
+            return m_fsrootPath + "/fsinfo";
+        }
+
         inline std::string mapPath( ) const {
             return m_fsrootPath + "/MAPS/";
         }
@@ -102,6 +130,10 @@ struct model {
 
         inline std::string battlePlatPath( ) const {
             return m_fsrootPath + "/PICS/SPRITES/PLAT/plat";
+        }
+
+        inline std::string pkmnNamePath( ) const {
+            return m_fsrootPath + "/DATA/PKMN_NAME/pkmnname";
         }
     };
     struct settings {
@@ -143,10 +175,67 @@ struct model {
         bool m_tseTileOverlay     = true;
     };
 
+    struct stringCache {
+        u16                      m_lastRefresh = 0;
+        bool                     m_valid       = false;
+        std::vector<std::string> m_strings;
+    };
+
     fsdata   m_fsdata;
     settings m_settings;
     bool     m_good = false;
 
+    stringCache m_pkmnNameCache;
+
+    inline void invalidateCaches( ) {
+        m_pkmnNameCache.m_valid = false;
+    }
+
+    /*
+     * @brief: reads the names of all pkmn from the fsroot and stores them in a string
+     * cache, which is returned.
+     */
+    inline const stringCache& pkmnNames( ) {
+        if( m_pkmnNameCache.m_valid ) { return m_pkmnNameCache; }
+
+        m_pkmnNameCache.m_lastRefresh++;
+
+        m_pkmnNameCache.m_strings.clear( );
+
+        // open pkmn name file
+        auto  path = m_fsdata.pkmnNamePath( ) + "0.strb";
+        FILE* f    = fopen( path.c_str( ), "rb" );
+
+        if( !f ) {
+            m_pkmnNameCache.m_valid = false;
+            return m_pkmnNameCache;
+        }
+
+        char tmp[ PKMN_NAMELENGTH + 10 ];
+        for( u16 i{ 0 }; i < m_fsdata.m_fsInfo.m_maxPkmn; ++i ) {
+            memset( tmp, 0, sizeof( tmp ) );
+            fread( tmp, PKMN_NAMELENGTH, 1, f );
+            m_pkmnNameCache.m_strings.push_back( std::string{ tmp } );
+        }
+
+        m_pkmnNameCache.m_valid = true;
+        fclose( f );
+        return m_pkmnNameCache;
+    }
+
+    /*
+     * @returns: true on error.
+     */
+    bool readOrCreateFsInfo( );
+
+    /*
+     * @returns: true on error.
+     */
+    bool writeFsInfo( );
+
+    /*
+     * @returns: true on error.
+     */
     bool writeFsRoot( );
 
     static model readFromPath( const std::string& p_path );

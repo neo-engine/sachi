@@ -81,4 +81,42 @@ namespace UI {
                 } );
         }
     }
+
+    void pkmnDropDown::refreshModel( model& p_model ) {
+        auto sc = p_model.pkmnNames( );
+        if( sc.m_lastRefresh <= _lastRefresh ) { return; }
+        _lastRefresh = sc.m_lastRefresh;
+        _choices     = sc.m_strings;
+        _popoverBtnSelect.clear( );
+
+        for( auto btn : _popoverButtons ) {
+            if( btn ) { _popoverBox.remove( *btn ); }
+        }
+        _popoverButtons.clear( );
+
+        if( _currentSelection >= _choices.size( ) ) { _currentSelection = _choices.size( ) - 1; }
+
+        for( u64 i{ 0 }; i < _choices.size( ); ++i ) {
+            Gtk::Label lb{ _choices[ i ] };
+            Gtk::Box   bb{ Gtk::Orientation::HORIZONTAL };
+            bb.append( lb );
+
+            auto ic = Gtk::Image{ };
+            ic.set_from_icon_name( "object-select-symbolic" );
+            bb.append( ic );
+            _popoverBtnSelect.push_back( std::move( ic ) );
+
+            auto btn = std::make_shared<Gtk::Button>( );
+            if( !btn ) { break; }
+
+            btn->set_child( bb );
+            _popoverBox.append( *btn );
+            _popoverBox.set_hexpand( );
+            btn->get_style_context( )->add_class( "flat" );
+            btn->set_halign( Gtk::Align::FILL );
+            btn->set_hexpand( true );
+
+            _popoverButtons.push_back( btn );
+        }
+    }
 } // namespace UI

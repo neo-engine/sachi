@@ -15,6 +15,10 @@ model model::readFromPath( const std::string& p_path ) {
 
     res.m_fsdata.m_fsrootPath = p_path;
 
+    if( res.readOrCreateFsInfo( ) ) { return res; }
+
+    res.invalidateCaches( );
+
     // traverse m_fsdata.mapPath() and search for all dirs that are named with a number
     // (assuming they are a map bank)
 
@@ -69,6 +73,47 @@ model model::readFromPath( const std::string& p_path ) {
 
     res.m_good = true;
     return res;
+}
+
+bool model::readOrCreateFsInfo( ) {
+    // check if an fsinfo file is present
+
+    FILE* f = fopen( m_fsdata.fsinfoPath( ).c_str( ), "rb" );
+    if( !f ) {
+        message_log( "load fsinfo", "fsinfo file not found; using default values." );
+
+        // TODO: try to construct info vfile from data present in fsroot
+
+        m_fsdata.m_fsInfo = DATA::fsdataInfo{ };
+        return false;
+    }
+
+    fread( &m_fsdata.m_fsInfo, sizeof( DATA::fsdataInfo ), 1, f );
+
+    message_log( "load fsinfo", std::to_string( m_fsdata.m_fsInfo.m_maxPkmn ) + " pkmn" );
+    message_log( "load fsinfo", std::to_string( m_fsdata.m_fsInfo.m_maxItem ) + " items" );
+    message_log( "load fsinfo", std::to_string( m_fsdata.m_fsInfo.m_maxMove ) + " moves" );
+
+    fclose( f );
+    return false;
+}
+
+bool model::writeFsInfo( ) {
+    // check if an fsinfo file is present
+
+    FILE* f = fopen( m_fsdata.fsinfoPath( ).c_str( ), "wb" );
+    if( !f ) {
+        message_error( "write fsinfo", "could not write fsinfo file." );
+
+        // TODO: try to construct info vfile from data present in fsroot
+
+        m_fsdata.m_fsInfo = DATA::fsdataInfo{ };
+        return true;
+    }
+
+    fwrite( &m_fsdata.m_fsInfo, sizeof( DATA::fsdataInfo ), 1, f );
+    fclose( f );
+    return false;
 }
 
 void model::addNewMapBank( u16 p_bank, u8 p_sizeY, u8 p_sizeX, u8 p_mapMode, status p_status ) {
@@ -568,6 +613,7 @@ bool model::writeFsRoot( ) {
     }
 
     if( tileStatus( ) == STATUS_EDITED_UNSAVED ) { error |= writeTileSets( ); }
+    error |= writeFsInfo( );
     return error;
 }
 

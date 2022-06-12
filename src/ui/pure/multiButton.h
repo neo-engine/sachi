@@ -17,13 +17,14 @@ namespace UI {
         u32                           _currentSelection = 0;
         std::function<u32( u32, u8 )> _transition;
 
-        Gtk::Box _buttonBox{ Gtk::Orientation::HORIZONTAL };
+        Gtk::Box _buttonBox;
 
         std::vector<std::shared_ptr<Gtk::ToggleButton>> _toggles;
 
       public:
         multiButton( const std::vector<std::string>&      p_choices,
-                     const std::function<u32( u32, u8 )>& p_transition, u32 p_defaultChoice = 0 );
+                     const std::function<u32( u32, u8 )>& p_transition, u32 p_defaultChoice = 0,
+                     Gtk::Orientation p_orientation = Gtk::Orientation::HORIZONTAL );
 
         void connect( const std::function<void( u32 )>& p_choiceChangedCallback );
 

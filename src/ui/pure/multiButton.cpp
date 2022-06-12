@@ -3,8 +3,9 @@
 namespace UI {
     multiButton::multiButton( const std::vector<std::string>&      p_choices,
                               const std::function<u32( u32, u8 )>& p_transition,
-                              u32                                  p_defaultChoice ) {
+                              u32 p_defaultChoice, Gtk::Orientation p_orientation ) {
         _transition = p_transition;
+        _buttonBox  = Gtk::Box{ p_orientation };
         _buttonBox.set_margin( MARGIN );
 
         for( const auto& i : p_choices ) {
