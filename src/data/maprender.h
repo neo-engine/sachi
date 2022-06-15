@@ -275,7 +275,30 @@ namespace DATA {
         HEADBUTT,
         ROCK_SMASH,
         SWEET_SCENT,
+        POKE_TORE,
+        SWARM,
+
+        _TP_FIRST = GRASS,
+        _TP_LAST  = SWARM
     };
+
+    constexpr std::string wildPkmnTypeName( wildPkmnType p_type ) {
+        switch( p_type ) {
+        default: return "";
+        case GRASS: return "Grass";
+        case HIGH_GRASS: return "Long Grass";
+        case WATER: return "Surf";
+        case OLD_ROD: return "Old Rod";
+        case GOOD_ROD: return "Good Rod";
+        case SUPER_ROD: return "Super Rod";
+        case HEADBUTT: return "Headbutt";
+        case ROCK_SMASH: return "Rock Smash";
+        case SWEET_SCENT: return "Sweet Scent";
+        case POKE_TORE: return "PokéRadar";
+        case SWARM: return "Swarm";
+        }
+    }
+
     enum mapWeather : u8 {
         NOTHING         = 0, // Inside
         SUNNY           = 1,
@@ -312,6 +335,7 @@ namespace DATA {
     };
 
     constexpr u8 MAX_EVENTS_PER_SLICE = 64;
+    constexpr u8 MAX_PKMN_PER_SLICE   = 30;
     struct mapData {
         u8 m_mapType;
         u8 m_weather;
@@ -334,10 +358,10 @@ namespace DATA {
             u8           m_forme;
             wildPkmnType m_encounterType;
 
-            u8 m_slot;
+            u8 m_slot; // num req badges for pkmn to show up
             u8 m_daytime;
             u8 m_encounterRate;
-        } m_pokemon[ 30 ];
+        } m_pokemon[ MAX_PKMN_PER_SLICE ];
         struct event {
             u8  m_posX;
             u8  m_posY;

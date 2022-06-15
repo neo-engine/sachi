@@ -134,6 +134,8 @@ namespace DATA {
 
         void updatePixbuf( std::shared_ptr<Gdk::Pixbuf>& p_out ) const;
 
+        static bitmap fromPkmnSprite( const char* p_path );
+
         static bitmap fromBGImage( const char* p_path );
 
         static bitmap fromPlatformSprite( const char* p_path );

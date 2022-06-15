@@ -60,9 +60,12 @@ namespace UI {
             _dropDown.grab_focus( );
         } );
 
-        _dropDown.signal_clicked( ).connect(
+        _conn = _dropDown.signal_clicked( ).connect(
             [ this ]( ) {
-                _popoverButtons[ _currentSelection ]->grab_focus( );
+                if( _currentSelection < _popoverButtons.size( )
+                    && _popoverButtons[ _currentSelection ] ) {
+                    _popoverButtons[ _currentSelection ]->grab_focus( );
+                }
                 _popover.popup( );
             },
             false );
@@ -72,6 +75,7 @@ namespace UI {
     }
 
     void dropDown::connect( const std::function<void( u64 )>& p_choiceChangedCallback ) {
+        _callback = p_choiceChangedCallback;
         for( u64 i{ 0 }; i < _popoverButtons.size( ); ++i ) {
             _popoverButtons[ i ]->signal_clicked( ).connect(
                 [ this, i, p_choiceChangedCallback ]( ) {
@@ -116,7 +120,18 @@ namespace UI {
             btn->set_halign( Gtk::Align::FILL );
             btn->set_hexpand( true );
 
+            btn->signal_clicked( ).connect( [ this, i ]( ) {
+                choose( i );
+                _popover.popdown( );
+                if( _callback ) { _callback( i ); }
+            } );
+
             _popoverButtons.push_back( btn );
         }
+
+        _conn.disconnect( );
+        _conn = _dropDown.signal_clicked( ).connect( [ this ]( ) { _popover.popup( ); }, false );
+
+        choose( _currentSelection );
     }
 } // namespace UI

@@ -56,6 +56,17 @@ const std::string EXTRA_CSS
       ".movement-bridge { color: black; background-color: #fcfa79; }\n"   /* 0x3c */
       ".movement-border { color: white; background-color: purple; }\n"    /* 0x3f */
       ".movement-weird { color: white; background-color: black; }\n"      /* anything else */
+      ".encounter-grass { color: black; background-color: #1bf579; }\n"
+      ".encounter-long-grass { color: white; background-color: #037333; }\n"
+      ".encounter-water { color: black; background-color: #4f85db; }\n"
+      ".encounter-old-rod { color: black; background-color: #a587ff; }\n"
+      ".encounter-good-rod { color: black; background-color: #896edb; }\n"
+      ".encounter-super-rod { color: white; background-color: #5f4d99; }\n"
+      ".encounter-headbutt { color: black; background-color: #72dbcf; }\n"
+      ".encounter-rock-smash { color: white; background-color: #5e3b03; }\n"
+      ".encounter-sweet-scent { color: black; background-color: #f2bdf1; }\n"
+      ".encounter-radar { color: black; background-color: #e5fcc5; }\n"
+      ".encounter-swarm { color: black; background-color: #f0cdc5; }\n"
       "";
 
 enum context : u8 {

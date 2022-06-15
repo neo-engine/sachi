@@ -132,6 +132,28 @@ struct model {
             return m_fsrootPath + "/PICS/SPRITES/PLAT/plat";
         }
 
+        inline std::string pkmnSpritePath( bool p_female = false, bool p_shiny = false,
+                                           std::string p_type = "frnt" ) const {
+            auto res = m_fsrootPath + "/PICS/SPRITES/" + p_type;
+            if( p_female ) { res += "f"; }
+            if( p_shiny ) { res += "s"; }
+
+            return res + ".pkmn.sprb";
+        }
+
+        inline std::string pkmnFormePath( u16 p_speciesId, u8 p_forme, bool p_female = false,
+                                          bool        p_shiny = false,
+                                          std::string p_type  = "frnt" ) const {
+            auto res = m_fsrootPath + "/PICS/SPRITES/" + p_type + "/";
+            res += std::to_string( p_speciesId / m_fsInfo.m_fileSplit ) + "/";
+            res += std::to_string( p_speciesId ) + "_" + std::to_string( p_forme );
+
+            if( p_female ) { res += "f"; }
+            if( p_shiny ) { res += "s"; }
+
+            return res + ".raw";
+        }
+
         inline std::string pkmnNamePath( ) const {
             return m_fsrootPath + "/DATA/PKMN_NAME/pkmnname";
         }
@@ -185,43 +207,36 @@ struct model {
     settings m_settings;
     bool     m_good = false;
 
+    bool m_needsRefresh = true;
+
     stringCache m_pkmnNameCache;
 
     inline void invalidateCaches( ) {
+        m_needsRefresh          = true;
         m_pkmnNameCache.m_valid = false;
+    }
+
+    inline u16 maxPkmn( ) const {
+        return m_fsdata.m_fsInfo.m_maxPkmn;
+    }
+
+    inline bool needsRefresh( ) const {
+        return m_needsRefresh;
+    }
+
+    inline void refresh( ) {
+        if( !m_needsRefresh ) { return; }
+
+        pkmnNames( );
+
+        m_needsRefresh = false;
     }
 
     /*
      * @brief: reads the names of all pkmn from the fsroot and stores them in a string
      * cache, which is returned.
      */
-    inline const stringCache& pkmnNames( ) {
-        if( m_pkmnNameCache.m_valid ) { return m_pkmnNameCache; }
-
-        m_pkmnNameCache.m_lastRefresh++;
-
-        m_pkmnNameCache.m_strings.clear( );
-
-        // open pkmn name file
-        auto  path = m_fsdata.pkmnNamePath( ) + "0.strb";
-        FILE* f    = fopen( path.c_str( ), "rb" );
-
-        if( !f ) {
-            m_pkmnNameCache.m_valid = false;
-            return m_pkmnNameCache;
-        }
-
-        char tmp[ PKMN_NAMELENGTH + 10 ];
-        for( u16 i{ 0 }; i < m_fsdata.m_fsInfo.m_maxPkmn; ++i ) {
-            memset( tmp, 0, sizeof( tmp ) );
-            fread( tmp, PKMN_NAMELENGTH, 1, f );
-            m_pkmnNameCache.m_strings.push_back( std::string{ tmp } );
-        }
-
-        m_pkmnNameCache.m_valid = true;
-        fclose( f );
-        return m_pkmnNameCache;
-    }
+    const stringCache& pkmnNames( );
 
     /*
      * @returns: true on error.
@@ -367,6 +382,14 @@ struct model {
         return bank( selectedBank( ) );
     }
 
+    inline const auto& bank( u16 p_bank ) const {
+        return m_fsdata.m_mapBanks.at( p_bank );
+    }
+
+    inline const auto& bank( ) const {
+        return bank( selectedBank( ) );
+    }
+
     inline auto& slice( u16 p_bank, u8 p_mapY, u8 p_mapX ) {
         return bank( p_bank ).m_bank.m_slices[ p_mapY ][ p_mapX ];
     }
@@ -375,11 +398,27 @@ struct model {
         return slice( selectedBank( ), selectedMapY( ), selectedMapX( ) );
     }
 
+    inline const auto& slice( u16 p_bank, u8 p_mapY, u8 p_mapX ) const {
+        return bank( p_bank ).m_bank.m_slices[ p_mapY ][ p_mapX ];
+    }
+
+    inline const auto& slice( ) const {
+        return slice( selectedBank( ), selectedMapY( ), selectedMapX( ) );
+    }
+
     inline auto& mapData( u16 p_bank, u8 p_mapY, u8 p_mapX ) {
         return bank( p_bank ).m_bank.m_mapData[ p_mapY ][ p_mapX ];
     }
 
     inline auto& mapData( ) {
+        return mapData( selectedBank( ), selectedMapY( ), selectedMapX( ) );
+    }
+
+    inline const auto& mapData( u16 p_bank, u8 p_mapY, u8 p_mapX ) const {
+        return bank( p_bank ).m_bank.m_mapData[ p_mapY ][ p_mapX ];
+    }
+
+    inline const auto& mapData( ) const {
         return mapData( selectedBank( ), selectedMapY( ), selectedMapX( ) );
     }
 
@@ -406,6 +445,13 @@ struct model {
     inline status tileStatus( ) const {
         return m_fsdata.m_tileStatus;
     }
+
+    /*
+     * @brief: returns the encounter data of the currently selected slice.
+     */
+    const DATA::mapData::wildPkmnData& encounterData( u8 p_encSlot ) const;
+
+    DATA::mapData::wildPkmnData& encounterData( u8 p_encSlot );
 
     inline void updateSelectedBlock( DATA::mapBlockAtom p_block ) {
         m_settings.m_currentlySelectedBlock = p_block;

@@ -62,6 +62,17 @@ namespace UI {
                 _image.set( _data );
                 return;
             }
+            if( t_type == imageType::IT_SPRITE_PKMN ) {
+                auto btm = DATA::bitmap::fromPkmnSprite( p_path.c_str( ) );
+                if( p_ch && p_cw ) {
+                    btm.crop( p_cx, p_cy, p_cw, p_ch );
+                    _cropx = 96 - p_cw;
+                    _cropy = 96 - p_ch;
+                }
+                _data = btm.pixbuf( );
+                _image.set( _data );
+                return;
+            }
         }
 
         inline u16 getWidth( ) const {

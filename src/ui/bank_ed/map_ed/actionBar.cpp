@@ -17,7 +17,7 @@ namespace UI::MED {
         // | Scale    [ 1 |+|-] | Nav | Neigh map blocks [ 8 |+|-] |
         // | Day Time [Day (2)] |     | Neigh distance   [ 9 |+|-] |
         // +--------------------+-----+----------------------------+
-        auto abScrolledWindow = Gtk::ScrolledWindow( );
+        auto abScrolledWindow = Gtk::ScrolledWindow{ };
         _mapEditorActionBar.set_child( abScrolledWindow );
         _mapEditorActionBar.set_margin_top( MARGIN );
         abScrolledWindow.set_policy( Gtk::PolicyType::AUTOMATIC, Gtk::PolicyType::NEVER );

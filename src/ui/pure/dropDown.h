@@ -20,6 +20,8 @@ namespace UI {
      */
     class dropDown {
       protected:
+        sigc::connection _conn;
+
         std::vector<std::string> _choices;
         u64                      _currentSelection = 0;
 
@@ -32,6 +34,8 @@ namespace UI {
         std::vector<Gtk::Image>                   _popoverBtnSelect;
         Gtk::Popover                              _popover;
 
+        std::function<void( u64 )> _callback;
+
         inline void updateLabel( u64 p_idx ) {
             _selectedText.set_text( _choices[ p_idx ] );
         }
@@ -39,7 +43,9 @@ namespace UI {
       public:
         dropDown( const std::vector<std::string>& p_choices, u64 p_defaultChoice = 0 );
 
-        virtual ~dropDown( ) = default;
+        virtual ~dropDown( ) {
+            _popover.unparent( );
+        }
 
         void connect( const std::function<void( u64 )>& p_choiceChangedCallback );
 
@@ -52,7 +58,7 @@ namespace UI {
         }
 
         inline void choose( u64 p_choice ) {
-            if( p_choice > _choices.size( ) ) { return; }
+            if( p_choice >= _choices.size( ) ) { return; }
             updateLabel( p_choice );
             for( auto& i : _popoverBtnSelect ) { i.hide( ); }
             _currentSelection = p_choice;

@@ -20,15 +20,19 @@ namespace UI {
      * @brief: A widget to select a pkmn species
      */
     class pokeSelector {
+      public:
+        using pkmnDscr = std::pair<u16, u8>;
+
       protected:
         model& _model;
+
+        pkmnDscr _image = { u16( -1 ), u8( -1 ) };
 
         bool _lock = false;
 
         u8 _maxFormes;
 
         Gtk::Box                         _outerBox{ Gtk::Orientation::HORIZONTAL };
-        Gtk::Label                       _formeLabel;
         std::shared_ptr<Gtk::Adjustment> _pkmnIdxA, _pkmnFormeA;
         Gtk::SpinButton                  _pkmnIdx, _pkmnForme;
         std::shared_ptr<pkmnDropDown>    _pkmnChooser;
@@ -36,8 +40,6 @@ namespace UI {
         std::shared_ptr<fsImage<imageType::IT_SPRITE_PKMN>> _pkmnImage;
 
       public:
-        using pkmnDscr = std::pair<u16, u8>;
-
         pokeSelector( model& p_model );
 
         /*
@@ -45,6 +47,7 @@ namespace UI {
          */
         inline void refreshModel( ) {
             if( _pkmnChooser ) { _pkmnChooser->refreshModel( _model ); }
+            if( _pkmnIdxA ) { _pkmnIdxA->set_upper( _model.maxPkmn( ) ); }
         }
 
         void setData( pkmnDscr p_data );
@@ -58,14 +61,21 @@ namespace UI {
 
             _pkmnIdxA->signal_value_changed( ).connect( [ this, p_callback ]( ) {
                 if( _lock ) { return; }
+                auto [ i, unused ] = getData( );
+                setData( { i, 0 } );
                 p_callback( getData( ) );
             } );
             _pkmnFormeA->signal_value_changed( ).connect( [ this, p_callback ]( ) {
                 if( _lock ) { return; }
+                setData( getData( ) );
                 p_callback( getData( ) );
             } );
-
-            // TODO
+            if( _pkmnChooser ) {
+                _pkmnChooser->connect( [ this, p_callback ]( u64 p_newChoice ) {
+                    setData( { p_newChoice, 0 } );
+                    p_callback( getData( ) );
+                } );
+            }
         }
 
         inline operator Gtk::Widget&( ) {

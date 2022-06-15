@@ -4,6 +4,7 @@
 #include "map_ed/actionBar.h"
 #include "map_ed/blockSelector.h"
 #include "map_ed/editableMap.h"
+#include "map_ed/encList.h"
 #include "map_ed/mapSettings.h"
 #include "map_ed/movementSelector.h"
 
@@ -37,6 +38,9 @@ namespace UI {
         _edMap = std::make_shared<MED::editableMap>( p_model, p_root, *this );
         if( _edMap ) { _mapMainBox.append( *_edMap ); }
 
+        _encList = std::make_shared<MED::encList>( p_model, p_root );
+        if( _encList ) { _mapMainBox.append( *_encList ); }
+
         _meta = std::make_shared<MED::mapSettings>( p_model, p_root );
         if( _meta ) { _mapMainBox.append( *_meta ); }
 
@@ -63,6 +67,8 @@ namespace UI {
         if( _actionBar ) { _actionBar->redraw( ); }
         if( _edMap ) { _edMap->redraw( ); }
         if( _meta ) { _meta->redraw( ); }
+
+        if( _encList ) { _encList->redraw( ); }
     }
 
     void mapEditor::setNewMapEditMode( mapDisplayMode p_newMode ) {
@@ -80,6 +86,16 @@ namespace UI {
             if( _edMap ) {
                 if( !_edMap->isVisible( ) ) { _edMap->show( ); }
                 _edMap->setNewMapEditMode( _currentMapDisplayMode );
+            }
+        }
+
+        if( _currentMapDisplayMode != MODE_EDIT_PKMN ) {
+            if( _encList && ( (Gtk::Widget&) *_encList ).is_visible( ) ) {
+                ( (Gtk::Widget&) *_encList ).hide( );
+            }
+        } else {
+            if( _encList && !( (Gtk::Widget&) *_encList ).is_visible( ) ) {
+                ( (Gtk::Widget&) *_encList ).show( );
             }
         }
 

@@ -657,3 +657,43 @@ void model::setTileSet( u8 p_tsIdx, u8 p_newTileSet ) {
         markSelectedBankChanged( );
     }
 }
+
+const DATA::mapData::wildPkmnData& model::encounterData( u8 p_encSlot ) const {
+    return mapData( ).m_pokemon[ p_encSlot ];
+}
+
+DATA::mapData::wildPkmnData& model::encounterData( u8 p_encSlot ) {
+    return mapData( ).m_pokemon[ p_encSlot ];
+}
+
+const model::stringCache& model::pkmnNames( ) {
+    if( m_pkmnNameCache.m_valid ) { return m_pkmnNameCache; }
+
+    m_pkmnNameCache.m_lastRefresh++;
+    m_pkmnNameCache.m_strings.clear( );
+
+    // open pkmn name file
+    auto  path = m_fsdata.pkmnNamePath( ) + ".0.strb";
+    FILE* f    = fopen( path.c_str( ), "rb" );
+
+    if( !f ) {
+        m_pkmnNameCache.m_valid = false;
+        return m_pkmnNameCache;
+    }
+
+    char tmp[ PKMN_NAMELENGTH + 10 ];
+    for( u16 i{ 0 }; i <= maxPkmn( ); ++i ) {
+        memset( tmp, 0, sizeof( tmp ) );
+        fread( tmp, PKMN_NAMELENGTH, 1, f );
+        for( u8 j{ 0 }; j < PKMN_NAMELENGTH; ++j ) {
+            if( u8( tmp[ j ] ) == 0xe9 ) { // e´
+                tmp[ j ] = 'e';
+            }
+        }
+        m_pkmnNameCache.m_strings.push_back( std::string{ tmp } );
+    }
+
+    m_pkmnNameCache.m_valid = true;
+    fclose( f );
+    return m_pkmnNameCache;
+}

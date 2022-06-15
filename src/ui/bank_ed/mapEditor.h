@@ -16,6 +16,7 @@ namespace UI {
         class blockSelector;
         class movementSelector;
         class editableMap;
+        class encList;
         class mapSettings;
     } // namespace MED
 
@@ -50,7 +51,7 @@ namespace UI {
         // left side
         Gtk::Box                          _mapMainBox{ Gtk::Orientation::VERTICAL };
         std::shared_ptr<MED::editableMap> _edMap;
-        // std::shared_ptr<MED::wpokeData> _wpoke;
+        std::shared_ptr<MED::encList>     _encList;
         std::shared_ptr<MED::mapSettings> _meta;
         std::shared_ptr<MED::actionBar>   _actionBar;
 

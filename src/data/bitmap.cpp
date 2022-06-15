@@ -207,6 +207,40 @@ namespace DATA {
         return res;
     }
 
+    bitmap bitmap::fromPkmnSprite( const char* p_path ) {
+        FILE* f;
+        if( p_path[ 0 ] == '@' ) {
+            // sprite bank, need to seek correct position first
+
+            u16  species = 0;
+            char buffer[ 100 ];
+            sscanf( p_path, "@%hu@%90s", &species, buffer );
+            f = fopen( buffer, "rb" );
+            if( f ) {
+                fseek( f, species * ( 16 * sizeof( u16 ) + 96 * 96 / 8 * sizeof( u32 ) ),
+                       SEEK_SET );
+            }
+        } else {
+            f = fopen( p_path, "rb" );
+        }
+
+        auto res = bitmap{ 96, 96 };
+        if( !f ) {
+            std::memset( TEMP, 0, sizeof( TEMP ) );
+            std::memset( TEMP_PAL, 0, sizeof( TEMP_PAL ) );
+        } else {
+            DATA::read( f, TEMP_PAL, sizeof( unsigned short ), 16 );
+            DATA::read( f, TEMP, sizeof( unsigned ), 96 * 96 / 8 );
+            res.addFromSprite( TEMP, TEMP_PAL, 64, 64 );
+            res.addFromSprite( TEMP + 64 * 64 / 8, TEMP_PAL, 32, 64, 64 );
+            res.addFromSprite( TEMP + 96 * 64 / 8, TEMP_PAL, 64, 32, 0, 64 );
+            res.addFromSprite( TEMP + 128 * 64 / 8, TEMP_PAL, 32, 32, 64, 64 );
+
+            fclose( f );
+        }
+        return res;
+    }
+
     void bitmap::crop( u16 p_cx, u16 p_cy, u16 p_cw, u16 p_ch ) {
         auto pixels
             = std::vector<std::vector<pixel>>( p_cw, std::vector<pixel>( p_ch, { 0, 0, 0, 255 } ) );
