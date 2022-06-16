@@ -347,9 +347,7 @@ namespace DATA {
         u8 m_surfBattlePlat1;
         u8 m_surfBattlePlat2;
 
-        u8 m_pokemonDescrCount;
-        u8 m_eventCount;
-        u32 : 16;
+        u32 : 32;
 
         u16 m_locationIds[ 4 ][ 4 ]; // (y, x), 8x8 blocks each
 

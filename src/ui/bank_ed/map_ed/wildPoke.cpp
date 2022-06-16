@@ -69,7 +69,7 @@ namespace UI::MED {
         if( _encType ) { _encBox.append( *_encType ); }
 
         _encTimes = std::make_shared<multiButton>(
-            std::vector<std::string>{ "Dawn", "Day", "Dusk", "Night" },
+            std::vector<std::string>{ "Night", "Dawn", "Day", "Dusk" },
             []( u32 p_os, u8 p_nc ) { return p_os ^= ( 1 << p_nc ); }, 0,
             Gtk::Orientation::VERTICAL );
         if( _encTimes ) {
