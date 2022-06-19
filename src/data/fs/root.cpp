@@ -10,8 +10,9 @@
 #include "util.h"
 
 namespace DATA {
-    const char PKMNDATA_PATH[] = "PKMNDATA/";
-    const char SCRIPT_PATH[]   = "DATA/MAP_SCRIPT/";
+    const char PKMNDATA_PATH[]    = "PKMNDATA/";
+    const char SCRIPT_PATH[]      = "DATA/MAP_SCRIPT/";
+    const char MAPLOCATION_PATH[] = "DATA/MAP_LOCATION/";
 
     const char CRY_PATH[]  = "SOUND/CRIES/";
     const char SFX_PATH[]  = "SOUND/SFX/";

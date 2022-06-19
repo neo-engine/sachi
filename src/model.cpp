@@ -116,6 +116,21 @@ bool model::writeFsInfo( ) {
     return false;
 }
 
+bool model::setCurrentBankOWStatus( u8 p_owStatus ) {
+    if( selectedBank( ) == -1 ) { return false; }
+
+    auto& bnk = bank( );
+
+    if( bnk.getOWStatus( ) != p_owStatus ) { markSelectedBankChanged( ); }
+
+    // check that ow status is also properly recorded in fsdata
+    if( m_fsdata.m_fsInfo.updateOWStatus( selectedBank( ), p_owStatus ) ) {
+        bnk.setOWStatus( p_owStatus );
+        return true;
+    }
+    return false;
+}
+
 void model::addNewMapBank( u16 p_bank, u8 p_sizeY, u8 p_sizeX, u8 p_mapMode, status p_status ) {
     if( m_fsdata.m_mapBanks.count( p_bank ) ) { return; }
 
@@ -554,6 +569,38 @@ bool model::writeMapBank( u16 p_bank ) {
     FILE* f = fopen( path.c_str( ), "wb" );
 
     error = !DATA::writeMapBank( f, &info.m_info, &info.m_bank );
+
+    if( info.m_info.m_isOWMap ) {
+        // write location file
+        auto owpath = fs::path( m_fsdata.mapLocationPath( ) )
+                      / fs::path( std::to_string( p_bank ) + ".loc.data" );
+        fs::create_directories( owpath.parent_path( ) );
+        FILE* owf = fopen( owpath.c_str( ), "wb" );
+
+        size_t scale = DATA::SIZE / DATA::MAP_LOCATION_RES;
+
+        u8 meta[] = { u8( info.getSizeX( ) * scale ), u8( info.getSizeY( ) * scale ) };
+
+        u16* tmploc = new u16[ meta[ 0 ] * meta[ 1 ] ];
+
+        // construct location data
+
+        for( u8 y{ 0 }; y < meta[ 1 ]; ++y ) {
+            for( u8 x{ 0 }; x < meta[ 0 ]; ++x ) {
+                size_t pos = y * meta[ 0 ] + x;
+
+                tmploc[ pos ] = info.m_bank.m_mapData[ y / scale ][ x / scale ]
+                                    .m_locationIds[ y % scale ][ x % scale ];
+            }
+        }
+
+        fwrite( &meta, sizeof( u8 ), 2, owf );
+        fwrite( &info.m_info.m_defaultLocation, sizeof( u16 ), 1, owf );
+        fwrite( tmploc, sizeof( u16 ), meta[ 0 ] * meta[ 1 ], owf );
+
+        delete[] tmploc;
+        fclose( owf );
+    }
 
     if( !info.isCombined( ) ) {
         for( u8 y{ 0 }; y <= info.getSizeY( ); ++y ) {

@@ -40,7 +40,7 @@ struct model {
             std::vector<std::vector<DATA::computedMapSlice>> m_computedBank;
 
             bool              m_loaded = false;
-            DATA::mapBankInfo m_info   = { 0, 0, 1 };
+            DATA::mapBankInfo m_info{ };
             status            m_status;
 
             inline status getStatus( ) const {
@@ -61,6 +61,9 @@ struct model {
             inline u8 getMapMode( ) const {
                 return m_info.m_mapMode;
             }
+            inline u8 getOWStatus( ) const {
+                return m_info.m_isOWMap;
+            }
 
             inline void setStatus( status p_status ) {
                 m_status = p_status;
@@ -79,6 +82,9 @@ struct model {
             }
             inline void setMapMode( u8 p_mode ) {
                 m_info.m_mapMode = p_mode;
+            }
+            inline void setOWStatus( u8 p_owStatus ) {
+                m_info.m_isOWMap = p_owStatus;
             }
         };
 
@@ -106,6 +112,10 @@ struct model {
 
         inline std::string mapPath( ) const {
             return m_fsrootPath + "/MAPS/";
+        }
+
+        inline std::string mapLocationPath( ) const {
+            return m_fsrootPath + "/DATA/MAP_LOCATION/";
         }
 
         inline std::string tilesetPath( ) const {
@@ -210,6 +220,13 @@ struct model {
     bool m_needsRefresh = true;
 
     stringCache m_pkmnNameCache;
+
+    /*
+     * @brief: sets the ow status of the current map and correspondingly adds/removes
+     * the bank from the owbank list
+     * @returns: true on success.
+     */
+    bool setCurrentBankOWStatus( u8 p_owStatus );
 
     inline void invalidateCaches( ) {
         m_needsRefresh          = true;

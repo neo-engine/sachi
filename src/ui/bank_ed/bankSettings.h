@@ -19,6 +19,7 @@ namespace UI {
 
         Gtk::Box                      _mapSettingsBox{ Gtk::Orientation::VERTICAL };
         std::shared_ptr<switchButton> _mapBankSettingsMapModeToggles;
+        std::shared_ptr<switchButton> _mapIsOW;
 
       public:
         bankSettings( model& p_model, root& p_root );

@@ -307,6 +307,8 @@ namespace DATA {
     };
 
     struct fsdataInfo {
+        static constexpr u8 MAX_OW_MAPS = 8;
+
         u16 m_maxPkmn = 0;
         u16 m_maxItem = 0;
 
@@ -316,5 +318,34 @@ namespace DATA {
 
         u8 m_maxNavBG     = 0; // valid subscrn wallpaper 0..m_maxNavBg
         u8 m_defaultNavBG = 0;
+        u8 m_owMapCount   = 1;
+        u8 m_defaultOWMap = 0;
+
+        u8 m_owMaps[ MAX_OW_MAPS ] = { 10 };
+
+        /*
+         * @brief: adds or removes p_bank from m_owMaps, according to p_owStatus.
+         */
+        inline bool updateOWStatus( u8 p_bank, u8 p_owStatus ) {
+            for( u8 i{ 0 }; i < m_owMapCount; ++i ) {
+                if( m_owMaps[ i ] == p_bank ) {
+                    if( !p_owStatus ) {
+                        // delete map from ow maps
+                        for( u8 j{ i }; j < --m_owMapCount; ++j ) {
+                            m_owMaps[ j ] = m_owMaps[ j + 1 ];
+                        }
+                    }
+                    return true;
+                }
+            }
+            if( m_owMapCount + 1 < MAX_OW_MAPS && p_owStatus ) {
+                m_owMaps[ m_owMapCount++ ] = p_bank;
+                return true;
+            } else if( p_owStatus ) {
+                // not enough space to store ow map
+                return false;
+            }
+            return true;
+        }
     };
 } // namespace DATA

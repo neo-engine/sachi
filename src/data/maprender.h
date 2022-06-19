@@ -217,6 +217,33 @@ namespace DATA {
     };
 
     typedef std::pair<u8, position> warpPos;
+    struct flyPos {
+        u8  m_owBank; // position on ow map where this fly pos should appear
+        u8  m_targetBank;
+        u16 m_targetZ : 4;
+        u16 m_owMapX : 6;
+        u16 m_owMapY : 6;
+
+        u16 m_targetX;
+        u16 m_targetY;
+
+        /*
+         * @brief: returns the ow map this flypos shoul appear on
+         */
+        constexpr auto owMap( ) const {
+            return m_owBank;
+        }
+
+        /*
+         * @brief: returns the target position this fly pos should warp to.
+         */
+        constexpr warpPos target( ) const {
+            return { m_targetBank, { m_targetX, m_targetY, u8( m_targetZ ) } };
+        }
+
+        constexpr auto operator<=>( const flyPos& ) const = default;
+    };
+
     enum moveMode {
         // Player modes
         WALK       = 0,
@@ -253,6 +280,7 @@ namespace DATA {
         EVENT_HMOBJECT    = 8, // cut, rock smash, strength
         EVENT_BERRYTREE   = 9,
         EVENT_NPC_MESSAGE = 10,
+        EVENT_FLY_POS     = 11,
     };
     enum eventTrigger : u8 {
         TRIGGER_NONE           = 0,
@@ -419,6 +447,12 @@ namespace DATA {
                 struct {
                     u8 m_treeIdx; // internal id of this berry tree
                 } m_berryTree;
+                struct {
+                    u8 m_bank; // map bank on whose map the fly pos should appear,
+                               // typically 10
+                    u8 m_mapX; // map coordinate where the fly pos should appear on ow map
+                    u8 m_mapY; // map coordinate where the fly pos should appear on ow map
+                } m_flyPos;
             } m_data;
         } m_events[ MAX_EVENTS_PER_SLICE ];
     };
@@ -434,48 +468,25 @@ namespace DATA {
     struct mapBankInfo {
         u8 m_sizeX   = 0;
         u8 m_sizeY   = 0;
-        u8 m_mapMode = 0; // 0: normal maps/data in folder, 1: scattered in subfolders, 2: combined
+        u8 m_mapMode = 2; // 0: normal maps/data in folder, 1: scattered in subfolders, 2: combined
+        u8 m_isOWMap = false; // stores whether the map bank has location data and hence
+                              // should appear in the fsinfo owmap list
+        u16 m_defaultLocation = 3002;
+        u8  m_mapMug          = 0; // preview image shown when switching to this bank (0
+                                   // for none)
         u8 : 8;
-        u32 : 32;
 
-        constexpr mapBankInfo( u8 p_sizeX = 0, u8 p_sizeY = 0, u8 p_mapMode = MAPMODE_DEFAULT )
-            : m_sizeX( p_sizeX ), m_sizeY( p_sizeY ), m_mapMode( p_mapMode ) {
+        constexpr mapBankInfo( u8 p_sizeX = 0, u8 p_sizeY = 0, u8 p_mapMode = MAPMODE_DEFAULT,
+                               bool p_isOWMap = false )
+            : m_sizeX{ p_sizeX }, m_sizeY{ p_sizeY }, m_mapMode{ p_mapMode }, m_isOWMap{
+                                                                                  p_isOWMap } {
         }
     };
 
-    constexpr u8 MAX_MAP_X    = 30;
-    constexpr u8 MAX_MAP_Y    = 20;
-    constexpr u8 MAX_FLY_POS  = 16;
-    constexpr u8 MAX_FLY_INFO = 16;
+    constexpr u8 MAP_LOCATION_RES = 8;
 
-    struct flyPos {
-        u8  m_activationFlag;
-        u8  m_deactivationFlag;
-        u8  m_targetBank;
-        u8  m_targetZ : 4;
-        u8  m_targetFlyBank : 4;
-        u16 m_targetX;
-        u16 m_targetY;
-    };
-
-    struct flyInfo {
-        u8 m_bank;   // map bank this fly map is corresponding to
-        u8 m_picIdx; // picture index
-        u8 m_dimX;
-        u8 m_dimY;
-        u8 m_mapTopX; // on-screen pos of top left corner of the map bank
-        u8 m_mapTopY;
-        u8 m_flyPosCount;
-        u8 : 8;
-
-        u8     m_flyPosIdx[ MAX_MAP_Y ][ MAX_MAP_X ]; // <= 2 fly pos per map
-        u16    m_mapLocations[ 4 * MAX_MAP_Y ][ 4 * MAX_MAP_X ];
-        flyPos m_flyPos[ MAX_FLY_POS ];
-    };
-
-    struct flyInfoBank {
-        flyInfo infos[ MAX_FLY_INFO ];
-    };
+    constexpr u8 MAX_MAP_X = 30;
+    constexpr u8 MAX_MAP_Y = 20;
 
     constexpr u8 TILEMODE_DEFAULT  = 0;
     constexpr u8 TILEMODE_COMBINED = 1;
