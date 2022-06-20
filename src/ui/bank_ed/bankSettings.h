@@ -2,9 +2,11 @@
 #include <memory>
 
 #include <gtkmm/box.h>
+#include <gtkmm/centerbox.h>
 
 #include "../../defines.h"
 #include "../../model.h"
+#include "../pure/dropDown.h"
 #include "../pure/switchButton.h"
 
 namespace UI {
@@ -20,6 +22,10 @@ namespace UI {
         Gtk::Box                      _mapSettingsBox{ Gtk::Orientation::VERTICAL };
         std::shared_ptr<switchButton> _mapBankSettingsMapModeToggles;
         std::shared_ptr<switchButton> _mapIsOW;
+
+        std::shared_ptr<locationDropDown> _bankDefaultLocation;
+
+        Gtk::CenterBox _shbox3;
 
       public:
         bankSettings( model& p_model, root& p_root );

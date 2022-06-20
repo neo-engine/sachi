@@ -64,6 +64,9 @@ struct model {
             inline u8 getOWStatus( ) const {
                 return m_info.m_isOWMap;
             }
+            inline u16 getDefaultLocation( ) const {
+                return m_info.m_defaultLocation;
+            }
 
             inline void setStatus( status p_status ) {
                 m_status = p_status;
@@ -85,6 +88,9 @@ struct model {
             }
             inline void setOWStatus( u8 p_owStatus ) {
                 m_info.m_isOWMap = p_owStatus;
+            }
+            inline void setDefaultLocation( u16 p_location ) {
+                m_info.m_defaultLocation = p_location;
             }
         };
 
@@ -167,6 +173,10 @@ struct model {
         inline std::string pkmnNamePath( ) const {
             return m_fsrootPath + "/DATA/PKMN_NAME/pkmnname";
         }
+
+        inline std::string locationNamePath( ) const {
+            return m_fsrootPath + "/DATA/LOC_NAME/locname";
+        }
     };
     struct settings {
         int m_selectedBank = -1;
@@ -220,6 +230,7 @@ struct model {
     bool m_needsRefresh = true;
 
     stringCache m_pkmnNameCache;
+    stringCache m_locationNameCache;
 
     /*
      * @brief: sets the ow status of the current map and correspondingly adds/removes
@@ -229,8 +240,9 @@ struct model {
     bool setCurrentBankOWStatus( u8 p_owStatus );
 
     inline void invalidateCaches( ) {
-        m_needsRefresh          = true;
-        m_pkmnNameCache.m_valid = false;
+        m_needsRefresh              = true;
+        m_pkmnNameCache.m_valid     = false;
+        m_locationNameCache.m_valid = false;
     }
 
     inline u16 maxPkmn( ) const {
@@ -245,6 +257,7 @@ struct model {
         if( !m_needsRefresh ) { return; }
 
         pkmnNames( );
+        locationNames( );
 
         m_needsRefresh = false;
     }
@@ -254,6 +267,12 @@ struct model {
      * cache, which is returned.
      */
     const stringCache& pkmnNames( );
+
+    /*
+     * @brief: reads the names of all locations from the fsroot and stores them in a string
+     * cache, which is returned.
+     */
+    const stringCache& locationNames( );
 
     /*
      * @returns: true on error.

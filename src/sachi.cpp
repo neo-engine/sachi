@@ -49,8 +49,6 @@ void sachi::onHideWindow( Gtk::Window* p_window ) {
 int main( int p_argc, char* p_argv[] ) {
     auto app = sachi::create( );
 
-    printf( "%lu %lu\n", sizeof( DATA::flyPos ), sizeof( DATA::flyPos ) / sizeof( u32 ) );
-
     app->set_accel_for_action( "load.fsroot", "<Primary>o" );
     app->set_accel_for_action( "load.reloadmap", "<Primary>r" );
     app->set_accel_for_action( "load.reloadmapbank", "<Primary><Shift>r" );

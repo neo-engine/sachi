@@ -13,6 +13,7 @@ namespace UI {
 
         _mapOverviewBox.set_margin( MARGIN );
 
+        /*
         _bankOverviewModeToggles
             = std::make_shared<switchButton>( std::vector<std::string>{ "_Blocks", "Loca_tions" } );
 
@@ -22,6 +23,7 @@ namespace UI {
                 setNewMapOverviewMode( bankOverviewMode( p_newChoice ) );
             } );
         }
+        */
 
         auto boswbox = Gtk::Box( );
         boswbox.set_halign( Gtk::Align::CENTER );

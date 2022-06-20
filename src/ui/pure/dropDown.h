@@ -53,6 +53,11 @@ namespace UI {
             return _dropDown;
         }
 
+        inline std::shared_ptr<Gtk::Widget> pointer( ) {
+            // this is as evil as it gets. I know.
+            return std::shared_ptr<Gtk::Widget>( &_dropDown );
+        }
+
         inline u64 currentChoice( ) const {
             return _currentSelection;
         }
@@ -82,4 +87,18 @@ namespace UI {
          */
         void refreshModel( model& p_model );
     };
+
+    class locationDropDown : public dropDown {
+        u16 _lastRefresh = 0;
+
+      public:
+        locationDropDown( ) : dropDown( { }, 0 ) {
+        }
+
+        /*
+         * @brief: update the available choices
+         */
+        void refreshModel( model& p_model );
+    };
+
 } // namespace UI

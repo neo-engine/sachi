@@ -12,6 +12,7 @@
 
 #include "../../data/maprender.h"
 #include "../../defines.h"
+#include "dropDown.h"
 #include "util.h"
 
 namespace UI {
@@ -29,8 +30,9 @@ namespace UI {
 
         s16 _currentSelectionIndex = -1;
 
-        double _overlayOpacity = .3;
-        bool   _showOverlay    = false;
+        double _overlayOpacity      = .3;
+        double _extraOverlayOpacity = 1.;
+        bool   _showOverlay         = false;
 
         std::vector<std::shared_ptr<Gtk::Overlay>> _images;
         std::vector<std::shared_ptr<Gdk::Pixbuf>>  _imageData;

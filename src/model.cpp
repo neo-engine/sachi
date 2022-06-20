@@ -744,3 +744,35 @@ const model::stringCache& model::pkmnNames( ) {
     fclose( f );
     return m_pkmnNameCache;
 }
+
+const model::stringCache& model::locationNames( ) {
+    if( m_locationNameCache.m_valid ) { return m_locationNameCache; }
+
+    m_locationNameCache.m_lastRefresh++;
+    m_locationNameCache.m_strings.clear( );
+
+    // open pkmn name file
+    auto  path = m_fsdata.locationNamePath( ) + ".0.strb";
+    FILE* f    = fopen( path.c_str( ), "rb" );
+
+    if( !f ) {
+        m_locationNameCache.m_valid = false;
+        return m_locationNameCache;
+    }
+
+    char tmp[ LOCATION_NAMELENGTH + 10 ];
+    for( u16 i{ 0 };; ++i ) {
+        memset( tmp, 0, sizeof( tmp ) );
+        if( !fread( tmp, LOCATION_NAMELENGTH, 1, f ) ) { break; }
+        for( u8 j{ 0 }; j < LOCATION_NAMELENGTH; ++j ) {
+            if( u8( tmp[ j ] ) == 0xe9 ) { // e´
+                tmp[ j ] = 'e';
+            }
+        }
+        m_locationNameCache.m_strings.push_back( std::string{ tmp } );
+    }
+
+    m_locationNameCache.m_valid = true;
+    fclose( f );
+    return m_locationNameCache;
+}

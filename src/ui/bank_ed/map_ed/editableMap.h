@@ -4,9 +4,11 @@
 #include <vector>
 
 #include <gtkmm/grid.h>
+#include <gtkmm/overlay.h>
 #include <gtkmm/scrolledwindow.h>
 
 #include "../../../model.h"
+#include "../../pure/dropDown.h"
 #include "../../pure/mapSlice.h"
 #include "../mapEditor.h"
 #include "blockStamp.h"
@@ -29,7 +31,12 @@ namespace UI::MED {
         std::vector<std::vector<lookupMapSlice>>
             _currentMap; // main map and parts of the adjacent maps
 
+        Gtk::Overlay _centerMapOverlay;
+        Gtk::Grid    _locationGrid;
+
         std::shared_ptr<blockStamp> _blockStamp;
+
+        std::vector<std::vector<std::shared_ptr<locationDropDown>>> _locations;
 
         std::tuple<u16, u16, s8, s8> _dragStart;
         std::tuple<s16, s16>         _dragLast;

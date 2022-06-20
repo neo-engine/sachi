@@ -134,4 +134,65 @@ namespace UI {
 
         choose( _currentSelection );
     }
+
+    void locationDropDown::refreshModel( model& p_model ) {
+        auto sc = p_model.locationNames( );
+        if( sc.m_lastRefresh <= _lastRefresh ) { return; }
+        _lastRefresh = sc.m_lastRefresh;
+        _choices     = sc.m_strings;
+        _popoverBtnSelect.clear( );
+
+        for( auto btn : _popoverButtons ) {
+            if( btn ) { _popoverBox.remove( *btn ); }
+        }
+        _popoverButtons.clear( );
+
+        if( _currentSelection >= _choices.size( ) ) { _currentSelection = _choices.size( ) - 1; }
+
+        for( u64 i{ 0 }; i < _choices.size( ); ++i ) {
+            auto ch = _choices[ i ];
+            if( ch == "" ) { ch = std::string( "(" ) + std::to_string( i ) + ")"; }
+
+            Gtk::Label lb{ ch };
+            Gtk::Box   bb{ Gtk::Orientation::HORIZONTAL };
+            bb.append( lb );
+
+            auto ic = Gtk::Image{ };
+            ic.set_from_icon_name( "object-select-symbolic" );
+            bb.append( ic );
+            _popoverBtnSelect.push_back( std::move( ic ) );
+
+            auto btn = std::make_shared<Gtk::Button>( );
+            if( !btn ) { break; }
+
+            btn->set_child( bb );
+            _popoverBox.append( *btn );
+            _popoverBox.set_hexpand( );
+            btn->get_style_context( )->add_class( "flat" );
+            btn->set_halign( Gtk::Align::FILL );
+            btn->set_hexpand( true );
+
+            btn->signal_clicked( ).connect( [ this, i ]( ) {
+                choose( i );
+                _popover.popdown( );
+                if( _callback ) { _callback( i ); }
+            } );
+
+            _popoverButtons.push_back( btn );
+        }
+
+        _conn.disconnect( );
+        _conn = _dropDown.signal_clicked( ).connect(
+            [ this ]( ) {
+                if( _currentSelection < _popoverButtons.size( )
+                    && _popoverButtons[ _currentSelection ] ) {
+                    _popoverButtons[ _currentSelection ]->grab_focus( );
+                }
+                _popover.popup( );
+            },
+            false );
+
+        choose( _currentSelection );
+    }
+
 } // namespace UI

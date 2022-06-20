@@ -120,6 +120,7 @@ namespace UI {
             } else {
                 mnt->show( );
             }
+
             _overlayMovement.push_back( mnt );
         }
         selectBlock( oldsel );

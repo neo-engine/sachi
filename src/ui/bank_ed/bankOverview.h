@@ -14,7 +14,7 @@ namespace UI {
      */
     class bankOverview {
       public:
-        enum bankOverviewMode : u8 { MODE_VIEW_MAPS, MODE_VIEW_LOCATIONS };
+        enum bankOverviewMode : u8 { MODE_VIEW_MAPS /*, MODE_VIEW_LOCATIONS*/ };
 
       private:
         model& _model;
@@ -22,8 +22,8 @@ namespace UI {
 
         bankOverviewMode _mapOverviewMode;
 
-        Gtk::Box                        _mapOverviewBox{ Gtk::Orientation::VERTICAL };
-        std::shared_ptr<switchButton>   _bankOverviewModeToggles;
+        Gtk::Box _mapOverviewBox{ Gtk::Orientation::VERTICAL };
+        // std::shared_ptr<switchButton>   _bankOverviewModeToggles;
         BOV::mapBankOverview            _mapBankOverview;
         std::shared_ptr<BOV::actionBar> _actionBar;
 

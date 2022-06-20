@@ -16,7 +16,13 @@ namespace UI::MED {
         for( u8 x{ 0 }; x < 3; ++x ) {
             _currentMap.push_back( std::vector<lookupMapSlice>( 3 ) );
             for( u8 y{ 0 }; y < 3; ++y ) {
-                _mapGrid.attach( _currentMap[ x ][ y ], x, y );
+                if( x == 1 && y == 1 ) {
+                    // use overlay for center map to attach sprites, etc
+                    _centerMapOverlay.set_child( _currentMap[ x ][ y ] );
+                    _mapGrid.attach( _centerMapOverlay, x, y );
+                } else {
+                    _mapGrid.attach( _currentMap[ x ][ y ], x, y );
+                }
                 _currentMap[ x ][ y ].connectClick(
                     [ this, x, y ]( mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY ) {
                         onMapClicked( p_button, p_blockX, p_blockY, s8( x ) - 1, s8( y ) - 1,
@@ -44,6 +50,28 @@ namespace UI::MED {
         _mainWindow.set_expand( );
 
         _blockStamp = std::make_shared<blockStamp>( p_model, p_root, p_parent );
+
+        _centerMapOverlay.add_overlay( _locationGrid );
+        _locationGrid.set_column_homogeneous( );
+        _locationGrid.set_expand( );
+        _locationGrid.get_style_context( )->add_class( "linked" );
+
+        size_t scale = DATA::SIZE / DATA::MAP_LOCATION_RES;
+        // init locations
+        for( u8 x{ 0 }; x < scale; ++x ) {
+            _locations.push_back( { } );
+            for( u8 y{ 0 }; y < scale; ++y ) {
+                auto l = std::make_shared<locationDropDown>( );
+                l->connect( [ this, x, y ]( u64 p_newChoice ) {
+                    _model.mapData( ).m_locationIds[ y ][ x ] = p_newChoice;
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redraw( );
+                } );
+                _locations[ x ].push_back( l );
+
+                _locationGrid.attach( *l, x, y );
+            }
+        }
     }
 
     void editableMap::setNewMapEditMode( mapEditor::mapDisplayMode p_newMode ) {
@@ -130,6 +158,24 @@ namespace UI::MED {
                 _currentMap[ x + 1 ][ y + 1 ].draw( );
                 _currentMap[ x + 1 ][ y + 1 ].queue_resize( );
             }
+        }
+
+        if( _currentMapDisplayMode == mapEditor::MODE_EDIT_LOCATIONS ) {
+            _locationGrid.show( );
+            // update model for locations
+            size_t scale = DATA::SIZE / DATA::MAP_LOCATION_RES;
+            for( u8 x{ 0 }; x < scale; ++x ) {
+                for( u8 y{ 0 }; y < scale; ++y ) {
+                    if( !_locations[ x ][ y ] ) { continue; }
+
+                    _locations[ x ][ y ]->refreshModel( _model );
+                    _locations[ x ][ y ]->choose( _model.mapData( ).m_locationIds[ y ][ x ] );
+                    ( (Gtk::Widget&) *_locations[ x ][ y ] ).set_opacity( .65 );
+                    ( (Gtk::Widget&) *_locations[ x ][ y ] ).set_expand( true );
+                }
+            }
+        } else {
+            _locationGrid.hide( );
         }
     }
 
