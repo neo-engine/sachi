@@ -8,17 +8,19 @@ namespace UI {
     dropDown::dropDown( const std::vector<std::string>& p_choices, u64 p_defaultChoice )
         : _choices{ p_choices }, _currentSelection{ p_defaultChoice } {
 
-        Gtk::CenterBox buttonBox{ };
-        buttonBox.set_hexpand( );
-        buttonBox.set_start_widget( _selectedText );
+        Gtk::Box buttonBox{ };
+        buttonBox.set_hexpand( false );
+        buttonBox.append( _selectedText );
+        _selectedText.set_hexpand( true );
         _selectedText.set_ellipsize( Pango::EllipsizeMode::END );
         _selectedText.set_xalign( 0.0 );
 
         auto icon = Gtk::Image{ };
         icon.set_from_icon_name( "pan-down-symbolic" );
-        buttonBox.set_end_widget( icon );
+        buttonBox.append( icon );
 
         _dropDown.set_child( buttonBox );
+        _dropDown.set_hexpand( false );
 
         Gtk::Box bx{ Gtk::Orientation::VERTICAL };
         bx.append( _sw );
