@@ -44,5 +44,9 @@ namespace UI::MED {
     void blockStamp::redraw( ) {
         _blockStampMap.draw( );
         _blockStampMap.setOverlayHidden( _currentMapDisplayMode != mapEditor::MODE_EDIT_MOVEMENT );
+        _blockStampMap.setSpacing( _model.m_settings.m_blockSpacing );
+        _blockStampMap.setScale( _model.m_settings.m_blockScale );
+
+        _blockStampMap.queue_resize( );
     }
 } // namespace UI::MED

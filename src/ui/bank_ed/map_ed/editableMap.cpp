@@ -77,6 +77,7 @@ namespace UI::MED {
     void editableMap::setNewMapEditMode( mapEditor::mapDisplayMode p_newMode ) {
         _currentMapDisplayMode = p_newMode;
         redraw( );
+        if( _blockStamp ) { _blockStamp->setNewMapEditMode( p_newMode ); }
     }
 
     void editableMap::updateSelectedBlock( DATA::mapBlockAtom p_block ) {
@@ -177,6 +178,8 @@ namespace UI::MED {
         } else {
             _locationGrid.hide( );
         }
+
+        if( _blockStamp ) { _blockStamp->redraw( ); }
     }
 
     void editableMap::onMapDragStart( mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY,
@@ -507,11 +510,17 @@ namespace UI::MED {
                                 if( bx + x < DATA::SIZE && by + y < DATA::SIZE ) {
                                     mp.m_data.m_blocks[ by + y ][ bx + x ]
                                         = _blockStamp->at( x, y );
+                                    _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlock(
+                                        _blockStamp->at( x, y ), bx + x, by + y );
+                                    _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlockMovement(
+                                        _blockStamp->at( x, y ).m_movedata, bx + x, by + y );
                                 }
                             }
                         }
                     } else {
                         block.m_blockidx = _model.m_settings.m_currentlySelectedBlock.m_blockidx;
+                        _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlock( block, p_blockX,
+                                                                             p_blockY );
                     }
                 } else if( _currentMapDisplayMode == mapEditor::MODE_EDIT_MOVEMENT ) {
                     if( _blockStamp && _blockStamp->isValid( ) ) {
@@ -522,14 +531,19 @@ namespace UI::MED {
                                 if( bx + x < DATA::SIZE && by + y < DATA::SIZE ) {
                                     mp.m_data.m_blocks[ by + y ][ bx + x ].m_movedata
                                         = _blockStamp->at( x, y ).m_movedata;
+                                    _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlockMovement(
+                                        _blockStamp->at( x, y ).m_movedata, bx + x, by + y );
                                 }
                             }
                         }
                     } else {
                         block.m_movedata = _model.m_settings.m_currentlySelectedBlock.m_movedata;
+                        _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlockMovement(
+                            block.m_movedata, p_blockX, p_blockY );
                     }
                 }
                 _model.markSelectedBankChanged( );
+                _rootWindow.redrawPanel( );
             } else {
                 _model.updateSelectedBlock( block );
             }
@@ -558,12 +572,15 @@ namespace UI::MED {
                         }
                         mp.m_data.m_blocks[ cy ][ cx ].m_blockidx
                             = _model.m_settings.m_currentlySelectedBlock.m_blockidx;
+                        _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlock( block, cx, cy );
                     } else if( _currentMapDisplayMode == mapEditor::MODE_EDIT_MOVEMENT ) {
                         if( mp.m_data.m_blocks[ cy ][ cx ].m_movedata != oldb.m_movedata ) {
                             continue;
                         }
                         mp.m_data.m_blocks[ cy ][ cx ].m_movedata
                             = _model.m_settings.m_currentlySelectedBlock.m_movedata;
+                        _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlockMovement(
+                            block.m_movedata, cx, cy );
                     }
 
                     for( s8 i{ -1 }; i <= 1; ++i ) {
@@ -577,13 +594,13 @@ namespace UI::MED {
                     }
                 }
                 _model.markSelectedBankChanged( );
+                _rootWindow.redrawPanel( );
             } else {
                 _model.updateSelectedBlock( block );
             }
             break;
         default: break;
         }
-        _rootWindow.redraw( );
     }
 
 } // namespace UI::MED

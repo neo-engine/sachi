@@ -54,6 +54,11 @@ namespace UI {
 
         void redraw( );
 
+        /*
+         * @brief: redraws the side panel.
+         */
+        void redrawPanel( );
+
         void initActions( );
         void initEvents( );
 

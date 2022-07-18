@@ -20,7 +20,7 @@ namespace UI {
             _model.readMapSlice( _model.selectedBank( ), _model.selectedMapX( ),
                                      _model.selectedMapY( ) );
             redraw( );
-            } );
+        } );
         _loadReloadmapbankAction = _loadActions->add_action( "reloadmapbank", [ & ]( ) {
             _model.checkOrLoadBank( _model.selectedBank( ), true );
             redraw( );
@@ -55,12 +55,12 @@ namespace UI {
                 case Gtk::ResponseType::CANCEL: break;
                 }
                 delete dialog;
-                } );
+            } );
 
             dialog->add_button( "_Cancel", Gtk::ResponseType::CANCEL );
             dialog->add_button( "_Select", Gtk::ResponseType::OK );
             dialog->show( );
-            } );
+        } );
 
         _saveFsrootAction
             = _saveActions->add_action( "fsroot", [ & ]( ) { this->onFsRootSaveClick( ); } );
@@ -68,11 +68,11 @@ namespace UI {
             _model.writeMapSlice( _model.selectedBank( ), _model.selectedMapX( ),
                                         _model.selectedMapY( ) );
             redraw( );
-              } );
+        } );
         _saveMapbankAction   = _saveActions->add_action( "mapbank", [ & ]( ) {
             _model.writeMapBank( _model.selectedBank( ) );
             redraw( );
-          } );
+        } );
         _saveExportmapAction = _saveActions->add_action( "exportmap", [ & ]( ) {
             auto dialog    = new Gtk::FileChooserDialog( "Save the current map",
                                                          Gtk::FileChooser::Action::SAVE, true );
@@ -245,13 +245,23 @@ namespace UI {
 
         if( _headerBar ) { _headerBar->switchContext( p_context ); }
         if( _sideBar ) { _sideBar->switchContext( p_context ); }
+
+        redraw( );
     }
 
     void root::redraw( ) {
         if( _headerBar ) { _headerBar->redraw( ); }
+        redrawPanel( );
+        if( _context == CONTEXT_MAP_EDITOR ) {
+            if( _bankEditor ) { _bankEditor->redraw( ); }
+        }
+        if( _context == CONTEXT_TILE_EDITOR ) {
+            if( _tileSetEditor ) { _tileSetEditor->redraw( ); }
+        }
+    }
+
+    void root::redrawPanel( ) {
         if( _sideBar ) { _sideBar->redraw( ); }
-        if( _bankEditor ) { _bankEditor->redraw( ); }
-        if( _tileSetEditor ) { _tileSetEditor->redraw( ); }
     }
 
     void root::loadMapBank( u16 p_bank, bool p_redraw ) {

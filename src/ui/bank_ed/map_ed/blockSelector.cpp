@@ -133,6 +133,14 @@ namespace UI::MED {
     void blockSelector::onTSClicked( mapSlice::clickType, u16 p_blockX, u16 p_blockY, u8 p_ts ) {
         u16 block = p_blockY * _model.m_settings.m_blockSetWidth + p_blockX;
         _model.updateSelectedBlock( { u16( block + p_ts * DATA::MAX_BLOCKS_PER_TILE_SET ), 0 } );
-        _rootWindow.redraw( );
+        if( _model.m_settings.m_currentlySelectedBlock.m_blockidx
+            < DATA::MAX_BLOCKS_PER_TILE_SET ) {
+            _ts1widget.selectBlock( _model.m_settings.m_currentlySelectedBlock.m_blockidx );
+            _ts2widget.selectBlock( -1 );
+        } else {
+            _ts1widget.selectBlock( -1 );
+            _ts2widget.selectBlock( _model.m_settings.m_currentlySelectedBlock.m_blockidx
+                                    - DATA::MAX_BLOCKS_PER_TILE_SET );
+        }
     }
 } // namespace UI::MED

@@ -83,6 +83,11 @@ namespace UI {
                 block::classForMovement( movement ) );
         }
         _overlayMovement[ p_blockIdx ]->set_opacity( _overlayOpacity );
+        if( _showOverlay ) {
+            _overlayMovement[ p_blockIdx ]->show( );
+        } else {
+            _overlayMovement[ p_blockIdx ]->hide( );
+        }
 
         _images[ p_blockIdx ]->add_overlay( *_overlayMovement[ p_blockIdx ] );
     }
