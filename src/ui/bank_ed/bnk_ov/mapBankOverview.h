@@ -16,7 +16,8 @@ namespace UI::BOV {
     class mapBankOverview : public Gtk::Widget {
       public:
         enum clickType {
-            LEFT_DOUBLE = GDK_BUTTON_PRIMARY,
+            LEFT_DOUBLE   = GDK_BUTTON_PRIMARY,
+            MIDDLE_DOUBLE = GDK_BUTTON_MIDDLE,
         };
 
       private:

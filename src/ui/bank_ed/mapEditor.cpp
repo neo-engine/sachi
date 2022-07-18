@@ -5,6 +5,7 @@
 #include "map_ed/blockSelector.h"
 #include "map_ed/editableMap.h"
 #include "map_ed/encList.h"
+#include "map_ed/eventSelector.h"
 #include "map_ed/mapSettings.h"
 #include "map_ed/movementSelector.h"
 
@@ -56,6 +57,9 @@ namespace UI {
         _mvmtPicker = std::make_shared<MED::movementSelector>( p_model, p_root );
         if( _mvmtPicker ) { _sideBox.append( *_mvmtPicker ); }
 
+        _evtPicker = std::make_shared<MED::eventSelector>( p_model, p_root );
+        if( _evtPicker ) { _sideBox.append( *_evtPicker ); }
+
         setNewMapEditMode( MODE_EDIT_TILES );
     }
 
@@ -64,6 +68,7 @@ namespace UI {
 
         if( _blockPicker ) { _blockPicker->redraw( ); }
         if( _mvmtPicker ) { _mvmtPicker->redraw( ); }
+        if( _evtPicker ) { _evtPicker->redraw( ); }
         if( _actionBar ) { _actionBar->redraw( ); }
         if( _edMap ) { _edMap->redraw( ); }
         if( _meta ) { _meta->redraw( ); }
@@ -109,6 +114,12 @@ namespace UI {
             if( _mvmtPicker && _mvmtPicker->isVisible( ) ) { _mvmtPicker->hide( ); }
         } else {
             if( _mvmtPicker && !_mvmtPicker->isVisible( ) ) { _mvmtPicker->show( ); }
+        }
+
+        if( _currentMapDisplayMode != MODE_EDIT_EVENTS ) {
+            if( _evtPicker && _evtPicker->isVisible( ) ) { _evtPicker->hide( ); }
+        } else {
+            if( _evtPicker && !_evtPicker->isVisible( ) ) { _evtPicker->show( ); }
         }
 
         if( _currentMapDisplayMode != MODE_EDIT_DATA ) {

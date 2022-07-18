@@ -197,6 +197,8 @@ struct model {
         u8   m_bankOverviewDayTime = 0;
         bool m_overviewNeedsRedraw = false;
 
+        u8 m_selectedEvent = 0;
+
         DATA::mapBlockAtom m_currentlySelectedBlock = DATA::mapBlockAtom( );
 
         std::string m_windowTitle, m_mainTitle, m_subTitle;
@@ -368,6 +370,14 @@ struct model {
      */
     bool checkOrLoadBank( int p_bank, bool p_forceRead );
 
+    inline auto selectedMapEvent( ) const {
+        return m_settings.m_selectedEvent;
+    }
+
+    inline void selectEvent( u8 p_event ) {
+        m_settings.m_selectedEvent = p_event;
+    }
+
     inline auto selectedMapX( ) const {
         return m_settings.m_selectedMapX;
     }
@@ -426,6 +436,22 @@ struct model {
         return bank( selectedBank( ) );
     }
 
+    inline auto& computedSlice( u16 p_bank, u8 p_mapY, u8 p_mapX ) {
+        return bank( p_bank ).m_computedBank[ p_mapY ][ p_mapX ];
+    }
+
+    inline auto& computedSlice( ) {
+        return computedSlice( selectedBank( ), selectedMapY( ), selectedMapX( ) );
+    }
+
+    inline const auto& computedSlice( u16 p_bank, u8 p_mapY, u8 p_mapX ) const {
+        return bank( p_bank ).m_computedBank[ p_mapY ][ p_mapX ];
+    }
+
+    inline const auto& computedSlice( ) const {
+        return computedSlice( selectedBank( ), selectedMapY( ), selectedMapX( ) );
+    }
+
     inline auto& slice( u16 p_bank, u8 p_mapY, u8 p_mapX ) {
         return bank( p_bank ).m_bank.m_slices[ p_mapY ][ p_mapX ];
     }
@@ -456,6 +482,28 @@ struct model {
 
     inline const auto& mapData( ) const {
         return mapData( selectedBank( ), selectedMapY( ), selectedMapX( ) );
+    }
+
+    inline auto& mapEvent( ) {
+        return mapData( ).m_events[ selectedMapEvent( ) ];
+    }
+
+    inline const auto& mapEvent( ) const {
+        return mapData( ).m_events[ selectedMapEvent( ) ];
+    }
+
+    inline DATA::warpPos mapEventPosition( ) const {
+        auto evt = mapEvent( );
+        return { (u8) selectedBank( ),
+                 DATA::position::fromLocal( selectedMapX( ), evt.m_posX, selectedMapY( ),
+                                            evt.m_posY, evt.m_posZ ) };
+    }
+
+    inline void copySelectedMapTo( u16 p_mapY, u16 p_mapX ) {
+        markSelectedBankChanged( );
+        slice( selectedBank( ), p_mapY, p_mapX )         = slice( );
+        computedSlice( selectedBank( ), p_mapY, p_mapX ) = computedSlice( );
+        mapData( selectedBank( ), p_mapY, p_mapX )       = mapData( );
     }
 
     /*

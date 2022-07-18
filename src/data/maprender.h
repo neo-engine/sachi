@@ -15,6 +15,9 @@ namespace DATA {
     constexpr u16 BLOCK_LAYERS = 2;
     constexpr u16 TILE_SIZE    = BLOCK_SIZE / 2;
 
+    constexpr u16 MAX_FLAG = 255;
+    constexpr u16 MAX_VARS = 255;
+
     constexpr u16 SIZE          = 32;
     constexpr s16 dir[ 4 ][ 2 ] = { { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 } };
 
@@ -208,6 +211,18 @@ namespace DATA {
         u8  m_posZ;
 
         constexpr auto operator<=>( const position& ) const = default;
+
+        static inline position fromLocal( u8 p_mapX, u8 p_localX, u8 p_mapY, u8 p_localY, u8 p_z ) {
+            return { (u16) ( p_mapX * SIZE + p_localX ), (u16) ( p_mapY * SIZE + p_localY ),
+                     (u8) p_z };
+        }
+
+        constexpr u8 localX( ) const {
+            return m_posX % SIZE;
+        }
+        constexpr u8 localY( ) const {
+            return m_posY % SIZE;
+        }
     };
     enum direction : u8 { UP, RIGHT, DOWN, LEFT };
 
@@ -281,7 +296,11 @@ namespace DATA {
         EVENT_BERRYTREE   = 9,
         EVENT_NPC_MESSAGE = 10,
         EVENT_FLY_POS     = 11,
-    };
+    }; // namespace DATA
+    const std::vector<std::string> EVENT_TYPE_NAMES{
+        "No Event", "Message", "Item",      "Trainer",    "OW PKMN",     "NPC",
+        "Warp",     "Generic", "HM Object", "Berry Tree", "NPC Message", "Fly Target" };
+
     enum eventTrigger : u8 {
         TRIGGER_NONE           = 0,
         TRIGGER_STEP_ON        = ( 1 << 0 ),
@@ -292,6 +311,9 @@ namespace DATA {
         TRIGGER_INTERACT_RIGHT = ( 1 << 4 ),
         TRIGGER_ON_MAP_ENTER   = ( 1 << 5 ),
     };
+    const std::vector<std::string> EVENT_TRIGGER_NAMES{
+        "On Step-on",        "On Interaction Down",  "On Interaction Left",
+        "On Interaction Up", "On Interaction Right", "On Map Enter" };
 
     enum wildPkmnType : u8 {
         GRASS,

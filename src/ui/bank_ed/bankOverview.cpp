@@ -37,10 +37,22 @@ namespace UI {
         boswbox.append( _mapBankOverview );
 
         _mapBankOverview.connectClick(
-            [ this ]( BOV::mapBankOverview::clickType, u16 p_mapX, u16 p_mapY ) {
-                _rootWindow.onUnloadMap( _model.selectedBank( ), _model.selectedMapY( ),
-                                         _model.selectedMapX( ) );
-                _rootWindow.loadMap( _model.selectedBank( ), p_mapY, p_mapX );
+            [ this ]( BOV::mapBankOverview::clickType p_ct, u16 p_mapX, u16 p_mapY ) {
+                switch( p_ct ) {
+                case BOV::mapBankOverview::LEFT_DOUBLE: {
+                    // load map
+                    _rootWindow.onUnloadMap( _model.selectedBank( ), _model.selectedMapY( ),
+                                             _model.selectedMapX( ) );
+                    _rootWindow.loadMap( _model.selectedBank( ), p_mapY, p_mapX );
+                    break;
+                }
+                case BOV::mapBankOverview::MIDDLE_DOUBLE: {
+                    // copy selected map to position
+                    _model.copySelectedMapTo( p_mapY, p_mapX );
+                    _mapBankOverview.replaceMap( _model.computedSlice( ), p_mapY, p_mapX );
+                    break;
+                }
+                }
             } );
 
         _mapOverviewBox.append( bankOverviewSW );

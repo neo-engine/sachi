@@ -15,6 +15,7 @@ namespace UI {
         class actionBar;
         class blockSelector;
         class movementSelector;
+        class eventSelector;
         class editableMap;
         class encList;
         class mapSettings;
@@ -60,8 +61,7 @@ namespace UI {
 
         std::shared_ptr<MED::blockSelector>    _blockPicker;
         std::shared_ptr<MED::movementSelector> _mvmtPicker;
-        // std::shared_ptr<MED::evtPicker> _evtPicker;
-        // std::shared_ptr<MED::locPicker> _locPicker;
+        std::shared_ptr<MED::eventSelector>    _evtPicker;
 
       public:
         mapEditor( model& p_model, root& p_root );
