@@ -135,4 +135,8 @@ namespace UI {
         if( _blockPicker ) { return _blockPicker->blockSetLookup( p_blockIdx ); }
         return nullptr;
     }
+    void mapEditor::updateSelectedBlock( ) {
+        if( _blockPicker && _blockPicker->isVisible( ) ) { _blockPicker->updateSelection( ); }
+        if( _mvmtPicker && _mvmtPicker->isVisible( ) ) { _mvmtPicker->updateSelection( ); }
+    }
 } // namespace UI

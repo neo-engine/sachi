@@ -43,6 +43,8 @@ namespace UI::MED {
 
         void redraw( );
 
+        void updateSelection( );
+
         inline void show( ) {
             _blockSetFrame.show( );
         }

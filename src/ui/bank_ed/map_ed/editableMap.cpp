@@ -81,7 +81,8 @@ namespace UI::MED {
     }
 
     void editableMap::updateSelectedBlock( DATA::mapBlockAtom p_block ) {
-        _model.m_settings.m_currentlySelectedBlock = p_block;
+        _model.updateSelectedBlock( p_block );
+        _mapEditor.updateSelectedBlock( );
     }
 
     void editableMap::redraw( ) {
@@ -557,13 +558,13 @@ namespace UI::MED {
                 _model.markSelectedBankChanged( );
                 _rootWindow.redrawPanel( );
             } else {
-                _model.updateSelectedBlock( block );
+                updateSelectedBlock( block );
             }
             break;
         case mapSlice::clickType::RIGHT:
             if( _currentMapDisplayMode == mapEditor::MODE_EDIT_TILES
                 || _currentMapDisplayMode == mapEditor::MODE_EDIT_MOVEMENT ) {
-                _model.updateSelectedBlock( block );
+                updateSelectedBlock( block );
             }
             break;
         case mapSlice::clickType::MIDDLE:
@@ -608,7 +609,7 @@ namespace UI::MED {
                 _model.markSelectedBankChanged( );
                 _rootWindow.redrawPanel( );
             } else {
-                _model.updateSelectedBlock( block );
+                updateSelectedBlock( block );
             }
             break;
         default: break;

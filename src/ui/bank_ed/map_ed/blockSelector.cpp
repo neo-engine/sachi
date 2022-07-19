@@ -79,6 +79,18 @@ namespace UI::MED {
             } );
     }
 
+    void blockSelector::updateSelection( ) {
+        if( _model.m_settings.m_currentlySelectedBlock.m_blockidx
+            < DATA::MAX_BLOCKS_PER_TILE_SET ) {
+            _ts1widget.selectBlock( _model.m_settings.m_currentlySelectedBlock.m_blockidx );
+            _ts2widget.selectBlock( -1 );
+        } else {
+            _ts1widget.selectBlock( -1 );
+            _ts2widget.selectBlock( _model.m_settings.m_currentlySelectedBlock.m_blockidx
+                                    - DATA::MAX_BLOCKS_PER_TILE_SET );
+        }
+    }
+
     void blockSelector::redraw( ) {
         auto sc = _model.slice( );
 
@@ -119,15 +131,7 @@ namespace UI::MED {
 
         _ts1widget.draw( );
         _ts2widget.draw( );
-        if( _model.m_settings.m_currentlySelectedBlock.m_blockidx
-            < DATA::MAX_BLOCKS_PER_TILE_SET ) {
-            _ts1widget.selectBlock( _model.m_settings.m_currentlySelectedBlock.m_blockidx );
-            _ts2widget.selectBlock( -1 );
-        } else {
-            _ts1widget.selectBlock( -1 );
-            _ts2widget.selectBlock( _model.m_settings.m_currentlySelectedBlock.m_blockidx
-                                    - DATA::MAX_BLOCKS_PER_TILE_SET );
-        }
+        updateSelection( );
     }
 
     void blockSelector::onTSClicked( mapSlice::clickType, u16 p_blockX, u16 p_blockY, u8 p_ts ) {

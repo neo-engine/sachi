@@ -81,5 +81,10 @@ namespace UI {
          * @brief: Looks up the computed image data of the block sets.
          */
         std::shared_ptr<Gdk::Pixbuf> blockSetLookup( u16 p_blockIdx );
+
+        /*
+         * @brief: Updates the block selection of the block / movement selector widgets.
+         */
+        void updateSelectedBlock( );
     };
 } // namespace UI

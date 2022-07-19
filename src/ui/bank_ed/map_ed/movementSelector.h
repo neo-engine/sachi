@@ -36,6 +36,8 @@ namespace UI::MED {
             _movementFrame.show( );
         }
 
+        void updateSelection( );
+
         inline bool isVisible( ) {
             return _movementFrame.is_visible( );
         }

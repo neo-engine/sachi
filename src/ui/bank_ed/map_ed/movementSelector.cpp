@@ -30,11 +30,7 @@ namespace UI::MED {
         _movementFrame.set_child( meScrolledWindow );
     }
 
-    void movementSelector::redraw( ) {
-        _movementWidget.setScale(
-            _model.m_settings.m_blockScale > 1 ? _model.m_settings.m_blockScale : 2 );
-        _movementWidget.setSpacing( _model.m_settings.m_blockSpacing );
-        _movementWidget.queue_resize( );
+    void movementSelector::updateSelection( ) {
 
         for( u8 i = 0; i < DATA::MAX_MOVEMENTS; ++i ) {
             if( DATA::mapBlockAtom::MOVEMENT_ORDER[ i ]
@@ -43,5 +39,14 @@ namespace UI::MED {
                 break;
             }
         }
+    }
+
+    void movementSelector::redraw( ) {
+        _movementWidget.setScale(
+            _model.m_settings.m_blockScale > 1 ? _model.m_settings.m_blockScale : 2 );
+        _movementWidget.setSpacing( _model.m_settings.m_blockSpacing );
+        _movementWidget.queue_resize( );
+
+        updateSelection( );
     }
 } // namespace UI::MED
