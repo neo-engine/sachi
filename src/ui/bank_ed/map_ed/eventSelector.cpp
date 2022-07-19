@@ -1,6 +1,8 @@
 #include <gtkmm/grid.h>
+#include <gtkmm/scrolledwindow.h>
 #include <gtkmm/separator.h>
 
+#include "../../pure/util.h"
 #include "../../root.h"
 #include "eventSelector.h"
 
@@ -15,7 +17,10 @@ namespace UI::MED {
         _mainFrame = Gtk::Frame{ "Event Data" };
 
         Gtk::Box mainBox{ Gtk::Orientation::VERTICAL };
-        _mainFrame.set_child( mainBox );
+        auto     swindow = Gtk::ScrolledWindow{ };
+        swindow.set_child( mainBox );
+        swindow.set_policy( Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC );
+        _mainFrame.set_child( swindow );
         _mainFrame.set_margin_start( MARGIN );
         _mainFrame.set_label_align( Gtk::Align::CENTER );
 
@@ -40,6 +45,13 @@ namespace UI::MED {
         if( _eventType ) {
             idxBox.append( *_eventType );
             ( (Gtk::Widget&) ( *_eventType ) ).set_hexpand( true );
+
+            _eventType->connect( [ this ]( u64 p_newChoice ) {
+                if( _disableRedraw ) { return; }
+                _model.mapEvent( ).m_type = p_newChoice;
+                _model.markSelectedBankChanged( );
+                _rootWindow.redraw( );
+            } );
         }
         idxBox.set_hexpand( false );
 
@@ -56,6 +68,7 @@ namespace UI::MED {
         if( _eventPosition ) {
             epos.set_child( *_eventPosition );
             _eventPosition->connect( [ this ]( ) {
+                if( _disableRedraw ) { return; }
                 auto& evt  = _model.mapEvent( );
                 auto  pos  = _eventPosition->getPosition( ).second;
                 evt.m_posX = pos.localX( );
@@ -94,24 +107,232 @@ namespace UI::MED {
             DATA::EVENT_TRIGGER_NAMES,
             []( u32 p_state, u8 p_choice ) { return p_state ^ p_choice; }, 0,
             Gtk::Orientation::VERTICAL );
-        if( _eventTrigger ) { g1.attach( *_eventTrigger, 0, 2, 2 ); }
+        if( _eventTrigger ) {
+            g1.attach( *_eventTrigger, 0, 2, 2 );
+            _eventTrigger->connect( [ this ]( u32 p_newChoice ) {
+                if( _disableRedraw ) { return; }
+                auto& evt     = _model.mapEvent( );
+                evt.m_trigger = p_newChoice;
+                _model.markSelectedBankChanged( );
+                _rootWindow.redraw( );
+            } );
+        }
 
         g1.set_hexpand( false );
 
         // event type specific widgets
+        {
+            Gtk::Frame frame{ "No Event" };
+            frame.set_margin_top( MARGIN );
+            frame.set_label_align( Gtk::Align::CENTER );
+            frame.hide( );
+            _detailFrames.push_back( std::move( frame ) );
+        }
+
+        // message
+        // message type, message id
+        // message preview
+        {
+            Gtk::Frame frame{ "Message Data" };
+            frame.set_margin_top( MARGIN );
+            frame.set_label_align( Gtk::Align::CENTER );
+            _generalData.append( frame );
+            _detailFrames.push_back( std::move( frame ) );
+        }
+
+        // item
+        // item type, item id
+        // item name, sprite
+        {
+            Gtk::Frame frame{ "Item Data" };
+            frame.set_margin_top( MARGIN );
+            frame.set_label_align( Gtk::Align::CENTER );
+            _generalData.append( frame );
+            _detailFrames.push_back( std::move( frame ) );
+        }
+
+        // trainer
+        {
+            Gtk::Frame frame{ "Trainer Data" };
+            frame.set_margin_top( MARGIN );
+            frame.set_label_align( Gtk::Align::CENTER );
+            _generalData.append( frame );
+            _detailFrames.push_back( std::move( frame ) );
+        }
+
+        // OW pkmn
+        {
+            Gtk::Frame frame{ "Pkmn Data" };
+            frame.set_margin_top( MARGIN );
+            frame.set_label_align( Gtk::Align::CENTER );
+            _generalData.append( frame );
+            _detailFrames.push_back( std::move( frame ) );
+        }
+
+        // NPC
+        {
+            Gtk::Frame frame{ "NPC Data" };
+            frame.set_margin_top( MARGIN );
+            frame.set_label_align( Gtk::Align::CENTER );
+            _generalData.append( frame );
+            _detailFrames.push_back( std::move( frame ) );
+        }
+
+        // warp
+        // warp type, target bank, target mx, my, lx, ly, z
+        // "go to" button
+        {
+            Gtk::Frame frame{ "Warp Data" };
+            frame.set_margin_top( MARGIN );
+            frame.set_label_align( Gtk::Align::CENTER );
+            _generalData.append( frame );
+
+            Gtk::Box fbox{ Gtk::Orientation::VERTICAL };
+            fbox.set_margin( MARGIN );
+            frame.set_child( fbox );
+
+            _warpType = std::make_shared<dropDown>( DATA::WARP_TYPE_NAMES );
+            if( _warpType ) {
+                fbox.append( *_warpType );
+                ( (Gtk::Widget&) ( *_warpType ) ).set_hexpand( true );
+
+                _warpType->connect( [ this ]( u64 p_newChoice ) {
+                    if( _disableRedraw ) { return; }
+                    _model.mapEvent( ).m_data.m_warp.m_warpType = p_newChoice;
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redraw( );
+                } );
+            }
+            fbox.set_hexpand( false );
+
+            Gtk::Frame wpos{ "Target" };
+            wpos.set_margin_top( MARGIN );
+            wpos.set_label_align( Gtk::Align::CENTER );
+            fbox.append( wpos );
+
+            _warpTarget = std::make_shared<mapPosition>( true );
+            if( _warpTarget ) {
+                wpos.set_child( *_warpTarget );
+                _warpTarget->connect( [ this ]( ) {
+                    if( _disableRedraw ) { return; }
+                    auto& evt                = _model.mapEvent( );
+                    auto  pos                = _warpTarget->getPosition( ).second;
+                    evt.m_data.m_warp.m_bank = _warpTarget->getPosition( ).first;
+                    evt.m_data.m_warp.m_mapX = pos.mapX( );
+                    evt.m_data.m_warp.m_mapY = pos.mapY( );
+
+                    evt.m_data.m_warp.m_posX = pos.localX( );
+                    evt.m_data.m_warp.m_posY = pos.localY( );
+                    evt.m_data.m_warp.m_posZ = pos.m_posZ;
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redraw( );
+                } );
+            }
+            _warpJumpTo = createButton( "", "_Follow Warp", [ this ]( ) {
+                if( _warpTarget ) {
+                    _rootWindow.loadMap( _warpTarget->getPosition( ).first,
+                                         _warpTarget->getPosition( ).second.mapY( ),
+                                         _warpTarget->getPosition( ).second.mapX( ) );
+                }
+            } );
+            if( _warpJumpTo ) {
+                _warpJumpTo->set_margin_top( MARGIN );
+                _warpJumpTo->set_vexpand( false );
+                _warpJumpTo->set_hexpand( false );
+            }
+            fbox.append( *_warpJumpTo );
+
+            _detailFrames.push_back( std::move( frame ) );
+        }
+
+        // generic
+        // script id, script type
+        {
+            Gtk::Frame frame{ "Script Data" };
+            frame.set_margin_top( MARGIN );
+            frame.set_label_align( Gtk::Align::CENTER );
+            _generalData.append( frame );
+            _detailFrames.push_back( std::move( frame ) );
+        }
+
+        // hm object
+        // type
+        // preview image
+        {
+            Gtk::Frame frame{ "HM Object Data" };
+            frame.set_margin_top( MARGIN );
+            frame.set_label_align( Gtk::Align::CENTER );
+            _generalData.append( frame );
+            _detailFrames.push_back( std::move( frame ) );
+        }
+
+        // berry tree
+        // tree idx
+        // (default berry?)
+        {
+            Gtk::Frame frame{ "Berry Tree Data" };
+            frame.set_margin_top( MARGIN );
+            frame.set_label_align( Gtk::Align::CENTER );
+            _generalData.append( frame );
+            _detailFrames.push_back( std::move( frame ) );
+        }
+
+        // NPC Message
+        {
+            Gtk::Frame frame{ "NPC/Message Data" };
+            frame.set_margin_top( MARGIN );
+            frame.set_label_align( Gtk::Align::CENTER );
+            _generalData.append( frame );
+            _detailFrames.push_back( std::move( frame ) );
+        }
+
+        // fly position
+        {
+            Gtk::Frame frame{ "FlyPos Data" };
+            frame.set_margin_top( MARGIN );
+            frame.set_label_align( Gtk::Align::CENTER );
+            _generalData.append( frame );
+            _detailFrames.push_back( std::move( frame ) );
+        }
     }
 
     void eventSelector::redraw( ) {
-        auto evt = _model.mapEvent( );
+        _disableRedraw = true;
+        auto evt       = _model.mapEvent( );
         if( _eventType ) { _eventType->choose( (u8) evt.m_type ); }
+        for( auto& f : _detailFrames ) { f.hide( ); }
 
         if( !_eventType || !_eventType->currentChoice( ) ) {
             // not a real event, hide everything
             _generalData.hide( );
         } else {
             _generalData.show( );
+            _detailFrames[ evt.m_type ].show( );
+        }
+
+        switch( evt.m_type ) {
+        case DATA::EVENT_WARP: {
+            if( _warpType ) { _warpType->choose( evt.m_data.m_warp.m_warpType ); }
+            if( _warpTarget ) {
+                auto tmpos = DATA::warpPos{
+                    evt.m_data.m_warp.m_bank,
+                    DATA::position::fromLocal( evt.m_data.m_warp.m_mapX, evt.m_data.m_warp.m_posX,
+                                               evt.m_data.m_warp.m_mapY, evt.m_data.m_warp.m_posY,
+                                               evt.m_data.m_warp.m_posZ ) };
+                _warpTarget->setPosition( tmpos );
+                break;
+            }
+        }
+        default: break;
         }
 
         if( _eventPosition ) { _eventPosition->setPosition( _model.mapEventPosition( ) ); }
+
+        _aFlagE.set_value( evt.m_activateFlag );
+        _dFlagE.set_value( evt.m_deactivateFlag );
+
+        if( _eventTrigger ) { _eventTrigger->choose( evt.m_trigger ); }
+
+        _disableRedraw = false;
     }
 } // namespace UI::MED

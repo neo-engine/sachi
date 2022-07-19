@@ -3,6 +3,7 @@
 
 #include <gtkmm/adjustment.h>
 #include <gtkmm/box.h>
+#include <gtkmm/button.h>
 #include <gtkmm/frame.h>
 #include <gtkmm/label.h>
 #include <gtkmm/spinbutton.h>
@@ -32,8 +33,11 @@ namespace UI::MED {
 
         Gtk::Box _generalData{ Gtk::Orientation::VERTICAL };
 
-        std::shared_ptr<mapPosition>     _eventPosition;
-        std::shared_ptr<dropDown>        _eventType;
+        std::vector<Gtk::Frame> _detailFrames;
+
+        std::shared_ptr<Gtk::Button>     _warpJumpTo;
+        std::shared_ptr<mapPosition>     _eventPosition, _warpTarget;
+        std::shared_ptr<dropDown>        _eventType, _warpType;
         std::shared_ptr<multiButton>     _eventTrigger;
         std::shared_ptr<Gtk::Adjustment> _selectedEventA, _aFlagA, _dFlagA;
         Gtk::SpinButton                  _selectedEventE, _aFlagE, _dFlagE;

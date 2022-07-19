@@ -180,6 +180,18 @@ namespace UI::MED {
         }
 
         if( _blockStamp ) { _blockStamp->redraw( ); }
+
+        if( _currentMapDisplayMode == mapEditor::MODE_EDIT_EVENTS ) {
+            // add selection box for currently selected event
+            auto evt = _model.mapEvent( );
+            if( evt.m_type ) {
+                _currentMap[ 1 ][ 1 ].selectBlock( evt.m_posX, evt.m_posY );
+            } else {
+                _currentMap[ 1 ][ 1 ].selectBlock( -1 );
+            }
+        } else {
+            _currentMap[ 1 ][ 1 ].selectBlock( -1 );
+        }
     }
 
     void editableMap::onMapDragStart( mapSlice::clickType p_button, u16 p_blockX, u16 p_blockY,

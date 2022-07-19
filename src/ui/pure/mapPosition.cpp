@@ -21,7 +21,7 @@ namespace UI {
         g1.set_margin_end( MARGIN );
         _mainBox.append( g1 );
 
-        Gtk::Label lm{ "Map" }, lx{ "X" }, ly{ "Y" }, lz{ "Z" };
+        Gtk::Label lm{ " Map" }, lx{ "X" }, ly{ "Y" }, lz{ "Z" };
         lm.set_margin_end( MARGIN );
         lx.set_margin_end( MARGIN );
         lx.set_margin_start( MARGIN );
@@ -41,10 +41,14 @@ namespace UI {
         bx.append( _localXB );
         _localXB.append( _mapXE );
         _localXB.append( _localXE );
+        _localXE.set_hexpand( true );
+        _mapXE.set_hexpand( true );
         bx.append( _globalXE );
         by.append( _localYB );
         _localYB.append( _mapYE );
         _localYB.append( _localYE );
+        _localYE.set_hexpand( true );
+        _mapYE.set_hexpand( true );
         by.append( _globalYE );
 
         _localXB.get_style_context( )->add_class( "linked" );

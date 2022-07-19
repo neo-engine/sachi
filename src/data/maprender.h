@@ -217,6 +217,13 @@ namespace DATA {
                      (u8) p_z };
         }
 
+        constexpr u8 mapX( ) const {
+            return m_posX / SIZE;
+        }
+        constexpr u8 mapY( ) const {
+            return m_posY / SIZE;
+        }
+
         constexpr u8 localX( ) const {
             return m_posX % SIZE;
         }
@@ -383,6 +390,9 @@ namespace DATA {
         LAST_VISITED,
         SLIDING_DOOR
     };
+    const std::vector<std::string> WARP_TYPE_NAMES{ "Default",     "Cave Entry",     "Door",
+                                                    "Teleport",    "(Emerge Water)", "Last Visited",
+                                                    "Sliding Door" };
 
     constexpr u8 MAX_EVENTS_PER_SLICE = 64;
     constexpr u8 MAX_PKMN_PER_SLICE   = 30;

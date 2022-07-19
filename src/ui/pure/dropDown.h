@@ -53,11 +53,6 @@ namespace UI {
             return _dropDown;
         }
 
-        inline std::shared_ptr<Gtk::Widget> pointer( ) {
-            // this is as evil as it gets. I know.
-            return std::shared_ptr<Gtk::Widget>( &_dropDown );
-        }
-
         inline u64 currentChoice( ) const {
             return _currentSelection;
         }
