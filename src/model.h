@@ -120,6 +120,14 @@ struct model {
             return m_fsrootPath + "/MAPS/";
         }
 
+        inline std::string mapStringPath( ) const {
+            return m_fsrootPath + "/STRN/MAP/map";
+        }
+
+        inline std::string uiStringPath( ) const {
+            return m_fsrootPath + "/STRN/UIS/uis";
+        }
+
         inline std::string mapLocationPath( ) const {
             return m_fsrootPath + "/DATA/MAP_LOCATION/";
         }
@@ -275,6 +283,8 @@ struct model {
      * cache, which is returned.
      */
     const stringCache& locationNames( );
+
+    std::string getMapString( u16 p_stringId, u8 p_language = 0 );
 
     /*
      * @returns: true on error.

@@ -116,4 +116,8 @@ namespace DATA {
 
     void readNames( char* p_path, std::vector<names>& p_out );
     void readNames( char* p_path, std::map<u16, names>& p_out );
+
+    bool getString( const char* p_path, u16 p_maxLen, u16 p_stringId, u8 p_language, char* p_out );
+    bool getString( FILE* p_bankFile, u16 p_maxLen, u16 p_stringId, char* p_out );
+
 } // namespace DATA

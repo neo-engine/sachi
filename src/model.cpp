@@ -98,6 +98,49 @@ bool model::readOrCreateFsInfo( ) {
     return false;
 }
 
+std::string parseLogCmd( const std::string& p_cmd ) {
+    u16 tmp = -1;
+    if( sscanf( p_cmd.c_str( ), "%hu", &tmp ) && tmp != u16( -1 ) ) {
+        switch( tmp ) {
+        case 129: return "“";
+        default: break;
+        }
+    }
+    return std::string( "[" ) + p_cmd + "]";
+}
+
+std::string parseMapString( const std::string& p_text ) {
+    std::string res = "";
+    for( size_t i = 0; i < p_text.size( ); ++i ) {
+        if( u8( p_text[ i ] ) == 0xe9 ) {
+            res += "é";
+            continue;
+        }else if( u8( p_text[ i ] ) == '"' ) {
+            res += "”";
+            continue;
+        } else if( p_text[ i ] == '[' ) {
+            std::string accmd = "";
+            while( p_text[ ++i ] != ']' ) { accmd += p_text[ i ]; }
+            res += parseLogCmd( accmd );
+            continue;
+        } else if( p_text[ i ] == '\r' ) {
+            res += "[A]\n";
+            continue;
+        }
+        res += p_text[ i ];
+    }
+    return res;
+}
+
+std::string model::getMapString( u16 p_stringId, u8 p_language ) {
+    auto  path = m_fsdata.mapStringPath( ) + "." + std::to_string( p_language ) + ".strb";
+    FILE* f    = fopen( path.c_str( ), "rb" );
+
+    char buffer[ DATA::MAPSTRING_LEN + 10 ] = { 0 };
+    DATA::getString( f, DATA::MAPSTRING_LEN, p_stringId, buffer );
+    return parseMapString( std::string( buffer ) );
+}
+
 bool model::writeFsInfo( ) {
     // check if an fsinfo file is present
 

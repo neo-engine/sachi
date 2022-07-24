@@ -5,14 +5,14 @@
 
 namespace UI {
     mapPosition::mapPosition( bool p_allowSliceEdit )
-        : _bankA( Gtk::Adjustment::create( 0.0, 10.0, 99.0, 1.0, 5.0, 0.0 ) ),
+        : _bankA( Gtk::Adjustment::create( 10.0, 10.0, 99.0, 1.0, 5.0, 0.0 ) ),
           _mapXA( Gtk::Adjustment::create( 0.0, 0.0, 99.0, 1.0, 5.0, 0.0 ) ),
           _localXA( Gtk::Adjustment::create( 0.0, 0.0, 31.0, 1.0, 1.0, 0.0 ) ),
           _globalXA( Gtk::Adjustment::create( 0.0, 0.0, 99.0 * 31.0, 1.0, 1.0, 0.0 ) ),
           _mapYA( Gtk::Adjustment::create( 0.0, 0.0, 99.0, 1.0, 5.0, 0.0 ) ),
           _localYA( Gtk::Adjustment::create( 0.0, 0.0, 31.0, 1.0, 1.0, 0.0 ) ),
           _globalYA( Gtk::Adjustment::create( 0.0, 0.0, 99.0 * 31.0, 1.0, 1.0, 0.0 ) ),
-          _posZA( Gtk::Adjustment::create( 0.0, 0.0, 15.0, 1.0, 1.0, 0.0 ) ), _bankE( _bankA ),
+          _posZA( Gtk::Adjustment::create( 3.0, 0.0, 15.0, 1.0, 1.0, 0.0 ) ), _bankE( _bankA ),
           _mapXE( _mapXA ), _localXE( _localXA ), _globalXE( _globalXA ), _mapYE( _mapYA ),
           _localYE( _localYA ), _globalYE( _globalYA ), _posZE( _posZA ) {
 

@@ -13,7 +13,9 @@ namespace UI::MED {
                                                     1.0, 0.0 ) ),
           _aFlagA( Gtk::Adjustment::create( 0.0, 0.0, DATA::MAX_FLAG, 1.0, 1.0, 0.0 ) ),
           _dFlagA( Gtk::Adjustment::create( 0.0, 0.0, DATA::MAX_FLAG, 1.0, 1.0, 0.0 ) ),
-          _selectedEventE( _selectedEventA ), _aFlagE( _aFlagA ), _dFlagE( _dFlagA ) {
+          _messageIdx1A( Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) ),
+          _selectedEventE( _selectedEventA ), _aFlagE( _aFlagA ), _dFlagE( _dFlagA ),
+          _messageIdx1E( _messageIdx1A ) {
         _mainFrame = Gtk::Frame{ "Event Data" };
 
         Gtk::Box mainBox{ Gtk::Orientation::VERTICAL };
@@ -34,7 +36,8 @@ namespace UI::MED {
 
         // evt idx
         idxBox.append( _selectedEventE );
-        _selectedEventE.signal_value_changed( ).connect( [ & ]( ) {
+        _selectedEventE.signal_value_changed( ).connect( [ this ]( ) {
+            if( _disableRedraw ) { return; }
             _model.selectEvent( _selectedEventE.get_value_as_int( ) );
             _rootWindow.redraw( );
         } );
@@ -137,6 +140,53 @@ namespace UI::MED {
             frame.set_margin_top( MARGIN );
             frame.set_label_align( Gtk::Align::CENTER );
             _generalData.append( frame );
+
+            Gtk::Box fbox{ Gtk::Orientation::VERTICAL };
+            fbox.set_margin( MARGIN );
+            frame.set_child( fbox );
+
+            _messageType1 = std::make_shared<dropDown>( DATA::MESSAGE_TYPE_NAMES );
+            if( _messageType1 ) {
+                fbox.append( *_messageType1 );
+                ( (Gtk::Widget&) ( *_messageType1 ) ).set_hexpand( true );
+
+                _messageType1->connect( [ this ]( u64 p_newChoice ) {
+                    if( _disableRedraw ) { return; }
+                    _model.mapEvent( ).m_data.m_message.m_msgType = p_newChoice;
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redraw( );
+                } );
+            }
+            fbox.set_hexpand( false );
+
+            Gtk::Box ibox{ Gtk::Orientation::HORIZONTAL };
+            ibox.set_margin_top( MARGIN );
+            Gtk::Label ilabel{ "Message Idx" };
+            ilabel.set_hexpand( );
+
+            fbox.append( ibox );
+            ibox.append( ilabel );
+            ibox.append( _messageIdx1E );
+            _messageIdx1E.signal_value_changed( ).connect( [ this ]( ) {
+                if( _disableRedraw
+                    || _model.mapEvent( ).m_data.m_message.m_msgId
+                           == _messageIdx1E.get_value_as_int( ) ) {
+                    return;
+                }
+                _disableMI1E = true;
+                _messageIdx1E.update( );
+                _model.mapEvent( ).m_data.m_message.m_msgId = _messageIdx1E.get_value_as_int( );
+                _model.markSelectedBankChanged( );
+                _rootWindow.redrawPanel( );
+                redraw( );
+                _disableMI1E = false;
+            } );
+
+            _messageLabel1.set_hexpand( );
+            _messageLabel1.set_wrap( );
+            fbox.append( _messageLabel1 );
+
+            _messageLabel1.set_margin_top( MARGIN );
             _detailFrames.push_back( std::move( frame ) );
         }
 
@@ -311,6 +361,13 @@ namespace UI::MED {
         }
 
         switch( evt.m_type ) {
+        case DATA::EVENT_MESSAGE: {
+            if( _messageType1 ) { _messageType1->choose( evt.m_data.m_message.m_msgType ); }
+
+            if( !_disableMI1E ) { _messageIdx1E.set_value( evt.m_data.m_message.m_msgId ); }
+            _messageLabel1.set_text( _model.getMapString( evt.m_data.m_message.m_msgId ) );
+            break;
+        }
         case DATA::EVENT_WARP: {
             if( _warpType ) { _warpType->choose( evt.m_data.m_warp.m_warpType ); }
             if( _warpTarget ) {
@@ -320,8 +377,8 @@ namespace UI::MED {
                                                evt.m_data.m_warp.m_mapY, evt.m_data.m_warp.m_posY,
                                                evt.m_data.m_warp.m_posZ ) };
                 _warpTarget->setPosition( tmpos );
-                break;
             }
+            break;
         }
         default: break;
         }

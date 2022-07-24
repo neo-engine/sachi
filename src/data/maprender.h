@@ -388,11 +388,28 @@ namespace DATA {
         TELEPORT,
         EMERGE_WATER,
         LAST_VISITED,
-        SLIDING_DOOR
+        SLIDING_DOOR,
+        FLY
     };
-    const std::vector<std::string> WARP_TYPE_NAMES{ "Default",     "Cave Entry",     "Door",
-                                                    "Teleport",    "(Emerge Water)", "Last Visited",
-                                                    "Sliding Door" };
+    const std::vector<std::string> WARP_TYPE_NAMES{
+        "Default",        "Cave Entry",   "Door",         "Teleport",
+        "(Emerge Water)", "Last Visited", "Sliding Door", "(Fly)" };
+
+    enum style : u8 {
+        MSG_NORMAL          = 0,
+        MSG_INFO            = 1,
+        MSG_NOCLOSE         = 2, // Msgbox stays open, future calls to print append text
+        MSG_INFO_NOCLOSE    = 3,
+        MSG_MART_ITEM       = 4, // Message used for items / pokemart
+        MSG_ITEM            = 5, // Message used when player obtains an item
+        MSG_SIGN            = 6,
+        MSG_NORMAL_CONT     = 7,
+        MSG_INFO_CONT       = 8,
+        MSG_SHOW_MONEY_FLAG = 128, // show the current money
+    };
+    const std::vector<std::string> MESSAGE_TYPE_NAMES{
+        "Normal",        "Information", "No-redraw",         "No-redraw Info", "(Mart Item)",
+        "(Obtain Item)", "Sign",        "Wait for Interact", "Interact (Info)" };
 
     constexpr u8 MAX_EVENTS_PER_SLICE = 64;
     constexpr u8 MAX_PKMN_PER_SLICE   = 30;
