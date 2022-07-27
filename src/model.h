@@ -375,6 +375,13 @@ struct model {
                        bool p_readMapData = true );
 
     /*
+     * @brief: Read a (large) map from the specified file, slice it and insert it at the
+     * specified position (might cover multiple slices)
+     */
+    bool readLargeMap( u16 p_bank, u8 p_mapX, u8 p_mapY, u8 p_insertX, u8 p_insertY,
+                       std::string p_path );
+
+    /*
      * @brief: Reads all map slices of the specified map bank from the FS.
      * @param p_forceReread: If true, ignores and overwrites any previously read data.
      */
@@ -514,6 +521,16 @@ struct model {
         slice( selectedBank( ), p_mapY, p_mapX )         = slice( );
         computedSlice( selectedBank( ), p_mapY, p_mapX ) = computedSlice( );
         mapData( selectedBank( ), p_mapY, p_mapX )       = mapData( );
+    }
+
+    inline void copySelectedMapMetaTo( u16 p_mapY, u16 p_mapX ) {
+        markSelectedBankChanged( );
+        auto tmp{ mapData( selectedBank( ), p_mapY, p_mapX ) };
+        mapData( selectedBank( ), p_mapY, p_mapX ) = mapData( );
+
+        for( u8 i{ 0 }; i < DATA::MAX_EVENTS_PER_SLICE; ++i ) {
+            mapData( selectedBank( ), p_mapY, p_mapX ).m_events[ i ] = tmp.m_events[ i ];
+        }
     }
 
     /*

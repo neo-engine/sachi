@@ -52,6 +52,11 @@ namespace UI {
                     _mapBankOverview.replaceMap( _model.computedSlice( ), p_mapY, p_mapX );
                     break;
                 }
+                case BOV::mapBankOverview::RIGHT_DOUBLE: {
+                    // copy selected map' wild pkmn and meta data to position
+                    _model.copySelectedMapMetaTo( p_mapY, p_mapX );
+                    break;
+                }
                 }
             } );
 

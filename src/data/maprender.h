@@ -176,6 +176,23 @@ namespace DATA {
         mapBlockAtom m_blocks[ SIZE ][ SIZE ] = { { mapBlockAtom( ) } }; // [ y ][ x ]
     };
 
+    struct largeMapSliceHeader {
+        u8 m_sizeX = 0;
+        u32 : 24;
+        u8 m_sizeY = 0;
+        u32 : 24;
+
+        u8 m_tIdx1 = 0;
+        u32 : 24;
+        u8 m_tIdx2 = 1;
+        u32 : 24;
+
+        u8 m_borderSizeX = 0;
+        u8 m_borderSizeY = 0;
+        u32 : 16;
+    };
+
+
     struct mapSlice {
         mapSliceData m_data;
         u16          m_x = 0, m_y = 0;

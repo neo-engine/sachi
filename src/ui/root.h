@@ -21,6 +21,7 @@ namespace UI {
         std::shared_ptr<Gio::SimpleAction>      _loadReloadmapAction;
         std::shared_ptr<Gio::SimpleAction>      _loadReloadmapbankAction;
         std::shared_ptr<Gio::SimpleAction>      _loadImportmapAction;
+        std::shared_ptr<Gio::SimpleAction>      _loadImportlargemapAction;
         std::shared_ptr<Gio::SimpleActionGroup> _saveActions;
         std::shared_ptr<Gio::SimpleAction>      _saveFsrootAction;
         std::shared_ptr<Gio::SimpleAction>      _saveMapAction;
@@ -40,6 +41,8 @@ namespace UI {
         Gtk::Label                     _loadMapLabel;
         std::shared_ptr<bankEditor>    _bankEditor;
         std::shared_ptr<tileSetEditor> _tileSetEditor;
+
+        Gtk::SpinButton _sb1, _sb2;
 
       public:
         root( );

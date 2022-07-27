@@ -54,6 +54,8 @@ namespace DATA {
     bool readPal( FILE* p_file, palette* p_palette, u8 p_count = 6 );
     bool readBlocks( FILE* p_file, block* p_tileSet, u16 p_startIdx = 0, u16 p_size = 512 );
     bool readMapData( FILE* p_file, mapData* p_result, bool p_close = true );
+    bool readLargeMap( FILE* p_mapFile, largeMapSliceHeader& p_header,
+                       std::vector<std::vector<mapBlockAtom>>& p_result, bool p_close = true );
 
     bool readMapSlice( FILE* p_mapFile, mapSlice* p_result, u16 p_x = 0, u16 p_y = 0,
                        bool p_close = true );

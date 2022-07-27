@@ -17,6 +17,7 @@ namespace UI::BOV {
       public:
         enum clickType {
             LEFT_DOUBLE   = GDK_BUTTON_PRIMARY,
+            RIGHT_DOUBLE  = GDK_BUTTON_SECONDARY,
             MIDDLE_DOUBLE = GDK_BUTTON_MIDDLE,
         };
 

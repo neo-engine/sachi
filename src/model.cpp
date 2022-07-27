@@ -115,7 +115,7 @@ std::string parseMapString( const std::string& p_text ) {
         if( u8( p_text[ i ] ) == 0xe9 ) {
             res += "é";
             continue;
-        }else if( u8( p_text[ i ] ) == '"' ) {
+        } else if( u8( p_text[ i ] ) == '"' ) {
             res += "”";
             continue;
         } else if( p_text[ i ] == '[' ) {
@@ -246,6 +246,65 @@ bool model::readMapSlice( u16 p_bank, u8 p_mapX, u8 p_mapY, std::string p_path,
             if( p_readMapData ) { selb.m_bank.m_mapData[ p_mapY ][ p_mapX ] = std::move( dt ); }
         }
     }
+    return true;
+}
+
+bool model::readLargeMap( u16 p_bank, u8 p_mapX, u8 p_mapY, u8 p_insertX, u8 p_insertY,
+                          std::string p_path ) {
+    if( !existsBank( p_bank ) || p_path == "" ) { return false; }
+
+    auto& selb = bank( p_bank );
+    FILE* f    = fopen( p_path.c_str( ), "rb" );
+
+    DATA::largeMapSliceHeader                    hd;
+    std::vector<std::vector<DATA::mapBlockAtom>> sl;
+
+    if( !DATA::readLargeMap( f, hd, sl ) ) {
+        message_error( "load slice", std::string( "Loading map " ) + std::to_string( p_bank ) + "/"
+                                         + std::to_string( p_mapY ) + "_" + std::to_string( p_mapX )
+                                         + ".map failed. (path " + p_path.c_str( ) + ")" );
+    } else {
+        m_settings.m_overviewNeedsRedraw = true;
+        markSelectedBankChanged( );
+
+        // copy the read map
+        auto sx{ ( DATA::SIZE * p_mapX + p_insertX + sl.size( ) - 1 ) / DATA::SIZE };
+        auto sy{ ( DATA::SIZE * p_mapY + p_insertY + sl.size( ) - 1 ) / DATA::SIZE };
+
+        while( sy > selectedSizeY( ) ) {
+            bank( ).m_info.m_sizeY++;
+            bank( ).m_bank.m_slices.push_back(
+                std::vector<DATA::mapSlice>( selectedSizeX( ) + 1, DATA::mapSlice( ) ) );
+            bank( ).m_bank.m_mapData.push_back(
+                std::vector<DATA::mapData>( selectedSizeX( ) + 1, DATA::mapData( ) ) );
+
+            bank( ).m_computedBank.push_back( std::vector<DATA::computedMapSlice>(
+                selectedSizeX( ) + 1, DATA::computedMapSlice( ) ) );
+        }
+        while( sx > selectedSizeX( ) ) {
+            bank( ).m_info.m_sizeX++;
+            for( u8 y{ 0 }; y <= selectedSizeY( ); ++y ) {
+                bank( ).m_bank.m_slices[ y ].push_back( DATA::mapSlice( ) );
+                bank( ).m_bank.m_mapData[ y ].push_back( DATA::mapData( ) );
+                bank( ).m_computedBank[ y ].push_back( DATA::computedMapSlice( ) );
+            }
+        }
+
+        for( u16 y{ 0 }; y < sl.size( ); ++y ) {
+            for( u16 x{ 0 }; x < sl[ y ].size( ); ++x ) {
+                auto px{ x + DATA::SIZE * p_mapX + p_insertX },
+                    py{ y + DATA::SIZE * p_mapY + p_insertY };
+
+                auto bx{ px / DATA::SIZE }, by{ py / DATA::SIZE }, mx{ px % DATA::SIZE },
+                    my{ py % DATA::SIZE };
+
+                selb.m_bank.m_slices[ by ][ bx ].m_data.m_blocks[ my ][ mx ] = sl[ y ][ x ];
+                selb.m_bank.m_slices[ by ][ bx ].m_data.m_tIdx1              = hd.m_tIdx1;
+                selb.m_bank.m_slices[ by ][ bx ].m_data.m_tIdx2              = hd.m_tIdx2;
+            }
+        }
+    }
+
     return true;
 }
 

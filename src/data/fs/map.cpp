@@ -76,6 +76,32 @@ namespace DATA {
         return true;
     }
 
+    bool readLargeMap( FILE* p_mapFile, largeMapSliceHeader& p_header,
+                       std::vector<std::vector<mapBlockAtom>>& p_result, bool p_close ) {
+        if( p_mapFile == 0 ) return false;
+
+        // properly read the data
+        fread( &p_header, sizeof( largeMapSliceHeader ), 1, p_mapFile );
+        // read border
+        mapBlockAtom tmp;
+        for( u16 i{ 0 }; i < p_header.m_borderSizeX * p_header.m_borderSizeY; ++i ) {
+            fread( &tmp, sizeof( mapBlockAtom ), 1, p_mapFile );
+        }
+        // read map
+        p_result.clear( );
+        for( u16 y{ 0 }; y < p_header.m_sizeY; ++y ) {
+            std::vector<mapBlockAtom> v{ };
+            for( u16 x{ 0 }; x < p_header.m_sizeX; ++x ) {
+                fread( &tmp, sizeof( mapBlockAtom ), 1, p_mapFile );
+                v.push_back( tmp );
+            }
+            p_result.push_back( v );
+        }
+
+        if( p_close ) { fclose( p_mapFile ); }
+        return true;
+    }
+
     bool writeMapSlice( FILE* p_mapFile, const mapSlice* p_map, bool p_close ) {
         if( p_mapFile == 0 ) return false;
         fwrite( &p_map->m_data, sizeof( mapSliceData ), 1, p_mapFile );
@@ -118,24 +144,9 @@ namespace DATA {
                    SEEK_SET ) ) {
             return false;
         }
-        fprintf( stderr, "%lu %lu %lu %lu\n",
-                 sizeof( mapBankInfo )
-                     + ( ( info.m_sizeX + 1 ) * p_y + p_x )
-                           * ( sizeof( mapSliceData ) + sizeof( mapData ) + 12 ),
-                 sizeof( mapBankInfo ), sizeof( mapSliceData ), sizeof( mapData ) );
 
         if( !readMapSlice( p_mapFile, p_slice, p_x, p_y, false ) ) { return false; }
         if( !readMapData( p_mapFile, p_data, false ) ) { return false; }
-
-        fprintf(
-            stderr,
-            "%02hhx %02hhx %02hhx %02hhx | %02hhx %02hhx %02hhx %02hhx | %02hhx %02hhx %02hhx %02hhx\n",
-            reinterpret_cast<u8*>( p_data )[ 0 ], reinterpret_cast<u8*>( p_data )[ 1 ],
-            reinterpret_cast<u8*>( p_data )[ 2 ], reinterpret_cast<u8*>( p_data )[ 3 ],
-            reinterpret_cast<u8*>( p_data )[ 4 ], reinterpret_cast<u8*>( p_data )[ 5 ],
-            reinterpret_cast<u8*>( p_data )[ 6 ], reinterpret_cast<u8*>( p_data )[ 7 ],
-            reinterpret_cast<u8*>( p_data )[ 8 ], reinterpret_cast<u8*>( p_data )[ 9 ],
-            reinterpret_cast<u8*>( p_data )[ 10 ], reinterpret_cast<u8*>( p_data )[ 11 ] );
 
         return true;
     }

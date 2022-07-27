@@ -2,6 +2,7 @@
 #include <gtkmm/eventcontrollerkey.h>
 #include <gtkmm/label.h>
 #include <gtkmm/messagedialog.h>
+#include <gtkmm/separator.h>
 
 #include "../data/fs.h"
 #include "../data/fs/util.h"
@@ -16,18 +17,18 @@ namespace UI {
         _saveActions = Gio::SimpleActionGroup::create( );
         _loadFsrootAction
             = _loadActions->add_action( "fsroot", [ & ]( ) { this->onFsRootOpenClick( ); } );
-        _loadReloadmapAction     = _loadActions->add_action( "reloadmap", [ & ]( ) {
+        _loadReloadmapAction      = _loadActions->add_action( "reloadmap", [ & ]( ) {
             _model.readMapSlice( _model.selectedBank( ), _model.selectedMapX( ),
-                                     _model.selectedMapY( ) );
+                                      _model.selectedMapY( ) );
             redraw( );
         } );
-        _loadReloadmapbankAction = _loadActions->add_action( "reloadmapbank", [ & ]( ) {
+        _loadReloadmapbankAction  = _loadActions->add_action( "reloadmapbank", [ & ]( ) {
             _model.checkOrLoadBank( _model.selectedBank( ), true );
             redraw( );
         } );
-        _loadImportmapAction     = _loadActions->add_action( "importmap", [ & ]( ) {
+        _loadImportmapAction      = _loadActions->add_action( "importmap", [ & ]( ) {
             auto dialog    = new Gtk::FileChooserDialog( "Choose a map to import",
-                                                             Gtk::FileChooser::Action::OPEN, true );
+                                                              Gtk::FileChooser::Action::OPEN, true );
             auto mapFilter = Gtk::FileFilter::create( );
             mapFilter->add_pattern( "*.map" );
             mapFilter->set_name( "AdvanceMap 1.92 Map Files (32x32 blocks)" );
@@ -45,7 +46,70 @@ namespace UI {
                 switch( p_responseId ) {
                 case Gtk::ResponseType::OK: {
                     _model.readMapSlice( _model.selectedBank( ), _model.selectedMapX( ),
-                                             _model.selectedMapY( ), dialog->get_file( )->get_path( ) );
+                                              _model.selectedMapY( ), dialog->get_file( )->get_path( ) );
+                    // redrawMap( _model.selectedMapY( ), _model.selectedMapX( ) );
+                    _model.markSelectedBankChanged( );
+                    redraw( );
+                    break;
+                }
+                default:
+                case Gtk::ResponseType::CANCEL: break;
+                }
+                delete dialog;
+            } );
+
+            dialog->add_button( "_Cancel", Gtk::ResponseType::CANCEL );
+            dialog->add_button( "_Select", Gtk::ResponseType::OK );
+            dialog->show( );
+        } );
+        _loadImportlargemapAction = _loadActions->add_action( "importlargemap", [ & ]( ) {
+            auto dialog = new Gtk::FileChooserDialog( "Choose a map to import",
+                                                      Gtk::FileChooser::Action::OPEN, true );
+
+            auto posbox = Gtk::Box{ Gtk::Orientation::HORIZONTAL };
+            posbox.set_halign( Gtk::Align::END );
+            auto posbox2  = Gtk::Box{ Gtk::Orientation::HORIZONTAL };
+            auto poslabel = Gtk::Label{ "Insert at position (x|y)" };
+            poslabel.set_margin( MARGIN );
+            auto sba1 = Gtk::Adjustment::create( 0, 0.0, 31.0, 1.0, 1.0, 0.0 );
+            auto sba2 = Gtk::Adjustment::create( 0, 0.0, 31.0, 1.0, 1.0, 0.0 );
+
+            _sb1 = Gtk::SpinButton{ sba1 };
+            _sb2 = Gtk::SpinButton{ sba2 };
+
+            posbox.set_margin( MARGIN );
+            posbox.append( poslabel );
+            posbox2.append( _sb1 );
+            posbox2.append( _sb2 );
+            posbox2.get_style_context( )->add_class( "linked" );
+            posbox.append( posbox2 );
+
+            auto sep = Gtk::Separator{ };
+
+            dialog->get_content_area( )->prepend( sep );
+            dialog->get_content_area( )->prepend( posbox );
+
+            auto mapFilter = Gtk::FileFilter::create( );
+            mapFilter->add_pattern( "*.map" );
+            mapFilter->set_name( "AdvanceMap 1.92 Map Files (any size)" );
+            dialog->set_filter( mapFilter );
+            dialog->set_transient_for( *this );
+            dialog->set_modal( true );
+            dialog->set_default_size( 800, 600 );
+            dialog->signal_response( ).connect( [ dialog, this ]( int p_responseId ) {
+                if( dialog == nullptr ) {
+                    message_error( "importMap", "Dialog is nullptr." );
+                    return;
+                }
+
+                // Handle the response:
+                switch( p_responseId ) {
+                case Gtk::ResponseType::OK: {
+                    _model.readLargeMap( _model.selectedBank( ), _model.selectedMapX( ),
+                                         _model.selectedMapY( ),
+
+                                         _sb1.get_value_as_int( ), _sb2.get_value_as_int( ),
+                                         dialog->get_file( )->get_path( ) );
                     // redrawMap( _model.selectedMapY( ), _model.selectedMapX( ) );
                     _model.markSelectedBankChanged( );
                     redraw( );
@@ -200,6 +264,7 @@ namespace UI {
         _loadReloadmapAction->set_enabled( false );
         _loadReloadmapbankAction->set_enabled( false );
         _loadImportmapAction->set_enabled( false );
+        _loadImportlargemapAction->set_enabled( false );
         _saveFsrootAction->set_enabled( false );
         _saveMapAction->set_enabled( false );
         _saveMapbankAction->set_enabled( false );
@@ -225,6 +290,7 @@ namespace UI {
             _loadReloadmapAction->set_enabled( true );
             _loadReloadmapbankAction->set_enabled( true );
             _loadImportmapAction->set_enabled( true );
+            _loadImportlargemapAction->set_enabled( true );
             _saveFsrootAction->set_enabled( true );
             _saveMapAction->set_enabled( true );
             _saveExportmapAction->set_enabled( true );
