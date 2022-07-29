@@ -22,11 +22,19 @@ namespace UI {
         std::shared_ptr<Gio::SimpleAction>      _loadReloadmapbankAction;
         std::shared_ptr<Gio::SimpleAction>      _loadImportmapAction;
         std::shared_ptr<Gio::SimpleAction>      _loadImportlargemapAction;
+        std::shared_ptr<Gio::SimpleAction>      _loadImportblocks1Action;
+        std::shared_ptr<Gio::SimpleAction>      _loadImportblocks2Action;
+        std::shared_ptr<Gio::SimpleAction>      _loadImporttiles1Action;
+        std::shared_ptr<Gio::SimpleAction>      _loadImporttiles2Action;
         std::shared_ptr<Gio::SimpleActionGroup> _saveActions;
         std::shared_ptr<Gio::SimpleAction>      _saveFsrootAction;
         std::shared_ptr<Gio::SimpleAction>      _saveMapAction;
         std::shared_ptr<Gio::SimpleAction>      _saveMapbankAction;
         std::shared_ptr<Gio::SimpleAction>      _saveExportmapAction;
+        std::shared_ptr<Gio::SimpleAction>      _saveExportblocks1Action;
+        std::shared_ptr<Gio::SimpleAction>      _saveExportblocks2Action;
+        std::shared_ptr<Gio::SimpleAction>      _saveExporttiles1Action;
+        std::shared_ptr<Gio::SimpleAction>      _saveExporttiles2Action;
 
         context _context;
         model   _model;

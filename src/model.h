@@ -352,6 +352,26 @@ struct model {
     bool writeTileSets( );
 
     /*
+     * @brief: Reads blocks for tile set p_bsId from file p_path.
+     */
+    bool readBlockSet( u16 p_bsId, std::string p_path );
+
+    /*
+     * @brief: Writes blocks of tile set p_bsId to file p_path.
+     */
+    bool writeBlockSet( u16 p_bsId, std::string p_path );
+
+    /*
+     * @brief: Reads tiles for tile set p_bsId from file p_path.
+     */
+    bool readTileSet( u16 p_bsId, std::string p_path );
+
+    /*
+     * @brief: Writes tiles of tile set p_bsId to file p_path.
+     */
+    bool writeTileSet( u16 p_bsId, std::string p_path );
+
+    /*
      * @brief: Writes the specified map slice to the FS.
      * @param p_path: If specified, the map is stored at the specified path, otherwise
      * it will be stored at the default location (FSROOT/MAPS/p_bank[/p_mapY]/p_mapY_p_mapX.map)

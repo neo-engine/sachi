@@ -586,6 +586,50 @@ bool model::writeMapSlice( u16 p_bank, u8 p_mapX, u8 p_mapY, std::string p_path,
     return false;
 }
 
+bool model::readTileSet( u16 p_bsId, std::string p_path ) {
+    auto& res = m_fsdata.m_blockSets[ p_bsId ];
+    auto  f   = fopen( p_path.c_str( ), "r" );
+    if( !DATA::readTiles( f, res.m_tileSet.m_tiles ) ) {
+        message_error( "readTileSets", ( "Reading tile set "s ) + p_path + " failed." );
+        return true;
+    }
+    fclose( f );
+    return false;
+}
+
+bool model::writeTileSet( u16 p_bsId, std::string p_path ) {
+    if( !m_fsdata.m_blockSets.count( p_bsId ) ) { return true; }
+
+    bool error{ false };
+    auto f = fopen( p_path.c_str( ), "wb" );
+    error |= !DATA::writeTiles( f, m_fsdata.m_blockSets[ p_bsId ].m_tileSet.m_tiles );
+    fclose( f );
+
+    return error;
+}
+
+bool model::readBlockSet( u16 p_bsId, std::string p_path ) {
+    auto& res = m_fsdata.m_blockSets[ p_bsId ];
+    auto  f   = fopen( p_path.c_str( ), "r" );
+    if( !DATA::readBlocks( f, res.m_blockSet.m_blocks ) ) {
+        message_error( "readTileSets", ( "Reading block set "s ) + p_path + " failed." );
+        return true;
+    }
+    fclose( f );
+    return false;
+}
+
+bool model::writeBlockSet( u16 p_bsId, std::string p_path ) {
+    if( !m_fsdata.m_blockSets.count( p_bsId ) ) { return true; }
+
+    bool error{ false };
+    auto f = fopen( p_path.c_str( ), "wb" );
+    error |= !DATA::writeBlocks( f, m_fsdata.m_blockSets[ p_bsId ].m_blockSet.m_blocks );
+    fclose( f );
+
+    return error;
+}
+
 bool model::writeTileSets( ) {
     if( m_fsdata.m_blockSetNames.empty( ) ) { return true; }
     bool error{ false };

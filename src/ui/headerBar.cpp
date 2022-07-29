@@ -1,8 +1,8 @@
 #include <gtkmm/box.h>
 
 #include "headerBar.h"
-#include "root.h"
 #include "pure/util.h"
+#include "root.h"
 
 namespace UI {
     headerBar::headerBar( model& p_model, root& p_root )
@@ -44,15 +44,39 @@ namespace UI {
         _saveMenuButton = std::make_shared<Gtk::MenuButton>( );
         _saveMenuButton->set_popover( _saveMenuPopover );
 
+        _openMenuTS = Gio::Menu::create( );
+        _saveMenuTS = Gio::Menu::create( );
+        _openMenuTS->append( "Import BlockSet 1", "load.importblocks1" );
+        _openMenuTS->append( "Import BlockSet 2", "load.importblocks2" );
+        _openMenuTS->append( "Import TileSet 1", "load.importtiles1" );
+        _openMenuTS->append( "Import TileSet 2", "load.importtiles2" );
+
+        _saveMenuTS->append( "Export BlockSet 1", "save.exportblocks1" );
+        _saveMenuTS->append( "Export BlockSet 2", "save.exportblocks2" );
+        _saveMenuTS->append( "Export TileSet 1", "load.exporttiles1" );
+        _saveMenuTS->append( "Export TileSet 2", "load.exporttiles2" );
+
+        _openMenuTSPopover = Gtk::PopoverMenu( _openMenuTS );
+        _openMenuTSPopover.set_has_arrow( false );
+        _saveMenuTSPopover = Gtk::PopoverMenu( _saveMenuTS );
+        _saveMenuTSPopover.set_has_arrow( false );
+
+        _openMenuTSButton = std::make_shared<Gtk::MenuButton>( );
+        _openMenuTSButton->set_popover( _openMenuTSPopover );
+        _saveMenuTSButton = std::make_shared<Gtk::MenuButton>( );
+        _saveMenuTSButton->set_popover( _saveMenuTSPopover );
+
         auto openBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
         openBox.get_style_context( )->add_class( "linked" );
         openBox.append( *_openButton );
         openBox.append( *_openMenuButton );
+        openBox.append( *_openMenuTSButton );
 
         auto saveBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
         saveBox.get_style_context( )->add_class( "linked" );
         saveBox.append( *_saveButton );
         saveBox.append( *_saveMenuButton );
+        saveBox.append( *_saveMenuTSButton );
         _headerBar.pack_start( openBox );
         _headerBar.pack_start( saveBox );
     }
@@ -70,6 +94,8 @@ namespace UI {
 
         if( _openMenuButton ) { _openMenuButton->hide( ); }
         if( _saveMenuButton ) { _saveMenuButton->hide( ); }
+        if( _openMenuTSButton ) { _openMenuTSButton->hide( ); }
+        if( _saveMenuTSButton ) { _saveMenuTSButton->hide( ); }
         if( _saveButton ) { _saveButton->hide( ); }
 
         switch( _context ) {
@@ -85,6 +111,8 @@ namespace UI {
             break;
         case CONTEXT_TILE_EDITOR:
             if( _saveButton ) { _saveButton->show( ); }
+            if( _openMenuTSButton ) { _openMenuTSButton->show( ); }
+            if( _saveMenuTSButton ) { _saveMenuTSButton->show( ); }
             break;
         default: setTitle( ); break;
         }

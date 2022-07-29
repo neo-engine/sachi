@@ -126,6 +126,151 @@ namespace UI {
             dialog->show( );
         } );
 
+        _loadImportblocks1Action = _loadActions->add_action( "importblocks1", [ & ]( ) {
+            auto dialog = new Gtk::FileChooserDialog( "Choose a block set to import as block set 1",
+                                                      Gtk::FileChooser::Action::OPEN, true );
+            auto mapFilter = Gtk::FileFilter::create( );
+            mapFilter->add_pattern( "*.bvd" );
+            mapFilter->set_name( "AdvanceMap 1.92 Block Set Files" );
+            dialog->set_filter( mapFilter );
+            dialog->set_transient_for( *this );
+            dialog->set_modal( true );
+            dialog->set_default_size( 800, 600 );
+            dialog->signal_response( ).connect( [ dialog, this ]( int p_responseId ) {
+                if( dialog == nullptr ) {
+                    message_error( "importBlocks", "Dialog is nullptr." );
+                    return;
+                }
+
+                // Handle the response:
+                switch( p_responseId ) {
+                case Gtk::ResponseType::OK: {
+                    _model.readBlockSet( _model.m_settings.m_tseBS1,
+                                         dialog->get_file( )->get_path( ) );
+                    // redrawMap( _model.selectedMapY( ), _model.selectedMapX( ) );
+                    _model.markTileSetsChanged( );
+                    redraw( );
+                    break;
+                }
+                default:
+                case Gtk::ResponseType::CANCEL: break;
+                }
+                delete dialog;
+            } );
+
+            dialog->add_button( "_Cancel", Gtk::ResponseType::CANCEL );
+            dialog->add_button( "_Select", Gtk::ResponseType::OK );
+            dialog->show( );
+        } );
+        _loadImportblocks2Action = _loadActions->add_action( "importblocks2", [ & ]( ) {
+            auto dialog = new Gtk::FileChooserDialog( "Choose a block set to import as block set 2",
+                                                      Gtk::FileChooser::Action::OPEN, true );
+            auto mapFilter = Gtk::FileFilter::create( );
+            mapFilter->add_pattern( "*.bvd" );
+            mapFilter->set_name( "AdvanceMap 1.92 Block Set Files" );
+            dialog->set_filter( mapFilter );
+            dialog->set_transient_for( *this );
+            dialog->set_modal( true );
+            dialog->set_default_size( 800, 600 );
+            dialog->signal_response( ).connect( [ dialog, this ]( int p_responseId ) {
+                if( dialog == nullptr ) {
+                    message_error( "importBlocks", "Dialog is nullptr." );
+                    return;
+                }
+
+                // Handle the response:
+                switch( p_responseId ) {
+                case Gtk::ResponseType::OK: {
+                    _model.readBlockSet( _model.m_settings.m_tseBS2,
+                                         dialog->get_file( )->get_path( ) );
+                    // redrawMap( _model.selectedMapY( ), _model.selectedMapX( ) );
+                    _model.markTileSetsChanged( );
+                    redraw( );
+                    break;
+                }
+                default:
+                case Gtk::ResponseType::CANCEL: break;
+                }
+                delete dialog;
+            } );
+
+            dialog->add_button( "_Cancel", Gtk::ResponseType::CANCEL );
+            dialog->add_button( "_Select", Gtk::ResponseType::OK );
+            dialog->show( );
+        } );
+        _loadImporttiles1Action  = _loadActions->add_action( "importtiles1", [ & ]( ) {
+            auto dialog = new Gtk::FileChooserDialog( "Choose a tile set to import as tile set 1",
+                                                       Gtk::FileChooser::Action::OPEN, true );
+            auto mapFilter = Gtk::FileFilter::create( );
+            mapFilter->add_pattern( "*.ts" );
+            mapFilter->set_name( "neo Tile Set Files" );
+            dialog->set_filter( mapFilter );
+            dialog->set_transient_for( *this );
+            dialog->set_modal( true );
+            dialog->set_default_size( 800, 600 );
+            dialog->signal_response( ).connect( [ dialog, this ]( int p_responseId ) {
+                if( dialog == nullptr ) {
+                    message_error( "importTiles", "Dialog is nullptr." );
+                    return;
+                }
+
+                // Handle the response:
+                switch( p_responseId ) {
+                case Gtk::ResponseType::OK: {
+                    _model.readTileSet( _model.m_settings.m_tseBS1,
+                                         dialog->get_file( )->get_path( ) );
+                    // redrawMap( _model.selectedMapY( ), _model.selectedMapX( ) );
+                    _model.markTileSetsChanged( );
+                    redraw( );
+                    break;
+                }
+                default:
+                case Gtk::ResponseType::CANCEL: break;
+                }
+                delete dialog;
+            } );
+
+            dialog->add_button( "_Cancel", Gtk::ResponseType::CANCEL );
+            dialog->add_button( "_Select", Gtk::ResponseType::OK );
+            dialog->show( );
+        } );
+        _loadImporttiles2Action  = _loadActions->add_action( "importtiles2", [ & ]( ) {
+            auto dialog = new Gtk::FileChooserDialog( "Choose a tile set to import as tile set 2",
+                                                       Gtk::FileChooser::Action::OPEN, true );
+            auto mapFilter = Gtk::FileFilter::create( );
+            mapFilter->add_pattern( "*.ts" );
+            mapFilter->set_name( "neo Tile Set Files" );
+            dialog->set_filter( mapFilter );
+            dialog->set_transient_for( *this );
+            dialog->set_modal( true );
+            dialog->set_default_size( 800, 600 );
+            dialog->signal_response( ).connect( [ dialog, this ]( int p_responseId ) {
+                if( dialog == nullptr ) {
+                    message_error( "importTiles", "Dialog is nullptr." );
+                    return;
+                }
+
+                // Handle the response:
+                switch( p_responseId ) {
+                case Gtk::ResponseType::OK: {
+                    _model.readTileSet( _model.m_settings.m_tseBS2,
+                                         dialog->get_file( )->get_path( ) );
+                    // redrawMap( _model.selectedMapY( ), _model.selectedMapX( ) );
+                    _model.markTileSetsChanged( );
+                    redraw( );
+                    break;
+                }
+                default:
+                case Gtk::ResponseType::CANCEL: break;
+                }
+                delete dialog;
+            } );
+
+            dialog->add_button( "_Cancel", Gtk::ResponseType::CANCEL );
+            dialog->add_button( "_Select", Gtk::ResponseType::OK );
+            dialog->show( );
+        } );
+
         _saveFsrootAction
             = _saveActions->add_action( "fsroot", [ & ]( ) { this->onFsRootSaveClick( ); } );
         _saveMapAction       = _saveActions->add_action( "map", [ & ]( ) {
@@ -159,6 +304,139 @@ namespace UI {
                 case Gtk::ResponseType::OK: {
                     _model.writeMapSlice( _model.selectedBank( ), _model.selectedMapX( ),
                                           _model.selectedMapY( ),
+                                          dialog->get_file( )->get_path( ) );
+                    break;
+                }
+                default:
+                case Gtk::ResponseType::CANCEL: break;
+                }
+                delete dialog;
+            } );
+
+            dialog->add_button( "_Cancel", Gtk::ResponseType::CANCEL );
+            dialog->add_button( "_Select", Gtk::ResponseType::OK );
+            dialog->show( );
+        } );
+
+        _saveExportblocks1Action = _saveActions->add_action( "exportblocks1", [ & ]( ) {
+            auto dialog = new Gtk::FileChooserDialog( "Export the blocks of the current tile set 1",
+                                                      Gtk::FileChooser::Action::SAVE, true );
+            auto mapFilter = Gtk::FileFilter::create( );
+            mapFilter->add_pattern( "*.bvd" );
+            mapFilter->set_name( "AdvanceMap 1.92 Block Set File" );
+            dialog->set_filter( mapFilter );
+            dialog->set_current_name( std::to_string( _model.m_settings.m_tseBS1 ) + ".bvd" );
+            dialog->set_transient_for( *this );
+            dialog->set_modal( true );
+            dialog->set_default_size( 800, 600 );
+            dialog->signal_response( ).connect( [ dialog, this ]( int p_responseId ) {
+                if( dialog == nullptr ) {
+                    message_error( "exportBlocks", "Dialog is nullptr." );
+                    return;
+                }
+                // Handle the response:
+                switch( p_responseId ) {
+                case Gtk::ResponseType::OK: {
+                    _model.writeBlockSet( _model.m_settings.m_tseBS1,
+                                          dialog->get_file( )->get_path( ) );
+                    break;
+                }
+                default:
+                case Gtk::ResponseType::CANCEL: break;
+                }
+                delete dialog;
+            } );
+
+            dialog->add_button( "_Cancel", Gtk::ResponseType::CANCEL );
+            dialog->add_button( "_Select", Gtk::ResponseType::OK );
+            dialog->show( );
+        } );
+        _saveExportblocks2Action = _saveActions->add_action( "exportblocks2", [ & ]( ) {
+            auto dialog = new Gtk::FileChooserDialog( "Export the blocks of the current tile set 2",
+                                                      Gtk::FileChooser::Action::SAVE, true );
+            auto mapFilter = Gtk::FileFilter::create( );
+            mapFilter->add_pattern( "*.bvd" );
+            mapFilter->set_name( "AdvanceMap 1.92 Block Set File" );
+            dialog->set_filter( mapFilter );
+            dialog->set_current_name( std::to_string( _model.m_settings.m_tseBS2 ) + ".bvd" );
+            dialog->set_transient_for( *this );
+            dialog->set_modal( true );
+            dialog->set_default_size( 800, 600 );
+            dialog->signal_response( ).connect( [ dialog, this ]( int p_responseId ) {
+                if( dialog == nullptr ) {
+                    message_error( "exportBlocks", "Dialog is nullptr." );
+                    return;
+                }
+                // Handle the response:
+                switch( p_responseId ) {
+                case Gtk::ResponseType::OK: {
+                    _model.writeBlockSet( _model.m_settings.m_tseBS2,
+                                          dialog->get_file( )->get_path( ) );
+                    break;
+                }
+                default:
+                case Gtk::ResponseType::CANCEL: break;
+                }
+                delete dialog;
+            } );
+
+            dialog->add_button( "_Cancel", Gtk::ResponseType::CANCEL );
+            dialog->add_button( "_Select", Gtk::ResponseType::OK );
+            dialog->show( );
+        } );
+        _saveExporttiles1Action  = _saveActions->add_action( "exporttiles1", [ & ]( ) {
+            auto dialog = new Gtk::FileChooserDialog( "Export the tiles of the current tile set 1",
+                                                       Gtk::FileChooser::Action::SAVE, true );
+            auto mapFilter = Gtk::FileFilter::create( );
+            mapFilter->add_pattern( "*.ts" );
+            mapFilter->set_name( "neo Tile Set File" );
+            dialog->set_filter( mapFilter );
+            dialog->set_current_name( std::to_string( _model.m_settings.m_tseBS1 ) + ".ts" );
+            dialog->set_transient_for( *this );
+            dialog->set_modal( true );
+            dialog->set_default_size( 800, 600 );
+            dialog->signal_response( ).connect( [ dialog, this ]( int p_responseId ) {
+                if( dialog == nullptr ) {
+                    message_error( "exportBlocks", "Dialog is nullptr." );
+                    return;
+                }
+                // Handle the response:
+                switch( p_responseId ) {
+                case Gtk::ResponseType::OK: {
+                    _model.writeTileSet( _model.m_settings.m_tseBS1,
+                                          dialog->get_file( )->get_path( ) );
+                    break;
+                }
+                default:
+                case Gtk::ResponseType::CANCEL: break;
+                }
+                delete dialog;
+            } );
+
+            dialog->add_button( "_Cancel", Gtk::ResponseType::CANCEL );
+            dialog->add_button( "_Select", Gtk::ResponseType::OK );
+            dialog->show( );
+        } );
+        _saveExporttiles2Action  = _saveActions->add_action( "exporttiles2", [ & ]( ) {
+            auto dialog = new Gtk::FileChooserDialog( "Export the tiles of the current tile set 2",
+                                                       Gtk::FileChooser::Action::SAVE, true );
+            auto mapFilter = Gtk::FileFilter::create( );
+            mapFilter->add_pattern( "*.ts" );
+            mapFilter->set_name( "neo Tile Set File" );
+            dialog->set_filter( mapFilter );
+            dialog->set_current_name( std::to_string( _model.m_settings.m_tseBS2 ) + ".ts" );
+            dialog->set_transient_for( *this );
+            dialog->set_modal( true );
+            dialog->set_default_size( 800, 600 );
+            dialog->signal_response( ).connect( [ dialog, this ]( int p_responseId ) {
+                if( dialog == nullptr ) {
+                    message_error( "exportBlocks", "Dialog is nullptr." );
+                    return;
+                }
+                // Handle the response:
+                switch( p_responseId ) {
+                case Gtk::ResponseType::OK: {
+                    _model.writeTileSet( _model.m_settings.m_tseBS2,
                                           dialog->get_file( )->get_path( ) );
                     break;
                 }
@@ -270,6 +548,15 @@ namespace UI {
         _saveMapbankAction->set_enabled( false );
         _saveExportmapAction->set_enabled( false );
 
+        _loadImportblocks1Action->set_enabled( false );
+        _loadImportblocks2Action->set_enabled( false );
+        _saveExportblocks1Action->set_enabled( false );
+        _saveExportblocks2Action->set_enabled( false );
+        _loadImporttiles1Action->set_enabled( false );
+        _loadImporttiles2Action->set_enabled( false );
+        _saveExporttiles1Action->set_enabled( false );
+        _saveExporttiles2Action->set_enabled( false );
+
         _loadMapLabel.hide( );
         if( _tileSetEditor ) { _tileSetEditor->hide( ); }
         if( _bankEditor ) { _bankEditor->hide( ); }
@@ -301,7 +588,14 @@ namespace UI {
             if( _tileSetEditor ) { _tileSetEditor->show( ); }
 
             _saveFsrootAction->set_enabled( true );
-            // TODO: actions
+            _loadImportblocks1Action->set_enabled( true );
+            _loadImportblocks2Action->set_enabled( true );
+            _saveExportblocks1Action->set_enabled( true );
+            _saveExportblocks2Action->set_enabled( true );
+            _loadImporttiles1Action->set_enabled( true );
+            _loadImporttiles2Action->set_enabled( true );
+            _saveExporttiles1Action->set_enabled( true );
+            _saveExporttiles2Action->set_enabled( true );
 
             break;
         default:

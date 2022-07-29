@@ -24,7 +24,8 @@ namespace DATA {
 
     bool readBlocks( FILE* p_file, block* p_tileSet, u16 p_startIdx, u16 p_size ) {
         if( p_file == 0 ) return false;
-        readNop( p_file, 4 );
+        read( p_file, &p_size, sizeof( u16 ), 1 );
+        readNop( p_file, 2 );
         for( u16 i = 0; i < p_size; ++i ) {
             read( p_file, &( p_tileSet + p_startIdx + i )->m_bottom, 4 * sizeof( blockAtom ), 1 );
             read( p_file, &( p_tileSet + p_startIdx + i )->m_top, 4 * sizeof( blockAtom ), 1 );

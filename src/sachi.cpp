@@ -52,13 +52,21 @@ int main( int p_argc, char* p_argv[] ) {
     app->set_accel_for_action( "load.fsroot", "<Primary>o" );
     app->set_accel_for_action( "load.reloadmap", "<Primary>r" );
     app->set_accel_for_action( "load.reloadmapbank", "<Primary><Shift>r" );
-    app->set_accel_for_action( "load.importmap", "<Primary>i" );
-    app->set_accel_for_action( "load.importlargemap", "<Primary><Shift>i" );
+    app->set_accel_for_action( "load.importmap", "<Primary>m" );
+    app->set_accel_for_action( "load.importlargemap", "<Primary><Shift>m" );
+    app->set_accel_for_action( "load.importblocks1", "<Primary>b" );
+    app->set_accel_for_action( "load.importblocks2", "<Primary><Shift>b" );
+    app->set_accel_for_action( "load.importtiles1", "<Primary>t" );
+    app->set_accel_for_action( "load.importtiles2", "<Primary><Shift>t" );
 
     app->set_accel_for_action( "save.fsroot", "<Primary>s" );
     app->set_accel_for_action( "save.map", "<Primary><Shift>s" );
     app->set_accel_for_action( "save.mapbank", "<Primary><Alt>s" );
-    app->set_accel_for_action( "save.exportmap", "<Primary>e" );
+    app->set_accel_for_action( "save.exportmap", "<Alt>m" );
+    app->set_accel_for_action( "save.exportblocks1", "<Alt><Shift>b" );
+    app->set_accel_for_action( "save.exportblocks2", "<Alt>b" );
+    app->set_accel_for_action( "save.exporttiles1", "<Alt><Shift>t" );
+    app->set_accel_for_action( "save.exporttiles2", "<Alt>t" );
 
     return app->run( p_argc, p_argv );
 }
