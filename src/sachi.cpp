@@ -62,11 +62,11 @@ int main( int p_argc, char* p_argv[] ) {
     app->set_accel_for_action( "save.fsroot", "<Primary>s" );
     app->set_accel_for_action( "save.map", "<Primary><Shift>s" );
     app->set_accel_for_action( "save.mapbank", "<Primary><Alt>s" );
-    app->set_accel_for_action( "save.exportmap", "<Alt>m" );
-    app->set_accel_for_action( "save.exportblocks1", "<Alt><Shift>b" );
-    app->set_accel_for_action( "save.exportblocks2", "<Alt>b" );
-    app->set_accel_for_action( "save.exporttiles1", "<Alt><Shift>t" );
-    app->set_accel_for_action( "save.exporttiles2", "<Alt>t" );
+    app->set_accel_for_action( "save.exportmap", "<Primary><Alt>m" );
+    app->set_accel_for_action( "save.exportblocks1", "<Primary><Alt><Shift>b" );
+    app->set_accel_for_action( "save.exportblocks2", "<Primary><Alt>b" );
+    app->set_accel_for_action( "save.exporttiles1", "<Primary><Alt><Shift>t" );
+    app->set_accel_for_action( "save.exporttiles2", "<Primary><Alt>t" );
 
     return app->run( p_argc, p_argv );
 }

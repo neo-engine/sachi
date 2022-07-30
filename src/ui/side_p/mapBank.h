@@ -28,10 +28,12 @@ namespace UI {
 
         Gtk::Frame _outerFrame;
         Gtk::Box _nameBox{ Gtk::Orientation::HORIZONTAL }, _entryBox{ Gtk::Orientation::VERTICAL };
+        Gtk::Box _nameBoxD{ Gtk::Orientation::HORIZONTAL };
         Gtk::Label                       _nameLabel;
+        Gtk::Label                       _nameLabelD;
         std::shared_ptr<Gtk::Adjustment> _mapXAdj, _mapYAdj;
         Gtk::SpinButton                  _mapXEntry, _mapYEntry;
-        Gtk::Button                      _loadMapButton{ "Load" };
+        Gtk::Button                      _loadMapButton{ "Load" }, _loadDiveMapButton{ "Dive" };
 
         mapBank( model& p_model, const std::string& p_yicon = "view-more-symbolic",
                  const std::string& p_xicon = "content-loading-symbolic" );
@@ -49,20 +51,31 @@ namespace UI {
         }
 
         virtual inline void redraw( ) {
-            setSelected( _model.selectedBank( ) == _bankName );
+            setSelected( _model.selectedBank( ) % DIVE_MAP == _bankName );
             collapse( _model.m_settings.m_focusMode || _collapsed );
             setSizeX( _model.sizeX( _bankName ) );
             setSizeY( _model.sizeY( _bankName ) );
             setStatus( _model.bankStatus( _bankName ) );
+            if( _loadDiveMapButton.is_visible( ) && _model.existsBank( _bankName + DIVE_MAP ) ) {
+                setDiveStatus( _model.bankStatus( _bankName + DIVE_MAP ) );
+                _nameBoxD.show( );
+            } else {
+                _nameBoxD.hide( );
+            }
         }
 
         virtual inline void collapse( bool p_collapsed = true ) {
             if( p_collapsed ) {
                 _entryBox.hide( );
                 _loadMapButton.hide( );
+                _loadDiveMapButton.hide( );
             } else {
                 _entryBox.show( );
-                _loadMapButton.show( );
+                if( _model.existsBank( _bankName ) && _model.bank( _bankName ).getDiveStatus( ) ) {
+                    _loadDiveMapButton.show( );
+                } else {
+                    _loadDiveMapButton.hide( );
+                }
             }
             _collapsed = p_collapsed;
         }
@@ -90,6 +103,8 @@ namespace UI {
             _bankName = p_bankName;
             _nameLabel.set_markup( "<span size=\"x-large\" weight=\"bold\">"
                                    + std::to_string( p_bankName ) + "</span>" );
+            _nameLabelD.set_markup( "<span size=\"x-large\" weight=\"bold\">"
+                                    + std::to_string( p_bankName ) + "U</span>" );
         }
 
         inline u8 getSizeX( ) const {
@@ -130,11 +145,30 @@ namespace UI {
             }
         }
 
+        inline void setDiveStatus( status p_status ) {
+            _nameBoxD.get_style_context( )->remove_class( "mapbank-saved" );
+            _nameBoxD.get_style_context( )->remove_class( "mapbank-created" );
+            _nameBoxD.get_style_context( )->remove_class( "mapbank-modified" );
+
+            switch( p_status ) {
+            case STATUS_SAVED: _nameBoxD.get_style_context( )->add_class( "mapbank-saved" ); break;
+            case STATUS_NEW: _nameBoxD.get_style_context( )->add_class( "mapbank-created" ); break;
+            case STATUS_EDITED_UNSAVED:
+                _nameBoxD.get_style_context( )->add_class( "mapbank-modified" );
+                break;
+            default: break;
+            }
+        }
+
         virtual inline void connect( const std::function<void( u16, u8, u8 )>& p_callback ) {
             if( !p_callback ) { return; }
 
             _loadMapButton.signal_clicked( ).connect( [ this, p_callback ]( ) {
                 p_callback( _bankName, _mapYEntry.get_value_as_int( ),
+                            _mapXEntry.get_value_as_int( ) );
+            } );
+            _loadDiveMapButton.signal_clicked( ).connect( [ this, p_callback ]( ) {
+                p_callback( _bankName + DIVE_MAP, _mapYEntry.get_value_as_int( ),
                             _mapXEntry.get_value_as_int( ) );
             } );
         }

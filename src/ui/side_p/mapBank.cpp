@@ -7,7 +7,9 @@ namespace UI {
           _mapYAdj( Gtk::Adjustment::create( 0.0, 0.0, 0.0, 1.0, 5.0, 0.0 ) ),
           _mapXEntry( _mapXAdj ), _mapYEntry( _mapYAdj ) {
         _loadMapButton.set_size_request( 70, 25 );
+        _loadDiveMapButton.set_size_request( 70, 25 );
         _nameBox.append( _nameLabel );
+        _nameBoxD.append( _nameLabelD );
 
         auto mainBox = Gtk::Box( Gtk::Orientation::HORIZONTAL );
         auto box3    = Gtk::Box( Gtk::Orientation::HORIZONTAL );
@@ -21,7 +23,13 @@ namespace UI {
 
         _outerFrame.set_child( mainBox );
 
-        mainBox.append( _nameBox );
+        Gtk::Box nbx{ Gtk::Orientation::VERTICAL };
+        nbx.append( _nameBox );
+        nbx.append( _nameBoxD );
+        _nameBox.set_vexpand( );
+        _nameBoxD.set_vexpand( );
+        mainBox.append( nbx );
+        _nameBoxD.hide( );
         mainBox.set_valign( Gtk::Align::CENTER );
 
         _nameLabel.set_size_request( 40, 25 );
@@ -52,7 +60,15 @@ namespace UI {
         _entryBox.append( box4 );
         mainBox.append( _entryBox );
 
-        mainBox.append( _loadMapButton );
+        Gtk::Box btnbx{ Gtk::Orientation::VERTICAL };
+        btnbx.get_style_context( )->add_class( "linked" );
+        btnbx.set_vexpand( true );
+        _loadMapButton.set_vexpand( true );
+        _loadDiveMapButton.set_vexpand( true );
+
+        btnbx.append( _loadMapButton );
+        btnbx.append( _loadDiveMapButton );
+        mainBox.append( btnbx );
     }
 
     mapBank::mapBank( model& p_model, u16 p_bankName, u8 p_sizeX, u8 p_sizeY,

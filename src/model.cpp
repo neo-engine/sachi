@@ -32,9 +32,11 @@ model model::readFromPath( const std::string& p_path ) {
             } catch( ... ) { continue; }
 
             if( nameAsNumber < 0 || nameAsNumber > MAX_MAPBANK_NAME ) {
-                message_error( "load FSROOT", std::string( "Skipping potential map bank " ) + name
-                                                  + ": name (as number) too large." );
-                continue;
+                if( nameAsNumber < DIVE_MAP && nameAsNumber > MAX_MAPBANK_NAME + DIVE_MAP ) {
+                    message_error( "load FSROOT", std::string( "Skipping potential map bank " )
+                                                      + name + ": name (as number) too large." );
+                    continue;
+                }
             }
 
             auto info = DATA::exploreMapBank( p.path( ) );
@@ -48,9 +50,11 @@ model model::readFromPath( const std::string& p_path ) {
             } catch( ... ) { continue; }
 
             if( nameAsNumber < 0 || nameAsNumber > MAX_MAPBANK_NAME ) {
-                message_error( "load FSROOT", std::string( "Skipping potential map bank " ) + name
-                                                  + ": name (as number) too large." );
-                continue;
+                if( nameAsNumber < DIVE_MAP && nameAsNumber > MAX_MAPBANK_NAME + DIVE_MAP ) {
+                    message_error( "load FSROOT", std::string( "Skipping potential map bank " )
+                                                      + name + ": name (as number) too large." );
+                    continue;
+                }
             }
 
             DATA::mapBankInfo info;
@@ -309,7 +313,19 @@ bool model::readLargeMap( u16 p_bank, u8 p_mapX, u8 p_mapY, u8 p_insertX, u8 p_i
 }
 
 bool model::checkOrLoadBank( int p_bank, bool p_forceRead ) {
-    if( p_bank < 0 || p_bank > MAX_MAPBANK_NAME ) { return false; }
+    if( p_bank > DIVE_MAP && p_bank <= DIVE_MAP + MAX_MAPBANK_NAME ) {
+        if( !existsBank( p_bank % DIVE_MAP ) ) { return false; }
+
+        if( !existsBank( p_bank ) ) {
+            // dive map does not exist yet, copy surface level
+            bank( p_bank )          = bank( p_bank % DIVE_MAP );
+            p_forceRead             = false;
+            bank( p_bank ).m_loaded = true;
+            markBankChanged( p_bank );
+        }
+    } else if( p_bank < 0 || p_bank > MAX_MAPBANK_NAME ) {
+        return false;
+    }
 
     if( !existsBank( p_bank ) ) { return false; }
 

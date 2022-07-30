@@ -28,6 +28,8 @@ typedef __int128          s128;
 constexpr u8 DAYTIMES = 5;
 constexpr u8 MAP_SIZE = 32;
 
+constexpr u16 DIVE_MAP = 1000;
+
 constexpr s64 MAX_MAPBANK_NAME = 99;
 constexpr s64 MAX_TILESET_NAME = 255;
 constexpr u8  MAX_MAPY         = 255;

@@ -64,6 +64,9 @@ struct model {
             inline u8 getOWStatus( ) const {
                 return m_info.m_isOWMap;
             }
+            inline u8 getDiveStatus( ) const {
+                return m_info.m_hasDiveMap;
+            }
             inline u16 getDefaultLocation( ) const {
                 return m_info.m_defaultLocation;
             }
@@ -88,6 +91,9 @@ struct model {
             }
             inline void setOWStatus( u8 p_owStatus ) {
                 m_info.m_isOWMap = p_owStatus;
+            }
+            inline void setDiveStatus( u8 p_owStatus ) {
+                m_info.m_hasDiveMap = p_owStatus;
             }
             inline void setDefaultLocation( u16 p_location ) {
                 m_info.m_defaultLocation = p_location;
@@ -305,6 +311,11 @@ struct model {
 
     void addNewMapBank( u16 p_bank, u8 p_sizeY, u8 p_sizeX, u8 p_mapMode = DATA::MAPMODE_COMBINED,
                         status p_status = STATUS_UNTOUCHED );
+
+    inline auto selectedBankIsDive( ) const {
+        return m_settings.m_selectedBank > DIVE_MAP
+               && m_settings.m_selectedBank <= DIVE_MAP + MAX_MAPBANK_NAME;
+    }
 
     inline auto selectedBank( ) const {
         return m_settings.m_selectedBank;

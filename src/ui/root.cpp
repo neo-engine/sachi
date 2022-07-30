@@ -667,10 +667,17 @@ namespace UI {
         _model.m_settings.m_tseBS1 = _model.slice( ).m_data.m_tIdx1;
         _model.m_settings.m_tseBS2 = _model.slice( ).m_data.m_tIdx2;
 
-        _headerBar->setTitle( "",
-                              std::to_string( p_bank ) + "/" + std::to_string( p_mapY ) + "_"
-                                  + std::to_string( p_mapX ) + ".map",
-                              _model.m_fsdata.m_fsrootPath, false );
+        if( _model.selectedBankIsDive( ) ) {
+            _headerBar->setTitle( "",
+                                  std::to_string( p_bank % DIVE_MAP ) + "/" + std::to_string( p_mapY ) + "_"
+                                      + std::to_string( p_mapX ) + ".map (Underwater)",
+                                  _model.m_fsdata.m_fsrootPath, false );
+        } else {
+            _headerBar->setTitle( "",
+                                  std::to_string( p_bank ) + "/" + std::to_string( p_mapY ) + "_"
+                                      + std::to_string( p_mapX ) + ".map",
+                                  _model.m_fsdata.m_fsrootPath, false );
+        }
 
         switchContext( CONTEXT_MAP_EDITOR );
         redraw( );

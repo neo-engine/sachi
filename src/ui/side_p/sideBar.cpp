@@ -133,7 +133,7 @@ namespace UI {
         for( auto& i : _mapBanks ) {
             if( i.second ) {
                 i.second->redraw( );
-                if( i.first == _model.selectedBank( ) ) {
+                if( i.first == _model.selectedBank( ) % DIVE_MAP ) {
                     i.second->select( );
                     i.second->setSelectedMap( _model.selectedMapX( ), _model.selectedMapY( ) );
                 } else {
@@ -161,7 +161,9 @@ namespace UI {
         _mapBanks.clear( );
 
         for( const auto& [ id, mb ] : _model.m_fsdata.m_mapBanks ) {
-            addNewMapBank( id, mb.getSizeY( ), mb.getSizeX( ), mb.getStatus( ) );
+            if( id < MAX_MAPBANK_NAME ) {
+                addNewMapBank( id, mb.getSizeY( ), mb.getSizeX( ), mb.getStatus( ) );
+            }
         }
     }
 

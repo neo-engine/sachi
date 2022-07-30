@@ -192,7 +192,6 @@ namespace DATA {
         u32 : 16;
     };
 
-
     struct mapSlice {
         mapSliceData m_data;
         u16          m_x = 0, m_y = 0;
@@ -535,8 +534,10 @@ namespace DATA {
         u8 m_sizeX   = 0;
         u8 m_sizeY   = 0;
         u8 m_mapMode = 2; // 0: normal maps/data in folder, 1: scattered in subfolders, 2: combined
-        u8 m_isOWMap = false; // stores whether the map bank has location data and hence
-                              // should appear in the fsinfo owmap list
+        u8 m_isOWMap : 1 = false;    // stores whether the map bank has location data and hence
+                                     // should appear in the fsinfo owmap list
+        u8 m_hasDiveMap : 1 = false; // stores whether there is a seperate map for hm dive
+        u8 : 6;
         u16 m_defaultLocation = 3002;
         u8  m_mapMug          = 0; // preview image shown when switching to this bank (0
                                    // for none)
