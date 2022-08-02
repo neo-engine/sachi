@@ -35,6 +35,11 @@ namespace UI {
         std::shared_ptr<Gio::SimpleAction>      _saveExportblocks2Action;
         std::shared_ptr<Gio::SimpleAction>      _saveExporttiles1Action;
         std::shared_ptr<Gio::SimpleAction>      _saveExporttiles2Action;
+        std::shared_ptr<Gio::SimpleActionGroup> _specialActions;
+        std::shared_ptr<Gio::SimpleAction>      _specialRecomputedns1Action;
+        std::shared_ptr<Gio::SimpleAction>      _specialRecomputedns2Action;
+        std::shared_ptr<Gio::SimpleAction>      _specialCopylocationsAction;
+        std::shared_ptr<Gio::SimpleAction>      _specialCopylocations2Action;
 
         context _context;
         model   _model;

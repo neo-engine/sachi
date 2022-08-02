@@ -549,6 +549,59 @@ void model::buildPalette( DATA::palette p_out[ DAYTIMES * 16 ], s8 p_ts1, s8 p_t
     }
 }
 
+u16 tintColor( u16 p_color, u16 p_tint, u8 p_tintFactor = 20 ) {
+    return ( p_color & ( 1 << 15 ) )
+           | ( ( p_color & 31 )
+               + ( ( p_tint & 31 ) - ( p_color & 31 ) ) * 10 / ( p_tintFactor - 3 ) )
+           | ( ( ( ( p_color >> 5 ) & 31 )
+                 + ( ( ( p_tint >> 5 ) & 31 ) - ( ( p_color >> 5 ) & 31 ) ) * 10
+                       / ( p_tintFactor + 2 ) )
+               << 5 )
+           | ( ( ( ( p_color >> 10 ) & 31 )
+                 + ( ( ( p_tint >> 10 ) & 31 ) - ( ( p_color >> 10 ) & 31 ) ) * 10 / p_tintFactor )
+               << 10 );
+}
+
+u16 swapColor( u16 p_color ) {
+    auto mx
+        = std::max( ( p_color & 31 ), std::max( ( p_color >> 5 ) & 31, ( p_color >> 10 ) & 31 ) );
+    auto mn
+        = std::min( ( p_color & 31 ), std::min( ( p_color >> 5 ) & 31, ( p_color >> 10 ) & 31 ) );
+
+    return ( p_color & ( 1 << 15 ) ) | ( mn << 10 ) | mx | ( mn << 5 );
+}
+
+constexpr u16 tints[ 5 ] = {
+    0x0000, // day (no tint)
+    0x3672, // dusk
+    0x24a4, // evening
+    0x1c44, // night
+    0x3f1c, // morning
+};
+constexpr u16 tint_fac[ 5 ] = { 400, 25, 35, 18, 30 };
+
+void model::recomputeDNS( u8 p_tsIdx, bool p_override ) {
+    if( !m_fsdata.m_blockSets.count( p_tsIdx ) ) { return; }
+
+    auto& bs = m_fsdata.m_blockSets[ p_tsIdx ];
+    for( u8 i{ 0 }; i < 8; ++i ) {
+        for( u8 j{ 0 }; j < 16; ++j ) {
+            u16 color = bs.m_pals[ i ].m_pal[ j ];
+            for( u8 k{ 1 }; k < 5; ++k ) {
+                if( bs.m_pals[ i + 8 * k ].m_pal[ j ] && !p_override ) {
+                    // don't overwrite existing pals
+                    continue;
+                }
+                bs.m_pals[ i + 8 * k ].m_pal[ j ]
+                    = ( k == 1 )
+                          ? tintColor( swapColor( color ), tints[ k ], tint_fac[ k ] )
+                          : tintColor( color, tints[ k ],
+                                       ( j <= 3 ? 5 : 0 ) + ( j == 15 ? -5 : 0 ) + tint_fac[ k ] );
+            }
+        }
+    }
+}
+
 void model::createBlockSet( u8 p_tsIdx ) {
     if( m_fsdata.m_blockSets.count( p_tsIdx ) ) { return; }
 

@@ -68,5 +68,10 @@ int main( int p_argc, char* p_argv[] ) {
     app->set_accel_for_action( "save.exporttiles1", "<Primary><Alt><Shift>t" );
     app->set_accel_for_action( "save.exporttiles2", "<Primary><Alt>t" );
 
+    app->set_accel_for_action( "special.recomputedns1", "<Primary>d" );
+    app->set_accel_for_action( "special.recomputedns2", "<Primary><Shift>d" );
+    app->set_accel_for_action( "special.copylocations", "<Primary>l" );
+    app->set_accel_for_action( "special.copylocations2", "<Primary><Shift>l" );
+
     return app->run( p_argc, p_argv );
 }

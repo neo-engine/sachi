@@ -13,8 +13,9 @@
 
 namespace UI {
     void root::initActions( ) {
-        _loadActions = Gio::SimpleActionGroup::create( );
-        _saveActions = Gio::SimpleActionGroup::create( );
+        _loadActions    = Gio::SimpleActionGroup::create( );
+        _saveActions    = Gio::SimpleActionGroup::create( );
+        _specialActions = Gio::SimpleActionGroup::create( );
         _loadFsrootAction
             = _loadActions->add_action( "fsroot", [ & ]( ) { this->onFsRootOpenClick( ); } );
         _loadReloadmapAction      = _loadActions->add_action( "reloadmap", [ & ]( ) {
@@ -451,8 +452,50 @@ namespace UI {
             dialog->show( );
         } );
 
+        _specialRecomputedns1Action = _specialActions->add_action( "recomputedns1", [ this ]( ) {
+            _model.recomputeDNS( _model.m_settings.m_tseBS1 );
+            _model.markTileSetsChanged( );
+            redraw( );
+        } );
+
+        _specialRecomputedns2Action = _specialActions->add_action( "recomputedns2", [ this ]( ) {
+            _model.recomputeDNS( _model.m_settings.m_tseBS2 );
+            _model.markTileSetsChanged( );
+            redraw( );
+        } );
+
+        _specialCopylocationsAction  = _specialActions->add_action( "copylocations", [ this ]( ) {
+            if( _model.selectedBank( ) == -1 ) { return; }
+            auto& data = _model.mapData( );
+
+            for( u8 x{ 0 }; x < 4; ++x ) {
+                for( u8 y{ 0 }; y < 4; ++y ) {
+                    data.m_locationIds[ x ][ y ] = data.m_locationIds[ 0 ][ 0 ];
+                }
+            }
+
+            _model.markSelectedBankChanged( );
+            redraw( );
+        } );
+        _specialCopylocations2Action = _specialActions->add_action( "copylocations2", [ this ]( ) {
+            if( _model.selectedBank( ) == -1 ) { return; }
+            auto& data = _model.mapData( );
+
+            for( u8 x{ 0 }; x < 4; ++x ) {
+                for( u8 y{ 0 }; y < 4; ++y ) {
+                    if( !data.m_locationIds[ x ][ y ] ) {
+                        data.m_locationIds[ x ][ y ] = data.m_locationIds[ 0 ][ 0 ];
+                    }
+                }
+            }
+
+            _model.markSelectedBankChanged( );
+            redraw( );
+        } );
+
         insert_action_group( "load", _loadActions );
         insert_action_group( "save", _saveActions );
+        insert_action_group( "special", _specialActions );
     }
 
     void root::initEvents( ) {
@@ -557,6 +600,11 @@ namespace UI {
         _saveExporttiles1Action->set_enabled( false );
         _saveExporttiles2Action->set_enabled( false );
 
+        _specialRecomputedns1Action->set_enabled( false );
+        _specialRecomputedns2Action->set_enabled( false );
+        _specialCopylocationsAction->set_enabled( false );
+        _specialCopylocations2Action->set_enabled( false );
+
         _loadMapLabel.hide( );
         if( _tileSetEditor ) { _tileSetEditor->hide( ); }
         if( _bankEditor ) { _bankEditor->hide( ); }
@@ -582,6 +630,8 @@ namespace UI {
             _saveMapAction->set_enabled( true );
             _saveExportmapAction->set_enabled( true );
             _saveMapbankAction->set_enabled( true );
+            _specialCopylocationsAction->set_enabled( true );
+            _specialCopylocations2Action->set_enabled( true );
             break;
         case CONTEXT_TILE_EDITOR:
             _mainBox.show( );
@@ -596,6 +646,9 @@ namespace UI {
             _loadImporttiles2Action->set_enabled( true );
             _saveExporttiles1Action->set_enabled( true );
             _saveExporttiles2Action->set_enabled( true );
+
+            _specialRecomputedns1Action->set_enabled( true );
+            _specialRecomputedns2Action->set_enabled( true );
 
             break;
         default:
@@ -669,8 +722,9 @@ namespace UI {
 
         if( _model.selectedBankIsDive( ) ) {
             _headerBar->setTitle( "",
-                                  std::to_string( p_bank % DIVE_MAP ) + "/" + std::to_string( p_mapY ) + "_"
-                                      + std::to_string( p_mapX ) + ".map (Underwater)",
+                                  std::to_string( p_bank % DIVE_MAP ) + "/"
+                                      + std::to_string( p_mapY ) + "_" + std::to_string( p_mapX )
+                                      + ".map (Underwater)",
                                   _model.m_fsdata.m_fsrootPath, false );
         } else {
             _headerBar->setTitle( "",

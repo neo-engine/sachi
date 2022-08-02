@@ -77,6 +77,7 @@ namespace UI {
         saveBox.append( *_saveButton );
         saveBox.append( *_saveMenuButton );
         saveBox.append( *_saveMenuTSButton );
+
         _headerBar.pack_start( openBox );
         _headerBar.pack_start( saveBox );
     }

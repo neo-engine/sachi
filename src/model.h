@@ -325,6 +325,8 @@ struct model {
         m_settings.m_selectedBank = p_newSelection;
     }
 
+    void recomputeDNS( u8 p_tsIdx, bool p_override = true );
+
     void setTileSet( u8 p_tsIdx, u8 p_newTileSet );
 
     /*

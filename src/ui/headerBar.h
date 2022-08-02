@@ -27,9 +27,9 @@ namespace UI {
         std::shared_ptr<Gtk::MenuButton> _openMenuButton, _saveMenuButton;
         std::shared_ptr<Gtk::MenuButton> _openMenuTSButton, _saveMenuTSButton;
         Gtk::PopoverMenu                 _openMenuPopover, _saveMenuPopover;
-        Gtk::PopoverMenu                 _openMenuTSPopover, _saveMenuTSPopover;
-        std::shared_ptr<Gio::Menu>       _openMenu, _saveMenu;
-        std::shared_ptr<Gio::Menu>       _openMenuTS, _saveMenuTS;
+        Gtk::PopoverMenu           _openMenuTSPopover, _saveMenuTSPopover;
+        std::shared_ptr<Gio::Menu> _openMenu, _saveMenu;
+        std::shared_ptr<Gio::Menu> _openMenuTS, _saveMenuTS;
 
         Gtk::Label _titleLabel, _subtitleLabel;
 
