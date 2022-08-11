@@ -4,11 +4,13 @@
 #include <string>
 #include <vector>
 
+#include <gtkmm/adjustment.h>
 #include <gtkmm/box.h>
 #include <gtkmm/button.h>
 #include <gtkmm/label.h>
 #include <gtkmm/popover.h>
 #include <gtkmm/scrolledwindow.h>
+#include <gtkmm/spinbutton.h>
 #include <gtkmm/togglebutton.h>
 
 #include "../../defines.h"
@@ -47,9 +49,9 @@ namespace UI {
             _popover.unparent( );
         }
 
-        void connect( const std::function<void( u64 )>& p_choiceChangedCallback );
+        virtual void connect( const std::function<void( u64 )>& p_choiceChangedCallback );
 
-        inline operator Gtk::Widget&( ) {
+        virtual inline operator Gtk::Widget&( ) {
             return _dropDown;
         }
 
@@ -57,7 +59,7 @@ namespace UI {
             return _currentSelection;
         }
 
-        inline void choose( u64 p_choice ) {
+        virtual inline void choose( u64 p_choice ) {
             if( p_choice >= _choices.size( ) ) { return; }
             updateLabel( p_choice );
             for( auto& i : _popoverBtnSelect ) { i.hide( ); }
@@ -84,10 +86,30 @@ namespace UI {
     };
 
     class locationDropDown : public dropDown {
-        u16 _lastRefresh = 0;
+        u16  _lastRefresh = 0;
+        bool _disableE    = false;
+
+        std::shared_ptr<Gtk::Adjustment> _locationA;
+        Gtk::SpinButton                  _locationE;
+        Gtk::Box                         _mainBox;
 
       public:
-        locationDropDown( ) : dropDown( { }, 0 ) {
+        locationDropDown( Gtk::Orientation p_orientation = Gtk::Orientation::VERTICAL );
+
+        inline operator Gtk::Widget&( ) override {
+            return _mainBox;
+        }
+
+        void connect( const std::function<void( u64 )>& p_choiceChangedCallback ) override;
+
+        inline void choose( u64 p_choice ) override {
+            if( p_choice >= _choices.size( ) ) { return; }
+            updateLabel( p_choice );
+            for( auto& i : _popoverBtnSelect ) { i.hide( ); }
+            _currentSelection = p_choice;
+            _popoverBtnSelect[ _currentSelection ].show( );
+
+            if( !_disableE ) { _locationE.set_value( p_choice ); }
         }
 
         /*

@@ -405,11 +405,12 @@ namespace DATA {
         EMERGE_WATER,
         LAST_VISITED,
         SLIDING_DOOR,
-        FLY
+        FLY,
+        SCRIPT
     };
     const std::vector<std::string> WARP_TYPE_NAMES{
-        "Default",        "Cave Entry",   "Door",         "Teleport",
-        "(Emerge Water)", "Last Visited", "Sliding Door", "(Fly)" };
+        "Default",      "Cave Entry",   "Door",  "Teleport", "(Emerge Water)",
+        "Last Visited", "Sliding Door", "(Fly)", "Script" };
 
     enum style : u8 {
         MSG_NORMAL          = 0,
@@ -500,7 +501,7 @@ namespace DATA {
 
                     u8 m_posX;
                     u8 m_posY;
-                    u8 m_posZ;
+                    u8 m_posZ; // script id if warp type is script
                 } m_warp;
                 struct {
                     u16 m_scriptId;
@@ -513,10 +514,7 @@ namespace DATA {
                     u8 m_treeIdx; // internal id of this berry tree
                 } m_berryTree;
                 struct {
-                    u8 m_bank; // map bank on whose map the fly pos should appear,
-                               // typically 10
-                    u8 m_mapX; // map coordinate where the fly pos should appear on ow map
-                    u8 m_mapY; // map coordinate where the fly pos should appear on ow map
+                    u16 m_location; // location idx
                 } m_flyPos;
             } m_data;
         } m_events[ MAX_EVENTS_PER_SLICE ];

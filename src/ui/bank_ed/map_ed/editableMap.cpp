@@ -63,6 +63,7 @@ namespace UI::MED {
             for( u8 y{ 0 }; y < scale; ++y ) {
                 auto l = std::make_shared<locationDropDown>( );
                 l->connect( [ this, x, y ]( u64 p_newChoice ) {
+                    if( _model.mapData( ).m_locationIds[ y ][ x ] == p_newChoice ) { return; }
                     _model.mapData( ).m_locationIds[ y ][ x ] = p_newChoice;
                     _model.markSelectedBankChanged( );
                     _rootWindow.redraw( );
@@ -553,6 +554,16 @@ namespace UI::MED {
                         block.m_movedata = _model.m_settings.m_currentlySelectedBlock.m_movedata;
                         _currentMap[ p_mapX + 1 ][ p_mapY + 1 ].updateBlockMovement(
                             block.m_movedata, p_blockX, p_blockY );
+                    }
+                } else if( _currentMapDisplayMode == mapEditor::MODE_EDIT_EVENTS ) {
+                    // move currently selected event to position that was clicked on
+                    auto  bx{ p_blockX + xcorr }, by{ p_blockY + ycorr };
+                    auto& evt = _model.mapEvent( );
+                    if( evt.m_type ) {
+                        evt.m_posX = bx;
+                        evt.m_posY = by;
+                        evt.m_posZ = block.m_movedata / 4;
+                        _rootWindow.redraw( );
                     }
                 }
                 _model.markSelectedBankChanged( );

@@ -14,8 +14,13 @@ namespace UI::MED {
           _aFlagA( Gtk::Adjustment::create( 0.0, 0.0, DATA::MAX_FLAG, 1.0, 1.0, 0.0 ) ),
           _dFlagA( Gtk::Adjustment::create( 0.0, 0.0, DATA::MAX_FLAG, 1.0, 1.0, 0.0 ) ),
           _messageIdx1A( Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) ),
+          _warpScriptIdxA( Gtk::Adjustment::create( 0.0, 0.0, (u8) -1, 1.0, 1.0, 0.0 ) ),
+          _scriptIdx1A( Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) ),
+          _scriptIdx2A( Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) ),
+          _flyLocationIdxA( Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) ),
           _selectedEventE( _selectedEventA ), _aFlagE( _aFlagA ), _dFlagE( _dFlagA ),
-          _messageIdx1E( _messageIdx1A ) {
+          _messageIdx1E( _messageIdx1A ), _warpScriptIdxE( _warpScriptIdxA ),
+          _scriptIdx1E( _scriptIdx1A ), _scriptIdx2E( _scriptIdx2A ) {
         _mainFrame = Gtk::Frame{ "Event Data" };
 
         Gtk::Box mainBox{ Gtk::Orientation::VERTICAL };
@@ -108,7 +113,7 @@ namespace UI::MED {
 
         _eventTrigger = std::make_shared<multiButton>(
             DATA::EVENT_TRIGGER_NAMES,
-            []( u32 p_state, u8 p_choice ) { return p_state ^ p_choice; }, 0,
+            []( u32 p_state, u8 p_choice ) { return p_state ^ ( 1 << p_choice ); }, 0,
             Gtk::Orientation::VERTICAL );
         if( _eventTrigger ) {
             g1.attach( *_eventTrigger, 0, 2, 2 );
@@ -198,6 +203,7 @@ namespace UI::MED {
             frame.set_margin_top( MARGIN );
             frame.set_label_align( Gtk::Align::CENTER );
             _generalData.append( frame );
+
             _detailFrames.push_back( std::move( frame ) );
         }
 
@@ -207,6 +213,7 @@ namespace UI::MED {
             frame.set_margin_top( MARGIN );
             frame.set_label_align( Gtk::Align::CENTER );
             _generalData.append( frame );
+
             _detailFrames.push_back( std::move( frame ) );
         }
 
@@ -216,6 +223,7 @@ namespace UI::MED {
             frame.set_margin_top( MARGIN );
             frame.set_label_align( Gtk::Align::CENTER );
             _generalData.append( frame );
+
             _detailFrames.push_back( std::move( frame ) );
         }
 
@@ -225,6 +233,35 @@ namespace UI::MED {
             frame.set_margin_top( MARGIN );
             frame.set_label_align( Gtk::Align::CENTER );
             _generalData.append( frame );
+
+            Gtk::Box fbox{ Gtk::Orientation::VERTICAL };
+            fbox.set_margin( MARGIN );
+            frame.set_child( fbox );
+            fbox.set_hexpand( false );
+
+            Gtk::Box ibox{ Gtk::Orientation::HORIZONTAL };
+            ibox.set_margin_top( MARGIN );
+            Gtk::Label ilabel{ "Script Idx" };
+            ilabel.set_hexpand( );
+
+            fbox.append( ibox );
+            ibox.append( ilabel );
+            ibox.append( _scriptIdx1E );
+            _scriptIdx1E.signal_value_changed( ).connect( [ this ]( ) {
+                if( _disableRedraw
+                    || _model.mapEvent( ).m_data.m_npc.m_scriptId
+                           == _scriptIdx1E.get_value_as_int( ) ) {
+                    return;
+                }
+                _disableSI1E = true;
+                _scriptIdx1E.update( );
+                _model.mapEvent( ).m_data.m_npc.m_scriptId = _scriptIdx1E.get_value_as_int( );
+                _model.markSelectedBankChanged( );
+                _rootWindow.redrawPanel( );
+                redraw( );
+                _disableSI1E = false;
+            } );
+
             _detailFrames.push_back( std::move( frame ) );
         }
 
@@ -260,9 +297,37 @@ namespace UI::MED {
             wpos.set_label_align( Gtk::Align::CENTER );
             fbox.append( wpos );
 
+            Gtk::Box f2box{ Gtk::Orientation::VERTICAL };
+            wpos.set_child( f2box );
+
+            _warpScriptIdxBox.set_margin_top( MARGIN );
+            Gtk::Label ilabel{ "Script Idx" };
+            ilabel.set_hexpand( );
+
+            _warpScriptIdxE.set_hexpand( );
+            _warpScriptIdxE.set_margin_end( MARGIN );
+            _warpScriptIdxE.set_margin_bottom( MARGIN );
+
+            f2box.append( _warpScriptIdxBox );
+            _warpScriptIdxBox.append( ilabel );
+            _warpScriptIdxBox.append( _warpScriptIdxE );
+            _warpScriptIdxE.signal_value_changed( ).connect( [ this ]( ) {
+                if( _disableRedraw
+                    || _model.mapEvent( ).m_data.m_warp.m_posZ
+                           == _warpScriptIdxE.get_value_as_int( ) ) {
+                    return;
+                }
+                _disableWSI                             = true;
+                _model.mapEvent( ).m_data.m_warp.m_posZ = _warpScriptIdxE.get_value_as_int( );
+                _model.markSelectedBankChanged( );
+                _rootWindow.redrawPanel( );
+                redraw( );
+                _disableWSI = false;
+            } );
+
             _warpTarget = std::make_shared<mapPosition>( true );
             if( _warpTarget ) {
-                wpos.set_child( *_warpTarget );
+                f2box.append( *_warpTarget );
                 _warpTarget->connect( [ this ]( ) {
                     if( _disableRedraw ) { return; }
                     auto& evt                = _model.mapEvent( );
@@ -302,6 +367,35 @@ namespace UI::MED {
             frame.set_margin_top( MARGIN );
             frame.set_label_align( Gtk::Align::CENTER );
             _generalData.append( frame );
+
+            Gtk::Box fbox{ Gtk::Orientation::VERTICAL };
+            fbox.set_margin( MARGIN );
+            frame.set_child( fbox );
+            fbox.set_hexpand( false );
+
+            Gtk::Box ibox{ Gtk::Orientation::HORIZONTAL };
+            ibox.set_margin_top( MARGIN );
+            Gtk::Label ilabel{ "Script Idx" };
+            ilabel.set_hexpand( );
+
+            fbox.append( ibox );
+            ibox.append( ilabel );
+            ibox.append( _scriptIdx2E );
+            _scriptIdx2E.signal_value_changed( ).connect( [ this ]( ) {
+                if( _disableRedraw
+                    || _model.mapEvent( ).m_data.m_generic.m_scriptId
+                           == _scriptIdx2E.get_value_as_int( ) ) {
+                    return;
+                }
+                _disableSI2E = true;
+                _scriptIdx2E.update( );
+                _model.mapEvent( ).m_data.m_generic.m_scriptId = _scriptIdx2E.get_value_as_int( );
+                _model.markSelectedBankChanged( );
+                _rootWindow.redrawPanel( );
+                redraw( );
+                _disableSI2E = false;
+            } );
+
             _detailFrames.push_back( std::move( frame ) );
         }
 
@@ -342,6 +436,33 @@ namespace UI::MED {
             frame.set_margin_top( MARGIN );
             frame.set_label_align( Gtk::Align::CENTER );
             _generalData.append( frame );
+
+            Gtk::Box fbox{ Gtk::Orientation::VERTICAL };
+            fbox.set_margin( MARGIN );
+            frame.set_child( fbox );
+            fbox.set_hexpand( false );
+
+            Gtk::Box ibox{ Gtk::Orientation::HORIZONTAL };
+            ibox.set_margin_top( MARGIN );
+            Gtk::Label ilabel{ "Fly Location" };
+            ilabel.set_hexpand( );
+
+            fbox.append( ibox );
+            ibox.append( ilabel );
+
+            _flyLocation = std::make_shared<locationDropDown>( );
+            if( _flyLocation ) {
+                ( (Gtk::Widget&) *_flyLocation ).set_hexpand( true );
+                ( (Gtk::Widget&) *_flyLocation ).set_vexpand( false );
+                ibox.append( *_flyLocation );
+                _flyLocation->connect( [ this ]( u64 p_newChoice ) {
+                    if( _model.mapEvent( ).m_data.m_flyPos.m_location == p_newChoice ) { return; }
+                    _model.mapEvent( ).m_data.m_flyPos.m_location = p_newChoice;
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redrawPanel( );
+                    redraw( );
+                } );
+            }
             _detailFrames.push_back( std::move( frame ) );
         }
     }
@@ -368,8 +489,25 @@ namespace UI::MED {
             _messageLabel1.set_text( _model.getMapString( evt.m_data.m_message.m_msgId ) );
             break;
         }
+        case DATA::EVENT_NPC: {
+            if( !_disableSI1E ) { _scriptIdx1E.set_value( evt.m_data.m_npc.m_scriptId ); }
+            break;
+        }
+        case DATA::EVENT_GENERIC: {
+            if( !_disableSI2E ) { _scriptIdx2E.set_value( evt.m_data.m_generic.m_scriptId ); }
+            break;
+        }
         case DATA::EVENT_WARP: {
             if( _warpType ) { _warpType->choose( evt.m_data.m_warp.m_warpType ); }
+            if( evt.m_data.m_warp.m_warpType == DATA::SCRIPT ) {
+                if( _warpTarget ) { ( (Gtk::Widget&) *_warpTarget ).hide( ); }
+                _warpJumpTo->hide( );
+                _warpScriptIdxBox.show( );
+            } else {
+                if( _warpTarget ) { ( (Gtk::Widget&) *_warpTarget ).show( ); }
+                _warpJumpTo->show( );
+                _warpScriptIdxBox.hide( );
+            }
             if( _warpTarget ) {
                 auto tmpos = DATA::warpPos{
                     evt.m_data.m_warp.m_bank,
@@ -377,6 +515,14 @@ namespace UI::MED {
                                                evt.m_data.m_warp.m_mapY, evt.m_data.m_warp.m_posY,
                                                evt.m_data.m_warp.m_posZ ) };
                 _warpTarget->setPosition( tmpos );
+            }
+            if( !_disableWSI ) { _warpScriptIdxE.set_value( evt.m_data.m_warp.m_posZ ); }
+            break;
+        }
+        case DATA::EVENT_FLY_POS: {
+            if( _flyLocation ) {
+                _flyLocation->refreshModel( _model );
+                _flyLocation->choose( evt.m_data.m_flyPos.m_location );
             }
             break;
         }

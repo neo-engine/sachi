@@ -50,8 +50,9 @@ namespace UI {
             _shbox2.set_end_widget( *_mapIsOW );
             _mapIsOW->connect( [ this ]( u8 p_newChoice ) {
                 if( _model.selectedBank( ) == -1 ) { return; }
+                if( _model.bank( ).getOWStatus( ) == p_newChoice ) { return; }
                 _model.bank( ).setOWStatus( p_newChoice );
-                _model.markSelectedBankChanged( );
+                _model.markSelectedBankChanged( 3 );
                 _rootWindow.redraw( );
             } );
         }
@@ -64,8 +65,10 @@ namespace UI {
         if( _bankDefaultLocation ) {
             _shbox3.set_end_widget( *_bankDefaultLocation );
             _bankDefaultLocation->connect( [ this ]( u64 p_newChoice ) {
+                if( _model.selectedBank( ) == -1 ) { return; }
+                if( _model.bank( ).getDefaultLocation( ) == p_newChoice ) { return; }
                 _model.bank( ).setDefaultLocation( p_newChoice );
-                _model.markSelectedBankChanged( );
+                _model.markSelectedBankChanged( 3 );
                 _rootWindow.redraw( );
             } );
         }
@@ -82,8 +85,9 @@ namespace UI {
             _shbox4.set_end_widget( *_mapHasDive );
             _mapHasDive->connect( [ this ]( u8 p_newChoice ) {
                 if( _model.selectedBank( ) == -1 ) { return; }
+                if( _model.bank( ).getDiveStatus( ) == p_newChoice ) { return; }
                 _model.bank( ).setDiveStatus( p_newChoice );
-                _model.markSelectedBankChanged( );
+                _model.markSelectedBankChanged( 3 );
                 _rootWindow.redraw( );
             } );
         }

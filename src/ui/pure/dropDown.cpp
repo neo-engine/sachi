@@ -137,6 +137,30 @@ namespace UI {
         choose( _currentSelection );
     }
 
+    locationDropDown::locationDropDown( Gtk::Orientation p_orientation )
+        : dropDown( { }, 0 ),
+          _locationA( Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) ),
+          _locationE{ _locationA }, _mainBox{ p_orientation } {
+
+        _mainBox.get_style_context( )->add_class( "linked" );
+
+        _dropDown.set_expand( true );
+        _locationE.set_expand( true );
+
+        _mainBox.append( _locationE );
+        _mainBox.append( _dropDown );
+    }
+
+    void locationDropDown::connect( const std::function<void( u64 )>& p_choiceChangedCallback ) {
+        dropDown::connect( p_choiceChangedCallback );
+
+        _locationE.signal_value_changed( ).connect( [ this, p_choiceChangedCallback ]( ) {
+            _disableE = true;
+            p_choiceChangedCallback( _locationE.get_value_as_int( ) );
+            _disableE = false;
+        } );
+    }
+
     void locationDropDown::refreshModel( model& p_model ) {
         auto sc = p_model.locationNames( );
         if( sc.m_lastRefresh <= _lastRefresh ) { return; }
@@ -150,6 +174,8 @@ namespace UI {
         _popoverButtons.clear( );
 
         if( _currentSelection >= _choices.size( ) ) { _currentSelection = _choices.size( ) - 1; }
+
+        _locationA->set_upper( _choices.size( ) );
 
         for( u64 i{ 0 }; i < _choices.size( ); ++i ) {
             auto ch = _choices[ i ];

@@ -29,9 +29,13 @@ namespace UI::MED {
 
         bool _disableRedraw = false;
         bool _disableMI1E   = false;
+        bool _disableSI1E   = false;
+        bool _disableSI2E   = false;
+        bool _disableWSI    = false;
 
         Gtk::Frame _mainFrame;
-        Gtk::Box   _generalData{ Gtk::Orientation::VERTICAL };
+        Gtk::Box   _generalData{ Gtk::Orientation::VERTICAL },
+            _warpScriptIdxBox{ Gtk::Orientation::HORIZONTAL };
         Gtk::Label _messageLabel1;
 
         std::vector<Gtk::Frame> _detailFrames;
@@ -40,8 +44,11 @@ namespace UI::MED {
         std::shared_ptr<mapPosition>     _eventPosition, _warpTarget;
         std::shared_ptr<dropDown>        _eventType, _messageType1, _warpType;
         std::shared_ptr<multiButton>     _eventTrigger;
-        std::shared_ptr<Gtk::Adjustment> _selectedEventA, _aFlagA, _dFlagA, _messageIdx1A;
-        Gtk::SpinButton                  _selectedEventE, _aFlagE, _dFlagE, _messageIdx1E;
+        std::shared_ptr<Gtk::Adjustment> _selectedEventA, _aFlagA, _dFlagA, _messageIdx1A,
+            _warpScriptIdxA, _scriptIdx1A, _scriptIdx2A, _flyLocationIdxA;
+        Gtk::SpinButton _selectedEventE, _aFlagE, _dFlagE, _messageIdx1E, _warpScriptIdxE,
+            _scriptIdx1E, _scriptIdx2E;
+        std::shared_ptr<locationDropDown> _flyLocation;
 
       public:
         eventSelector( model& p_model, root& p_root );
