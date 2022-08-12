@@ -103,6 +103,20 @@ namespace UI::MED {
         _aFlagE.set_margin_end( MARGIN );
         g1.attach( _aFlagE, 1, 0 );
 
+        _aFlagE.signal_value_changed( ).connect( [ this ]( ) {
+            if( _disableRedraw
+                || _model.mapEvent( ).m_activateFlag == _aFlagE.get_value_as_int( ) ) {
+                return;
+            }
+            _disableAF = true;
+            _aFlagE.update( );
+            _model.mapEvent( ).m_activateFlag = _aFlagE.get_value_as_int( );
+            _model.markSelectedBankChanged( );
+            _rootWindow.redrawPanel( );
+            redraw( );
+            _disableAF = false;
+        } );
+
         Gtk::Label dfL{ "Deactivation Flag" };
         g1.attach( dfL, 0, 1 );
         dfL.set_margin_end( MARGIN );
@@ -110,6 +124,20 @@ namespace UI::MED {
         dfL.set_hexpand( );
         _dFlagE.set_margin_end( MARGIN );
         g1.attach( _dFlagE, 1, 1 );
+
+        _dFlagE.signal_value_changed( ).connect( [ this ]( ) {
+            if( _disableRedraw
+                || _model.mapEvent( ).m_deactivateFlag == _dFlagE.get_value_as_int( ) ) {
+                return;
+            }
+            _disableDF = true;
+            _dFlagE.update( );
+            _model.mapEvent( ).m_deactivateFlag = _dFlagE.get_value_as_int( );
+            _model.markSelectedBankChanged( );
+            _rootWindow.redrawPanel( );
+            redraw( );
+            _disableDF = false;
+        } );
 
         _eventTrigger = std::make_shared<multiButton>(
             DATA::EVENT_TRIGGER_NAMES,
@@ -530,9 +558,8 @@ namespace UI::MED {
         }
 
         if( _eventPosition ) { _eventPosition->setPosition( _model.mapEventPosition( ) ); }
-
-        _aFlagE.set_value( evt.m_activateFlag );
-        _dFlagE.set_value( evt.m_deactivateFlag );
+        if( !_disableAF ) { _aFlagE.set_value( evt.m_activateFlag ); }
+        if( !_disableDF ) { _dFlagE.set_value( evt.m_deactivateFlag ); }
 
         if( _eventTrigger ) { _eventTrigger->choose( evt.m_trigger ); }
 

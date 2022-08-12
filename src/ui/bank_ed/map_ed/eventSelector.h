@@ -32,6 +32,8 @@ namespace UI::MED {
         bool _disableSI1E   = false;
         bool _disableSI2E   = false;
         bool _disableWSI    = false;
+        bool _disableAF     = false;
+        bool _disableDF     = false;
 
         Gtk::Frame _mainFrame;
         Gtk::Box   _generalData{ Gtk::Orientation::VERTICAL },
