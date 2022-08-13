@@ -947,12 +947,7 @@ const model::stringCache& model::pkmnNames( ) {
     for( u16 i{ 0 }; i <= maxPkmn( ); ++i ) {
         memset( tmp, 0, sizeof( tmp ) );
         fread( tmp, PKMN_NAMELENGTH, 1, f );
-        for( u8 j{ 0 }; j < PKMN_NAMELENGTH; ++j ) {
-            if( u8( tmp[ j ] ) == 0xe9 ) { // e´
-                tmp[ j ] = 'e';
-            }
-        }
-        m_pkmnNameCache.m_strings.push_back( std::string{ tmp } );
+        m_pkmnNameCache.m_strings.push_back( parseMapString( std::string{ tmp } ) );
     }
 
     m_pkmnNameCache.m_valid = true;
@@ -979,15 +974,37 @@ const model::stringCache& model::locationNames( ) {
     for( u16 i{ 0 };; ++i ) {
         memset( tmp, 0, sizeof( tmp ) );
         if( !fread( tmp, LOCATION_NAMELENGTH, 1, f ) ) { break; }
-        for( u8 j{ 0 }; j < LOCATION_NAMELENGTH; ++j ) {
-            if( u8( tmp[ j ] ) == 0xe9 ) { // e´
-                tmp[ j ] = 'e';
-            }
-        }
-        m_locationNameCache.m_strings.push_back( std::string{ tmp } );
+        m_locationNameCache.m_strings.push_back( parseMapString( std::string{ tmp } ) );
     }
 
     m_locationNameCache.m_valid = true;
     fclose( f );
     return m_locationNameCache;
+}
+
+const model::stringCache& model::itemNames( ) {
+    if( m_itemNameCache.m_valid ) { return m_itemNameCache; }
+
+    m_itemNameCache.m_lastRefresh++;
+    m_itemNameCache.m_strings.clear( );
+
+    // open pkmn name file
+    auto  path = m_fsdata.itemNamePath( ) + ".0.strb";
+    FILE* f    = fopen( path.c_str( ), "rb" );
+
+    if( !f ) {
+        m_itemNameCache.m_valid = false;
+        return m_itemNameCache;
+    }
+
+    char tmp[ ITEM_NAMELENGTH + 10 ];
+    for( u16 i{ 0 };; ++i ) {
+        memset( tmp, 0, sizeof( tmp ) );
+        if( !fread( tmp, ITEM_NAMELENGTH, 1, f ) ) { break; }
+        m_itemNameCache.m_strings.push_back( parseMapString( std::string{ tmp } ) );
+    }
+
+    m_itemNameCache.m_valid = true;
+    fclose( f );
+    return m_itemNameCache;
 }

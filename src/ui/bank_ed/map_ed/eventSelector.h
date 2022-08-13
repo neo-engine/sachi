@@ -11,6 +11,7 @@
 #include "../../../data/maprender.h"
 #include "../../../model.h"
 #include "../../pure/dropDown.h"
+#include "../../pure/itemSelector.h"
 #include "../../pure/mapPosition.h"
 #include "../../pure/multiButton.h"
 
@@ -44,13 +45,14 @@ namespace UI::MED {
 
         std::shared_ptr<Gtk::Button>     _warpJumpTo;
         std::shared_ptr<mapPosition>     _eventPosition, _warpTarget;
-        std::shared_ptr<dropDown>        _eventType, _messageType1, _warpType;
+        std::shared_ptr<dropDown>        _eventType, _messageType1, _warpType, _itemType;
         std::shared_ptr<multiButton>     _eventTrigger;
         std::shared_ptr<Gtk::Adjustment> _selectedEventA, _aFlagA, _dFlagA, _messageIdx1A,
             _warpScriptIdxA, _scriptIdx1A, _scriptIdx2A, _flyLocationIdxA;
         Gtk::SpinButton _selectedEventE, _aFlagE, _dFlagE, _messageIdx1E, _warpScriptIdxE,
             _scriptIdx1E, _scriptIdx2E;
         std::shared_ptr<locationDropDown> _flyLocation;
+        std::shared_ptr<itemSelector>     _item;
 
       public:
         eventSelector( model& p_model, root& p_root );

@@ -162,6 +162,10 @@ struct model {
             return m_fsrootPath + "/PICS/SPRITES/PLAT/plat";
         }
 
+        inline std::string itemSpritePath( ) const {
+            return m_fsrootPath + "/PICS/SPRITES/item.icon.rawb";
+        }
+
         inline std::string pkmnSpritePath( bool p_female = false, bool p_shiny = false,
                                            std::string p_type = "frnt" ) const {
             auto res = m_fsrootPath + "/PICS/SPRITES/" + p_type;
@@ -190,6 +194,14 @@ struct model {
 
         inline std::string locationNamePath( ) const {
             return m_fsrootPath + "/DATA/LOC_NAME/locname";
+        }
+
+        inline std::string itemNamePath( ) const {
+            return m_fsrootPath + "/DATA/ITEM_NAME/itemname";
+        }
+
+        inline std::string itemDscrPath( ) const {
+            return m_fsrootPath + "/DATA/ITEM_DSCR/itemdscr";
         }
     };
     struct settings {
@@ -247,6 +259,7 @@ struct model {
 
     stringCache m_pkmnNameCache;
     stringCache m_locationNameCache;
+    stringCache m_itemNameCache;
 
     /*
      * @brief: sets the ow status of the current map and correspondingly adds/removes
@@ -259,6 +272,11 @@ struct model {
         m_needsRefresh              = true;
         m_pkmnNameCache.m_valid     = false;
         m_locationNameCache.m_valid = false;
+        m_itemNameCache.m_valid     = false;
+    }
+
+    inline u16 maxItem( ) const {
+        return m_fsdata.m_fsInfo.m_maxItem;
     }
 
     inline u16 maxPkmn( ) const {
@@ -274,6 +292,7 @@ struct model {
 
         pkmnNames( );
         locationNames( );
+        itemNames( );
 
         m_needsRefresh = false;
     }
@@ -289,6 +308,12 @@ struct model {
      * cache, which is returned.
      */
     const stringCache& locationNames( );
+
+    /*
+     * @brief: reads the names of all items from the fsroot and stores them in a string
+     * cache, which is returned.
+     */
+    const stringCache& itemNames( );
 
     std::string getMapString( u16 p_stringId, u8 p_language = 0 );
 

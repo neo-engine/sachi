@@ -28,14 +28,16 @@ namespace UI {
 
         pkmnDscr _image = { u16( -1 ), u8( -1 ) };
 
-        bool _lock = false;
+        bool _lock        = false;
+        bool _disableIdx  = false;
+        bool _disableFIdx = false;
 
         u8 _maxFormes;
 
-        Gtk::Box                         _outerBox{ Gtk::Orientation::HORIZONTAL };
-        std::shared_ptr<Gtk::Adjustment> _pkmnIdxA, _pkmnFormeA;
-        Gtk::SpinButton                  _pkmnIdx, _pkmnForme;
-        std::shared_ptr<pkmnDropDown>    _pkmnChooser;
+        Gtk::Box                             _outerBox{ Gtk::Orientation::HORIZONTAL };
+        std::shared_ptr<Gtk::Adjustment>     _pkmnIdxA, _pkmnFormeA;
+        Gtk::SpinButton                      _pkmnIdx, _pkmnForme;
+        std::shared_ptr<stringCacheDropDown> _pkmnChooser;
 
         std::shared_ptr<fsImage<imageType::IT_SPRITE_PKMN>> _pkmnImage;
 
@@ -46,7 +48,7 @@ namespace UI {
          * @brief: reload list of pkmn names from fs and correspondinly update the widget
          */
         inline void refreshModel( ) {
-            if( _pkmnChooser ) { _pkmnChooser->refreshModel( _model ); }
+            if( _pkmnChooser ) { _pkmnChooser->refreshModel( _model.pkmnNames( ) ); }
             if( _pkmnIdxA ) { _pkmnIdxA->set_upper( _model.maxPkmn( ) ); }
         }
 
@@ -60,15 +62,19 @@ namespace UI {
             if( !p_callback ) { return; }
 
             _pkmnIdxA->signal_value_changed( ).connect( [ this, p_callback ]( ) {
-                if( _lock ) { return; }
+                if( _lock || _disableIdx ) { return; }
+                _disableIdx        = true;
                 auto [ i, unused ] = getData( );
                 setData( { i, 0 } );
                 p_callback( getData( ) );
+                _disableIdx = false;
             } );
             _pkmnFormeA->signal_value_changed( ).connect( [ this, p_callback ]( ) {
-                if( _lock ) { return; }
+                if( _lock || _disableFIdx ) { return; }
+                _disableFIdx = true;
                 setData( getData( ) );
                 p_callback( getData( ) );
+                _disableFIdx = false;
             } );
             if( _pkmnChooser ) {
                 _pkmnChooser->connect( [ this, p_callback ]( u64 p_newChoice ) {

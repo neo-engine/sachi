@@ -112,32 +112,32 @@ namespace DATA {
     unsigned int   TEMP[ 12288 ]   = { 0 };
     unsigned short TEMP_PAL[ 256 ] = { 0 };
     bitmap         bitmap::fromBGImage( const char* p_path ) {
-        auto res = bitmap{ 256, 192 };
-        if( !readPictureData( TEMP, TEMP_PAL, p_path ) ) {
-            std::memset( TEMP, 0, sizeof( TEMP ) );
-            std::memset( TEMP_PAL, 0, sizeof( TEMP_PAL ) );
+                auto res = bitmap{ 256, 192 };
+                if( !readPictureData( TEMP, TEMP_PAL, p_path ) ) {
+                    std::memset( TEMP, 0, sizeof( TEMP ) );
+                    std::memset( TEMP_PAL, 0, sizeof( TEMP_PAL ) );
         }
 
-        u8* ptr = reinterpret_cast<u8*>( TEMP );
+                u8* ptr = reinterpret_cast<u8*>( TEMP );
 
-        auto pos{ 0 };
-        for( auto y{ 0 }; y < 192; ++y ) {
-            for( auto x{ 0 }; x < 256; ++x, ++pos ) {
-                auto colidx{ ptr[ pos ] };
-                auto col{ TEMP_PAL[ colidx ] };
-                //                printf( "\x1b[48;2;%u;%u;%um \x1b[0;00m", red( col ), green( col
-                //                ), blue( col ) );
-                if( colidx ) {
-                    res( x, y ) = pixel( red( col ), green( col ), blue( col ), 255 );
+                auto pos{ 0 };
+                for( auto y{ 0 }; y < 192; ++y ) {
+                    for( auto x{ 0 }; x < 256; ++x, ++pos ) {
+                        auto colidx{ ptr[ pos ] };
+                        auto col{ TEMP_PAL[ colidx ] };
+                        //                printf( "\x1b[48;2;%u;%u;%um \x1b[0;00m", red( col ), green( col
+                        //                ), blue( col ) );
+                        if( colidx ) {
+                            res( x, y ) = pixel( red( col ), green( col ), blue( col ), 255 );
                 } else {
-                    res( x, y ) = pixel{ 0, 0, 0, 0 };
+                            res( x, y ) = pixel{ 0, 0, 0, 0 };
                 }
             }
-            //            printf( "\n" );
+                    //            printf( "\n" );
         }
 
-        // res->writeToFile( "test.png" );
-        return res;
+                // res->writeToFile( "test.png" );
+                return res;
     }
 
     void bitmap::addFromSprite( unsigned* p_imgData, unsigned short* p_palData, size_t p_width,
@@ -185,14 +185,33 @@ namespace DATA {
     }
 
     bitmap bitmap::fromSprite( const char* p_path, size_t p_width, size_t p_height ) {
-        if( !readData<unsigned short, unsigned int>( p_path, 16, TEMP_PAL, p_width * p_height / 8,
-                                                     TEMP ) ) {
-            std::memset( TEMP, 0, sizeof( TEMP ) );
-            std::memset( TEMP_PAL, 0, sizeof( TEMP_PAL ) );
+        FILE* f;
+        if( p_path[ 0 ] == '@' ) {
+            // sprite bank, need to seek correct position first
+
+            u16  species = 0;
+            char buffer[ 100 ];
+            sscanf( p_path, "@%hu@%90s", &species, buffer );
+            f = fopen( buffer, "rb" );
+            if( f ) {
+                fseek( f, species * ( 16 * sizeof( u16 ) + p_width * p_height / 8 * sizeof( u32 ) ),
+                       SEEK_SET );
+            }
+        } else {
+            f = fopen( p_path, "rb" );
         }
 
         auto res = bitmap{ p_width, p_height };
-        res.addFromSprite( TEMP, TEMP_PAL, p_width, p_height );
+        if( !f ) {
+            std::memset( TEMP, 0, sizeof( TEMP ) );
+            std::memset( TEMP_PAL, 0, sizeof( TEMP_PAL ) );
+        } else {
+            DATA::read( f, TEMP_PAL, sizeof( unsigned short ), 16 );
+            DATA::read( f, TEMP, sizeof( unsigned ), p_width * p_height / 8 );
+            res.addFromSprite( TEMP, TEMP_PAL, p_width, p_height );
+            fclose( f );
+        }
+
         return res;
     }
 

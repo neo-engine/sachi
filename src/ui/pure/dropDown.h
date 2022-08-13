@@ -72,17 +72,17 @@ namespace UI {
         }
     };
 
-    class pkmnDropDown : public dropDown {
+    class stringCacheDropDown : public dropDown {
         u16 _lastRefresh = 0;
 
       public:
-        pkmnDropDown( ) : dropDown( { }, 0 ) {
+        stringCacheDropDown( ) : dropDown( { }, 0 ) {
         }
 
         /*
          * @brief: update the available choices
          */
-        void refreshModel( model& p_model );
+        void refreshModel( const model::stringCache& p_model );
     };
 
     class locationDropDown : public dropDown {

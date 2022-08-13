@@ -88,11 +88,10 @@ namespace UI {
         }
     }
 
-    void pkmnDropDown::refreshModel( model& p_model ) {
-        auto sc = p_model.pkmnNames( );
-        if( sc.m_lastRefresh <= _lastRefresh ) { return; }
-        _lastRefresh = sc.m_lastRefresh;
-        _choices     = sc.m_strings;
+    void stringCacheDropDown::refreshModel( const model::stringCache& p_model ) {
+        if( p_model.m_lastRefresh <= _lastRefresh ) { return; }
+        _lastRefresh = p_model.m_lastRefresh;
+        _choices     = p_model.m_strings;
         _popoverBtnSelect.clear( );
 
         for( auto btn : _popoverButtons ) {

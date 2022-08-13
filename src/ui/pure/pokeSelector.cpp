@@ -24,7 +24,7 @@ namespace UI {
         numBox.get_style_context( )->add_class( "linked" );
 
         selBox.append( numBox );
-        _pkmnChooser = std::make_shared<pkmnDropDown>( );
+        _pkmnChooser = std::make_shared<stringCacheDropDown>( );
         if( _pkmnChooser ) { selBox.append( *_pkmnChooser ); }
         selBox.get_style_context( )->add_class( "linked" );
     }
@@ -32,8 +32,8 @@ namespace UI {
     void pokeSelector::setData( pkmnDscr p_data ) {
         _lock = true;
         if( _pkmnChooser ) { _pkmnChooser->choose( p_data.first ); }
-        _pkmnIdx.set_value( p_data.first );
-        _pkmnForme.set_value( p_data.second );
+        if( !_disableIdx ) { _pkmnIdx.set_value( p_data.first ); }
+        if( !_disableFIdx ) { _pkmnForme.set_value( p_data.second ); }
         // TODO: update adjustment
         if( _pkmnFormeA ) { _pkmnFormeA->set_upper( 32 ); }
 

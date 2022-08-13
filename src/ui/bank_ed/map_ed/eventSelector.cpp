@@ -232,6 +232,39 @@ namespace UI::MED {
             frame.set_label_align( Gtk::Align::CENTER );
             _generalData.append( frame );
 
+            Gtk::Box fbox{ Gtk::Orientation::VERTICAL };
+            fbox.set_margin( MARGIN );
+            frame.set_child( fbox );
+
+            _itemType = std::make_shared<dropDown>( DATA::ITEM_TYPE_NAMES );
+            if( _itemType ) {
+                fbox.append( *_itemType );
+                ( (Gtk::Widget&) ( *_itemType ) ).set_hexpand( true );
+
+                _itemType->connect( [ this ]( u64 p_newChoice ) {
+                    if( _disableRedraw ) { return; }
+                    _model.mapEvent( ).m_data.m_item.m_itemType = p_newChoice;
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redraw( );
+                } );
+            }
+
+            _item = std::make_shared<itemSelector>( _model );
+            if( _item ) {
+                fbox.append( *_item );
+
+                _item->connect( [ this ]( u16 p_item ) {
+                    if( _disableRedraw ) { return; }
+                    _model.mapEvent( ).m_data.m_item.m_itemId = p_item;
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redraw( );
+                } );
+
+                ( (Gtk::Widget&) ( *_item ) ).set_hexpand( true );
+                ( (Gtk::Widget&) ( *_item ) ).set_margin_top( MARGIN );
+            }
+            fbox.set_hexpand( false );
+
             _detailFrames.push_back( std::move( frame ) );
         }
 
@@ -515,6 +548,14 @@ namespace UI::MED {
 
             if( !_disableMI1E ) { _messageIdx1E.set_value( evt.m_data.m_message.m_msgId ); }
             _messageLabel1.set_text( _model.getMapString( evt.m_data.m_message.m_msgId ) );
+            break;
+        }
+        case DATA::EVENT_ITEM: {
+            if( _itemType ) { _itemType->choose( evt.m_data.m_item.m_itemType ); }
+            if( _item ) {
+                _item->refreshModel( );
+                _item->setData( evt.m_data.m_item.m_itemId );
+            }
             break;
         }
         case DATA::EVENT_NPC: {

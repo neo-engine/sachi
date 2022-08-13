@@ -428,6 +428,8 @@ namespace DATA {
         "Normal",        "Information", "No-redraw",         "No-redraw Info", "(Mart Item)",
         "(Obtain Item)", "Sign",        "Wait for Interact", "Interact (Info)" };
 
+    const std::vector<std::string> ITEM_TYPE_NAMES{ "Hidden", "Normal", "HM/TM/TR" };
+
     constexpr u8 MAX_EVENTS_PER_SLICE = 64;
     constexpr u8 MAX_PKMN_PER_SLICE   = 30;
     struct mapData {
