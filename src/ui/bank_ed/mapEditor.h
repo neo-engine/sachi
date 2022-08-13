@@ -42,6 +42,9 @@ namespace UI {
 
         mapDisplayMode _currentMapDisplayMode; // current widget stateg
 
+        DATA::mapData::event _cachedEvent;
+        bool                 _hasCachedEvent = false;
+
         // sub widgets
         Gtk::Box _mapEditorMainBox{ Gtk::Orientation::VERTICAL };
 
@@ -86,5 +89,9 @@ namespace UI {
          * @brief: Updates the block selection of the block / movement selector widgets.
          */
         void updateSelectedBlock( );
+
+        void copyAction( );
+        void pasteAction( );
+        void deleteAction( );
     };
 } // namespace UI

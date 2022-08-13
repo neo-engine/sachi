@@ -52,7 +52,7 @@ namespace UI {
                 if( _model.selectedBank( ) == -1 ) { return; }
                 if( _model.bank( ).getOWStatus( ) == p_newChoice ) { return; }
                 _model.bank( ).setOWStatus( p_newChoice );
-                _model.markSelectedBankChanged( 3 );
+                _model.markSelectedBankChanged( );
                 _rootWindow.redraw( );
             } );
         }
@@ -68,7 +68,7 @@ namespace UI {
                 if( _model.selectedBank( ) == -1 ) { return; }
                 if( _model.bank( ).getDefaultLocation( ) == p_newChoice ) { return; }
                 _model.bank( ).setDefaultLocation( p_newChoice );
-                _model.markSelectedBankChanged( 3 );
+                _model.markSelectedBankChanged( );
                 _rootWindow.redraw( );
             } );
         }
@@ -87,7 +87,7 @@ namespace UI {
                 if( _model.selectedBank( ) == -1 ) { return; }
                 if( _model.bank( ).getDiveStatus( ) == p_newChoice ) { return; }
                 _model.bank( ).setDiveStatus( p_newChoice );
-                _model.markSelectedBankChanged( 3 );
+                _model.markSelectedBankChanged( );
                 _rootWindow.redraw( );
             } );
         }

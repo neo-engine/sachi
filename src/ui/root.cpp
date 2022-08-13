@@ -492,6 +492,15 @@ namespace UI {
             _model.markSelectedBankChanged( );
             redraw( );
         } );
+        _specialCacheAction          = _specialActions->add_action( "copy", [ this ]( ) {
+            if( _bankEditor ) { _bankEditor->copyAction( ); }
+        } );
+        _specialPasteAction          = _specialActions->add_action( "paste", [ this ]( ) {
+            if( _bankEditor ) { _bankEditor->pasteAction( ); }
+        } );
+        _specialDeleteAction         = _specialActions->add_action( "delete", [ this ]( ) {
+            if( _bankEditor ) { _bankEditor->deleteAction( ); }
+        } );
 
         insert_action_group( "load", _loadActions );
         insert_action_group( "save", _saveActions );
@@ -604,6 +613,9 @@ namespace UI {
         _specialRecomputedns2Action->set_enabled( false );
         _specialCopylocationsAction->set_enabled( false );
         _specialCopylocations2Action->set_enabled( false );
+        _specialCacheAction->set_enabled( false );
+        _specialPasteAction->set_enabled( false );
+        _specialDeleteAction->set_enabled( false );
 
         _loadMapLabel.hide( );
         if( _tileSetEditor ) { _tileSetEditor->hide( ); }
@@ -632,6 +644,10 @@ namespace UI {
             _saveMapbankAction->set_enabled( true );
             _specialCopylocationsAction->set_enabled( true );
             _specialCopylocations2Action->set_enabled( true );
+
+            _specialCacheAction->set_enabled( true );
+            _specialPasteAction->set_enabled( true );
+            _specialDeleteAction->set_enabled( true );
             break;
         case CONTEXT_TILE_EDITOR:
             _mainBox.show( );

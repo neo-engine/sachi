@@ -45,14 +45,26 @@ namespace UI {
         }
 
         inline void redraw( ) {
-            if( _mapEditor ) { _mapEditor->redraw( ); }
-            if( _bankOverview ) { _bankOverview->redraw( ); }
-            if( _bankSettings ) { _bankSettings->redraw( ); }
+            switch( _mapNotebook.get_current_page( ) ) {
+            case 0:
+                if( _mapEditor ) { _mapEditor->redraw( ); }
+                break;
+            case 1:
+                if( _bankOverview ) { _bankOverview->redraw( ); }
+                break;
+            case 2:
+                if( _bankSettings ) { _bankSettings->redraw( ); }
+                break;
+            }
         }
 
         inline void replaceOverviewMap( const DATA::computedMapSlice& p_map, u8 p_mapY,
                                         u8 p_mapX ) {
             if( _bankOverview ) { _bankOverview->replaceOverviewMap( p_map, p_mapY, p_mapX ); }
         }
+
+        void copyAction( );
+        void pasteAction( );
+        void deleteAction( );
     };
 } // namespace UI

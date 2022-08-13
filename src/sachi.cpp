@@ -72,6 +72,9 @@ int main( int p_argc, char* p_argv[] ) {
     app->set_accel_for_action( "special.recomputedns2", "<Primary><Shift>d" );
     app->set_accel_for_action( "special.copylocations", "<Primary>l" );
     app->set_accel_for_action( "special.copylocations2", "<Primary><Shift>l" );
+    app->set_accel_for_action( "special.copy", "<Primary>c" );
+    app->set_accel_for_action( "special.paste", "<Primary>v" );
+    app->set_accel_for_action( "special.delete", "<Primary>x" );
 
     return app->run( p_argc, p_argv );
 }

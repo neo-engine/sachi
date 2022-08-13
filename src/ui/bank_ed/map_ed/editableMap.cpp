@@ -563,6 +563,7 @@ namespace UI::MED {
                         evt.m_posX = bx;
                         evt.m_posY = by;
                         evt.m_posZ = block.m_movedata / 4;
+                        if( !evt.m_posZ ) { evt.m_posZ = 3; }
                         _rootWindow.redraw( );
                     }
                 }

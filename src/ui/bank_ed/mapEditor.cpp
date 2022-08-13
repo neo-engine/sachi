@@ -135,8 +135,49 @@ namespace UI {
         if( _blockPicker ) { return _blockPicker->blockSetLookup( p_blockIdx ); }
         return nullptr;
     }
+
     void mapEditor::updateSelectedBlock( ) {
         if( _blockPicker && _blockPicker->isVisible( ) ) { _blockPicker->updateSelection( ); }
         if( _mvmtPicker && _mvmtPicker->isVisible( ) ) { _mvmtPicker->updateSelection( ); }
     }
+
+    void mapEditor::copyAction( ) {
+        switch( _currentMapDisplayMode ) {
+        case MODE_EDIT_EVENTS: {
+            _cachedEvent    = _model.mapEvent( );
+            _hasCachedEvent = true;
+            break;
+        }
+        default: break;
+        }
+    }
+
+    void mapEditor::pasteAction( ) {
+        switch( _currentMapDisplayMode ) {
+        case MODE_EDIT_EVENTS: {
+            if( _hasCachedEvent ) {
+                _model.mapEvent( ) = _cachedEvent;
+                _model.markSelectedBankChanged( );
+                redraw( );
+            }
+            break;
+        }
+
+        default: break;
+        }
+    }
+
+    void mapEditor::deleteAction( ) {
+        switch( _currentMapDisplayMode ) {
+        case MODE_EDIT_EVENTS: {
+            _model.mapEvent( ) = DATA::mapData::event{ };
+
+            _model.markSelectedBankChanged( );
+            redraw( );
+            break;
+        }
+        default: break;
+        }
+    }
+
 } // namespace UI

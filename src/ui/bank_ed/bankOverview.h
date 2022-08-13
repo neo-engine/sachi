@@ -44,5 +44,12 @@ namespace UI {
                                         u8 p_mapX ) {
             _mapBankOverview.replaceMap( p_map, p_mapY, p_mapX );
         }
+
+        void copyAction( ) {
+        }
+        void pasteAction( ) {
+        }
+        void deleteAction( ) {
+        }
     };
 } // namespace UI

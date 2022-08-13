@@ -40,6 +40,9 @@ namespace UI {
         std::shared_ptr<Gio::SimpleAction>      _specialRecomputedns2Action;
         std::shared_ptr<Gio::SimpleAction>      _specialCopylocationsAction;
         std::shared_ptr<Gio::SimpleAction>      _specialCopylocations2Action;
+        std::shared_ptr<Gio::SimpleAction>      _specialCacheAction;
+        std::shared_ptr<Gio::SimpleAction>      _specialPasteAction;
+        std::shared_ptr<Gio::SimpleAction>      _specialDeleteAction;
 
         context _context;
         model   _model;

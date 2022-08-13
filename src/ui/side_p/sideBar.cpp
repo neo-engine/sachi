@@ -161,7 +161,7 @@ namespace UI {
         _mapBanks.clear( );
 
         for( const auto& [ id, mb ] : _model.m_fsdata.m_mapBanks ) {
-            if( id < MAX_MAPBANK_NAME ) {
+            if( id <= MAX_MAPBANK_NAME ) {
                 addNewMapBank( id, mb.getSizeY( ), mb.getSizeX( ), mb.getStatus( ) );
             }
         }
