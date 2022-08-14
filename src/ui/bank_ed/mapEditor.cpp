@@ -57,10 +57,14 @@ namespace UI {
         _mvmtPicker = std::make_shared<MED::movementSelector>( p_model, p_root );
         if( _mvmtPicker ) { _sideBox.append( *_mvmtPicker ); }
 
-        _evtPicker = std::make_shared<MED::eventSelector>( p_model, p_root );
+        _evtPicker = std::make_shared<MED::eventSelector>( p_model, *this, p_root );
         if( _evtPicker ) { _sideBox.append( *_evtPicker ); }
 
         setNewMapEditMode( MODE_EDIT_TILES );
+    }
+
+    void mapEditor::redrawMap( bool p_full ) {
+        if( _edMap ) { _edMap->redraw( p_full ); }
     }
 
     void mapEditor::redraw( ) {
@@ -70,7 +74,7 @@ namespace UI {
         if( _mvmtPicker ) { _mvmtPicker->redraw( ); }
         if( _evtPicker ) { _evtPicker->redraw( ); }
         if( _actionBar ) { _actionBar->redraw( ); }
-        if( _edMap ) { _edMap->redraw( ); }
+        redrawMap( );
         if( _meta ) { _meta->redraw( ); }
 
         if( _encList ) { _encList->redraw( ); }

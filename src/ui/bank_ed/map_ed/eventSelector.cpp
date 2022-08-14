@@ -7,20 +7,22 @@
 #include "eventSelector.h"
 
 namespace UI::MED {
-    eventSelector::eventSelector( model& p_model, root& p_root )
-        : _model{ p_model }, _rootWindow{ p_root },
-          _selectedEventA( Gtk::Adjustment::create( 0.0, 0.0, DATA::MAX_EVENTS_PER_SLICE - 1.0, 1.0,
-                                                    1.0, 0.0 ) ),
-          _aFlagA( Gtk::Adjustment::create( 0.0, 0.0, DATA::MAX_FLAG, 1.0, 1.0, 0.0 ) ),
-          _dFlagA( Gtk::Adjustment::create( 0.0, 0.0, DATA::MAX_FLAG, 1.0, 1.0, 0.0 ) ),
-          _messageIdx1A( Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) ),
-          _warpScriptIdxA( Gtk::Adjustment::create( 0.0, 0.0, (u8) -1, 1.0, 1.0, 0.0 ) ),
-          _scriptIdx1A( Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) ),
-          _scriptIdx2A( Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) ),
-          _flyLocationIdxA( Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) ),
-          _selectedEventE( _selectedEventA ), _aFlagE( _aFlagA ), _dFlagE( _dFlagA ),
-          _messageIdx1E( _messageIdx1A ), _warpScriptIdxE( _warpScriptIdxA ),
-          _scriptIdx1E( _scriptIdx1A ), _scriptIdx2E( _scriptIdx2A ) {
+    eventSelector::eventSelector( model& p_model, mapEditor& p_parent, root& p_root )
+        : _model{ p_model }, _parent{ p_parent }, _rootWindow{ p_root },
+          _selectedEventA{ Gtk::Adjustment::create( 0.0, 0.0, DATA::MAX_EVENTS_PER_SLICE - 1.0, 1.0,
+                                                    1.0, 0.0 ) },
+          _aFlagA{ Gtk::Adjustment::create( 0.0, 0.0, DATA::MAX_FLAG, 1.0, 1.0, 0.0 ) },
+          _dFlagA{ Gtk::Adjustment::create( 0.0, 0.0, DATA::MAX_FLAG, 1.0, 1.0, 0.0 ) },
+          _messageIdx1A{ Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) },
+          _warpScriptIdxA{ Gtk::Adjustment::create( 0.0, 0.0, (u8) -1, 1.0, 1.0, 0.0 ) },
+          _scriptIdx1A{ Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) },
+          _scriptIdx2A{ Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) },
+          _flyLocationIdxA{ Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) },
+          _berryTreeIdxA{ Gtk::Adjustment::create( 0.0, 0.0, (u8) -1, 1.0, 1.0, 0.0 ) },
+          _selectedEventE{ _selectedEventA }, _aFlagE{ _aFlagA }, _dFlagE{ _dFlagA },
+          _messageIdx1E{ _messageIdx1A }, _warpScriptIdxE{ _warpScriptIdxA },
+          _scriptIdx1E{ _scriptIdx1A }, _scriptIdx2E{ _scriptIdx2A }, _berryTreeIdxE{
+                                                                          _berryTreeIdxA } {
         _mainFrame = Gtk::Frame{ "Event Data" };
 
         Gtk::Box mainBox{ Gtk::Orientation::VERTICAL };
@@ -44,7 +46,8 @@ namespace UI::MED {
         _selectedEventE.signal_value_changed( ).connect( [ this ]( ) {
             if( _disableRedraw ) { return; }
             _model.selectEvent( _selectedEventE.get_value_as_int( ) );
-            _rootWindow.redraw( );
+            redraw( );
+            _parent.redrawMap( false );
         } );
 
         // evt type
@@ -58,7 +61,9 @@ namespace UI::MED {
                 if( _disableRedraw ) { return; }
                 _model.mapEvent( ).m_type = p_newChoice;
                 _model.markSelectedBankChanged( );
-                _rootWindow.redraw( );
+                redraw( );
+                _parent.redrawMap( false );
+                _rootWindow.redrawPanel( );
             } );
         }
         idxBox.set_hexpand( false );
@@ -83,7 +88,9 @@ namespace UI::MED {
                 evt.m_posY = pos.localY( );
                 evt.m_posZ = pos.m_posZ;
                 _model.markSelectedBankChanged( );
-                _rootWindow.redraw( );
+                redraw( );
+                _parent.redrawMap( false );
+                _rootWindow.redrawPanel( );
             } );
         }
 
@@ -150,7 +157,8 @@ namespace UI::MED {
                 auto& evt     = _model.mapEvent( );
                 evt.m_trigger = p_newChoice;
                 _model.markSelectedBankChanged( );
-                _rootWindow.redraw( );
+                redraw( );
+                _rootWindow.redrawPanel( );
             } );
         }
 
@@ -187,10 +195,10 @@ namespace UI::MED {
                     if( _disableRedraw ) { return; }
                     _model.mapEvent( ).m_data.m_message.m_msgType = p_newChoice;
                     _model.markSelectedBankChanged( );
-                    _rootWindow.redraw( );
+                    _rootWindow.redrawPanel( );
+                    redraw( );
                 } );
             }
-            fbox.set_hexpand( false );
 
             Gtk::Box ibox{ Gtk::Orientation::HORIZONTAL };
             ibox.set_margin_top( MARGIN );
@@ -220,6 +228,8 @@ namespace UI::MED {
             fbox.append( _messageLabel1 );
 
             _messageLabel1.set_margin_top( MARGIN );
+
+            fbox.set_hexpand( false );
             _detailFrames.push_back( std::move( frame ) );
         }
 
@@ -245,7 +255,9 @@ namespace UI::MED {
                     if( _disableRedraw ) { return; }
                     _model.mapEvent( ).m_data.m_item.m_itemType = p_newChoice;
                     _model.markSelectedBankChanged( );
-                    _rootWindow.redraw( );
+                    _rootWindow.redrawPanel( );
+                    _parent.redrawMap( false );
+                    redraw( );
                 } );
             }
 
@@ -257,7 +269,8 @@ namespace UI::MED {
                     if( _disableRedraw ) { return; }
                     _model.mapEvent( ).m_data.m_item.m_itemId = p_item;
                     _model.markSelectedBankChanged( );
-                    _rootWindow.redraw( );
+                    _rootWindow.redrawPanel( );
+                    redraw( );
                 } );
 
                 ( (Gtk::Widget&) ( *_item ) ).set_hexpand( true );
@@ -298,7 +311,41 @@ namespace UI::MED {
             Gtk::Box fbox{ Gtk::Orientation::VERTICAL };
             fbox.set_margin( MARGIN );
             frame.set_child( fbox );
-            fbox.set_hexpand( false );
+
+            _scriptType2 = std::make_shared<dropDown>( DATA::SCRIPT_TYPE_NAMES );
+            if( _scriptType2 ) {
+                fbox.append( *_scriptType2 );
+                ( (Gtk::Widget&) ( *_scriptType2 ) ).set_hexpand( true );
+
+                _scriptType2->connect( [ this ]( u64 p_newChoice ) {
+                    if( _disableRedraw ) { return; }
+                    if( p_newChoice ) {
+                        _model.mapEvent( ).m_data.m_npc.m_scriptType = 9 + p_newChoice;
+                    } else {
+                        _model.mapEvent( ).m_data.m_npc.m_scriptType = 0;
+                    }
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redrawPanel( );
+                    redraw( );
+                } );
+            }
+
+            _npcOWSprite = std::make_shared<owSpriteSelector>( _model, false );
+            if( _npcOWSprite ) {
+                fbox.append( *_npcOWSprite );
+
+                _npcOWSprite->connect( [ this ]( std::pair<u16, u8> p_sprite ) {
+                    if( _disableRedraw ) { return; }
+                    _model.mapEvent( ).m_data.m_npc.m_spriteId = p_sprite.first;
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redrawPanel( );
+                    _parent.redrawMap( false );
+                    redraw( );
+                } );
+
+                ( (Gtk::Widget&) ( *_npcOWSprite ) ).set_hexpand( true );
+                ( (Gtk::Widget&) ( *_npcOWSprite ) ).set_margin_top( MARGIN );
+            }
 
             Gtk::Box ibox{ Gtk::Orientation::HORIZONTAL };
             ibox.set_margin_top( MARGIN );
@@ -323,6 +370,7 @@ namespace UI::MED {
                 _disableSI1E = false;
             } );
 
+            fbox.set_hexpand( false );
             _detailFrames.push_back( std::move( frame ) );
         }
 
@@ -348,7 +396,8 @@ namespace UI::MED {
                     if( _disableRedraw ) { return; }
                     _model.mapEvent( ).m_data.m_warp.m_warpType = p_newChoice;
                     _model.markSelectedBankChanged( );
-                    _rootWindow.redraw( );
+                    _rootWindow.redrawPanel( );
+                    redraw( );
                 } );
             }
             fbox.set_hexpand( false );
@@ -401,7 +450,8 @@ namespace UI::MED {
                     evt.m_data.m_warp.m_posY = pos.localY( );
                     evt.m_data.m_warp.m_posZ = pos.m_posZ;
                     _model.markSelectedBankChanged( );
-                    _rootWindow.redraw( );
+                    _rootWindow.redrawPanel( );
+                    redraw( );
                 } );
             }
             _warpJumpTo = createButton( "", "_Follow Warp", [ this ]( ) {
@@ -432,7 +482,24 @@ namespace UI::MED {
             Gtk::Box fbox{ Gtk::Orientation::VERTICAL };
             fbox.set_margin( MARGIN );
             frame.set_child( fbox );
-            fbox.set_hexpand( false );
+
+            _scriptType1 = std::make_shared<dropDown>( DATA::SCRIPT_TYPE_NAMES );
+            if( _scriptType1 ) {
+                fbox.append( *_scriptType1 );
+                ( (Gtk::Widget&) ( *_scriptType1 ) ).set_hexpand( true );
+
+                _scriptType1->connect( [ this ]( u64 p_newChoice ) {
+                    if( _disableRedraw ) { return; }
+                    if( p_newChoice ) {
+                        _model.mapEvent( ).m_data.m_generic.m_scriptType = 9 + p_newChoice;
+                    } else {
+                        _model.mapEvent( ).m_data.m_generic.m_scriptType = 0;
+                    }
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redrawPanel( );
+                    redraw( );
+                } );
+            }
 
             Gtk::Box ibox{ Gtk::Orientation::HORIZONTAL };
             ibox.set_margin_top( MARGIN );
@@ -457,6 +524,7 @@ namespace UI::MED {
                 _disableSI2E = false;
             } );
 
+            fbox.set_hexpand( false );
             _detailFrames.push_back( std::move( frame ) );
         }
 
@@ -468,6 +536,12 @@ namespace UI::MED {
             frame.set_margin_top( MARGIN );
             frame.set_label_align( Gtk::Align::CENTER );
             _generalData.append( frame );
+
+            Gtk::Box fbox{ Gtk::Orientation::VERTICAL };
+            fbox.set_margin( MARGIN );
+            frame.set_child( fbox );
+
+            fbox.set_hexpand( false );
             _detailFrames.push_back( std::move( frame ) );
         }
 
@@ -479,6 +553,36 @@ namespace UI::MED {
             frame.set_margin_top( MARGIN );
             frame.set_label_align( Gtk::Align::CENTER );
             _generalData.append( frame );
+
+            Gtk::Box fbox{ Gtk::Orientation::VERTICAL };
+            fbox.set_margin( MARGIN );
+            frame.set_child( fbox );
+
+            Gtk::Box ibox{ Gtk::Orientation::HORIZONTAL };
+            ibox.set_margin_top( MARGIN );
+            Gtk::Label ilabel{ "Internal Tree No." };
+            ilabel.set_hexpand( );
+
+            fbox.append( ibox );
+            ibox.append( ilabel );
+            ibox.append( _berryTreeIdxE );
+            _berryTreeIdxE.signal_value_changed( ).connect( [ this ]( ) {
+                if( _disableRedraw
+                    || _model.mapEvent( ).m_data.m_berryTree.m_treeIdx
+                           == _berryTreeIdxE.get_value_as_int( ) ) {
+                    return;
+                }
+                _disableBTI = true;
+                _berryTreeIdxE.update( );
+                _model.mapEvent( ).m_data.m_berryTree.m_treeIdx
+                    = _berryTreeIdxE.get_value_as_int( );
+                _model.markSelectedBankChanged( );
+                _rootWindow.redrawPanel( );
+                redraw( );
+                _disableBTI = false;
+            } );
+
+            fbox.set_hexpand( false );
             _detailFrames.push_back( std::move( frame ) );
         }
 
@@ -488,6 +592,12 @@ namespace UI::MED {
             frame.set_margin_top( MARGIN );
             frame.set_label_align( Gtk::Align::CENTER );
             _generalData.append( frame );
+
+            Gtk::Box fbox{ Gtk::Orientation::VERTICAL };
+            fbox.set_margin( MARGIN );
+            frame.set_child( fbox );
+
+            fbox.set_hexpand( false );
             _detailFrames.push_back( std::move( frame ) );
         }
 
@@ -501,7 +611,6 @@ namespace UI::MED {
             Gtk::Box fbox{ Gtk::Orientation::VERTICAL };
             fbox.set_margin( MARGIN );
             frame.set_child( fbox );
-            fbox.set_hexpand( false );
 
             Gtk::Box ibox{ Gtk::Orientation::HORIZONTAL };
             ibox.set_margin_top( MARGIN );
@@ -524,6 +633,7 @@ namespace UI::MED {
                     redraw( );
                 } );
             }
+            fbox.set_hexpand( false );
             _detailFrames.push_back( std::move( frame ) );
         }
     }
@@ -558,12 +668,27 @@ namespace UI::MED {
             }
             break;
         }
-        case DATA::EVENT_NPC: {
-            if( !_disableSI1E ) { _scriptIdx1E.set_value( evt.m_data.m_npc.m_scriptId ); }
+        case DATA::EVENT_OW_PKMN: {
+            // TODO
             break;
         }
-        case DATA::EVENT_GENERIC: {
-            if( !_disableSI2E ) { _scriptIdx2E.set_value( evt.m_data.m_generic.m_scriptId ); }
+        case DATA::EVENT_NPC: {
+            // TODO: movemode
+            if( _scriptType2 ) {
+                if( !( evt.m_data.m_npc.m_scriptType & 127 ) ) {
+                    _scriptType2->choose( 0 );
+                } else {
+                    _scriptType2->choose( ( evt.m_data.m_npc.m_scriptType & 127 ) - 9 );
+                }
+            }
+            if( !_disableSI1E ) { _scriptIdx1E.set_value( evt.m_data.m_npc.m_scriptId ); }
+            if( _npcOWSprite ) {
+                _npcOWSprite->setData(
+                    evt.m_data.m_npc.m_spriteId,
+                    DATA::moveModeToFrame(
+                        DATA::moveMode( evt.m_data.m_npc.m_movementType ),
+                        DATA::frameFuncionForIdx( evt.m_data.m_npc.m_spriteId ) ) );
+            }
             break;
         }
         case DATA::EVENT_WARP: {
@@ -586,6 +711,29 @@ namespace UI::MED {
                 _warpTarget->setPosition( tmpos );
             }
             if( !_disableWSI ) { _warpScriptIdxE.set_value( evt.m_data.m_warp.m_posZ ); }
+            break;
+        }
+        case DATA::EVENT_GENERIC: {
+            if( _scriptType1 ) {
+                if( !( evt.m_data.m_generic.m_scriptType & 127 ) ) {
+                    _scriptType1->choose( 0 );
+                } else {
+                    _scriptType1->choose( ( evt.m_data.m_generic.m_scriptType & 127 ) - 9 );
+                }
+            }
+            if( !_disableSI2E ) { _scriptIdx2E.set_value( evt.m_data.m_generic.m_scriptId ); }
+            break;
+        }
+        case DATA::EVENT_HMOBJECT: {
+            // TODO
+            break;
+        }
+        case DATA::EVENT_BERRYTREE: {
+            if( !_disableBTI ) { _berryTreeIdxE.set_value( evt.m_data.m_berryTree.m_treeIdx ); }
+            break;
+        }
+        case DATA::EVENT_NPC_MESSAGE: {
+            // TODO
             break;
         }
         case DATA::EVENT_FLY_POS: {

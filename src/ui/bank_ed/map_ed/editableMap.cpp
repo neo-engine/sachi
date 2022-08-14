@@ -86,7 +86,7 @@ namespace UI::MED {
         _mapEditor.updateSelectedBlock( );
     }
 
-    void editableMap::redraw( ) {
+    void editableMap::redraw( bool p_full ) {
         if( _model.selectedBank( ) == -1 ) { return; }
 
         _mapGrid.set_row_spacing( _model.m_settings.m_neighborSpacing );
@@ -116,49 +116,51 @@ namespace UI::MED {
                     _currentMap[ x + 1 ][ y + 1 ].show( );
                 }
 
-                auto filtered = std::vector<DATA::mapBlockAtom>( );
-                for( u8 y2{ 0 }; y2 < DATA::SIZE; ++y2 ) {
-                    for( u8 x2{ 0 }; x2 < DATA::SIZE; ++x2 ) {
-                        bool addx{ false }, addy{ false };
-                        if( x2 < mapwd && x >= 0 ) {
-                            addx = true;
-                        } else if( x2 >= DATA::SIZE - mapwd && x <= 0 ) {
-                            addx = true;
-                        } else if( x == 0 ) {
-                            addx = true;
-                        }
-                        if( y2 < maphg && y >= 0 ) {
-                            addy = true;
-                        } else if( y2 >= DATA::SIZE - maphg && y <= 0 ) {
-                            addy = true;
-                        } else if( y == 0 ) {
-                            addy = true;
-                        }
+                if( p_full ) {
+                    auto filtered = std::vector<DATA::mapBlockAtom>( );
+                    for( u8 y2{ 0 }; y2 < DATA::SIZE; ++y2 ) {
+                        for( u8 x2{ 0 }; x2 < DATA::SIZE; ++x2 ) {
+                            bool addx{ false }, addy{ false };
+                            if( x2 < mapwd && x >= 0 ) {
+                                addx = true;
+                            } else if( x2 >= DATA::SIZE - mapwd && x <= 0 ) {
+                                addx = true;
+                            } else if( x == 0 ) {
+                                addx = true;
+                            }
+                            if( y2 < maphg && y >= 0 ) {
+                                addy = true;
+                            } else if( y2 >= DATA::SIZE - maphg && y <= 0 ) {
+                                addy = true;
+                            } else if( y == 0 ) {
+                                addy = true;
+                            }
 
-                        if( addx && addy ) {
-                            if( empty ) {
-                                filtered.push_back( { 0, 1 } );
-                            } else {
-                                filtered.push_back(
-                                    mbank[ mapY + y ][ mapX + x ].m_data.m_blocks[ y2 ][ x2 ] );
+                            if( addx && addy ) {
+                                if( empty ) {
+                                    filtered.push_back( { 0, 1 } );
+                                } else {
+                                    filtered.push_back(
+                                        mbank[ mapY + y ][ mapX + x ].m_data.m_blocks[ y2 ][ x2 ] );
+                                }
                             }
                         }
                     }
-                }
 
-                _currentMap[ x + 1 ][ y + 1 ].set(
-                    filtered,
-                    [ this ]( DATA::mapBlockAtom p_block ) {
-                        return _mapEditor.blockSetLookup( p_block.m_blockidx );
-                    },
-                    mapwd );
+                    _currentMap[ x + 1 ][ y + 1 ].set(
+                        filtered,
+                        [ this ]( DATA::mapBlockAtom p_block ) {
+                            return _mapEditor.blockSetLookup( p_block.m_blockidx );
+                        },
+                        mapwd );
+                }
 
                 _currentMap[ x + 1 ][ y + 1 ].setSpacing( _model.m_settings.m_blockSpacing );
                 _currentMap[ x + 1 ][ y + 1 ].setScale( _model.m_settings.m_blockScale );
 
                 _currentMap[ x + 1 ][ y + 1 ].setOverlayHidden( _currentMapDisplayMode
                                                                 != mapEditor::MODE_EDIT_MOVEMENT );
-                _currentMap[ x + 1 ][ y + 1 ].draw( );
+                if( p_full ) { _currentMap[ x + 1 ][ y + 1 ].draw( ); }
                 _currentMap[ x + 1 ][ y + 1 ].queue_resize( );
             }
         }

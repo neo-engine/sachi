@@ -84,7 +84,8 @@ namespace UI::MED {
                 if( _lock ) { return; }
                 _model.encounterData( _slot ) = getData( );
                 _model.markSelectedBankChanged( );
-                _rootWindow.redraw( );
+                _rootWindow.redrawPanel( );
+                redraw( );
             } );
         }
 

@@ -166,6 +166,41 @@ struct model {
             return m_fsrootPath + "/PICS/SPRITES/item.icon.rawb";
         }
 
+        inline std::string owSpritePath( u16 p_spriteIdx, u8 p_forme = 0, bool p_shiny = false,
+                                         bool p_female = false ) const {
+            if( p_spriteIdx > DATA::PKMN_SPRITE ) {
+                u16  species = p_spriteIdx - DATA::PKMN_SPRITE;
+                u8   forme   = p_forme;
+                bool shiny   = p_shiny;
+                bool female  = p_female;
+
+                char buf[ 100 ];
+                if( !forme ) {
+                    snprintf( buf, 99, "%02d/%hu%s%s", species / m_fsInfo.m_fileSplit, species,
+                              shiny ? "s" : "", female ? "f" : "" );
+                } else {
+                    snprintf( buf, 99, "%02d/%hu%s%s_%hhu", species / m_fsInfo.m_fileSplit, species,
+                              shiny ? "s" : "", female ? "f" : "", forme );
+                }
+                return m_fsrootPath + "/PICS/SPRITES/NPCP/" + std::string( buf ) + ".rsd";
+            } else if( p_spriteIdx < 250 ) {
+                return m_fsrootPath + "/PICS/SPRITES/OW/" + std::to_string( p_spriteIdx ) + ".rsd";
+            }
+            if( p_spriteIdx == 250 ) {
+                // load player appearance
+                p_spriteIdx = 0;
+            } else if( p_spriteIdx == 251 ) {
+                // load rival's appearance
+                p_spriteIdx = 1;
+            } else {
+                p_spriteIdx &= 255;
+            }
+
+            return m_fsrootPath + "/PICS/SPRITES/NPC/"
+                   + std::to_string( p_spriteIdx / m_fsInfo.m_fileSplit ) + "/"
+                   + std::to_string( p_spriteIdx ) + ".rsd";
+        }
+
         inline std::string pkmnSpritePath( bool p_female = false, bool p_shiny = false,
                                            std::string p_type = "frnt" ) const {
             auto res = m_fsrootPath + "/PICS/SPRITES/" + p_type;

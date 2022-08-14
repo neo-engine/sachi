@@ -184,6 +184,30 @@ namespace DATA {
         delete[] image_data;
     }
 
+    bitmap bitmap::fromAnimatedSprite( const char* p_path, u8 p_frame ) {
+        FILE* f = fopen( p_path, "rb" );
+        if( !f ) {
+            std::memset( TEMP, 0, sizeof( TEMP ) );
+            std::memset( TEMP_PAL, 0, sizeof( TEMP_PAL ) );
+            return bitmap{ 8, 8 };
+        }
+
+        DATA::read( f, TEMP_PAL, sizeof( u16 ), 16 );
+        u8 frameCount, width, height;
+        DATA::read( f, &frameCount, sizeof( u8 ), 1 );
+        DATA::read( f, &width, sizeof( u8 ), 1 );
+        DATA::read( f, &height, sizeof( u8 ), 1 );
+        DATA::read( f, TEMP, sizeof( u32 ), width * height * frameCount / 8 );
+        fclose( f );
+
+        TEMP_PAL[ 0 ] = 0;
+
+        auto res = bitmap{ width, height };
+        if( p_frame >= frameCount ) { p_frame = 0; }
+        res.addFromSprite( TEMP + ( width * height * p_frame / 8 ), TEMP_PAL, width, height );
+        return res;
+    }
+
     bitmap bitmap::fromSprite( const char* p_path, size_t p_width, size_t p_height ) {
         FILE* f;
         if( p_path[ 0 ] == '@' ) {

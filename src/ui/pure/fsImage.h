@@ -11,16 +11,15 @@ namespace UI {
         IT_SPRITE_ICON_32x32, // vanilla sprite/icon
         IT_SPRITE_ICON_64x64, // vanilla sprite/icon
         IT_SPRITE_PKMN,       // multi-part pkmn sprite
-        // IT_SPRITE_ANIMATED,   // animated rsd
-        IT_SPRITE_PLATFORM, // multi-part platform
-        IT_BG_IMAGE,        // 256x192 bg image
+        IT_SPRITE_ANIMATED,   // animated rsd
+        IT_SPRITE_PLATFORM,   // multi-part platform
+        IT_BG_IMAGE,          // 256x192 bg image
     };
 
     /*
      * @brief: A widget to display a single gfx object from FSROOT
      */
-    template <imageType t_type>
-    class fsImage : public Gtk::Widget {
+    class fsImageWidget : public Gtk::Widget {
       public:
       protected:
         Gtk::Image                   _image;
@@ -30,12 +29,70 @@ namespace UI {
         u16 _cropx = 0, _cropy = 0;
 
       public:
-        inline fsImage( ) {
+        inline fsImageWidget( ) {
             _image.set_parent( *this );
         }
 
-        virtual inline ~fsImage( ) {
+        virtual inline ~fsImageWidget( ) {
             _image.unparent( );
+        }
+
+        virtual u16 getWidth( ) const = 0;
+
+        virtual inline u16 getHeight( ) const = 0;
+
+        inline void setScale( u16 p_scale = 1 ) {
+            if( p_scale ) { _scale = p_scale; }
+        }
+
+      protected:
+        inline Gtk::SizeRequestMode get_request_mode_vfunc( ) const override {
+            return Gtk::SizeRequestMode::CONSTANT_SIZE;
+        }
+
+        inline void measure_vfunc( Gtk::Orientation p_orientation, int, int& p_minimum,
+                                   int& p_natural, int& p_minimumBaseline,
+                                   int& p_naturalBaseline ) const override {
+            p_minimumBaseline = -1;
+            p_naturalBaseline = -1;
+
+            if( p_orientation == Gtk::Orientation::HORIZONTAL ) {
+                p_minimum = getWidth( ) * _scale;
+                p_natural = getWidth( ) * _scale;
+            } else {
+                p_minimum = getHeight( ) * _scale;
+                p_natural = getHeight( ) * _scale;
+            }
+        }
+
+        inline void size_allocate_vfunc( int, int, int p_baseline ) override {
+            // make dummy calls to measure to suppress warnings (yes we do know how big
+            // every block should be.)
+            int ignore;
+            _image.measure( Gtk::Orientation::HORIZONTAL, -1, ignore, ignore, ignore, ignore );
+
+            Gtk::Allocation allo;
+            allo.set_x( 0 );
+            allo.set_y( 0 );
+            auto width  = _scale * getWidth( );
+            auto height = _scale * getHeight( );
+            allo.set_width( width );
+            allo.set_height( height );
+            _image.size_allocate( allo, p_baseline );
+        }
+    };
+
+    /*
+     * @brief: A widget to display a single gfx object from FSROOT
+     */
+    template <imageType t_type>
+    class fsImage : public fsImageWidget {
+      public:
+        inline fsImage( ) : fsImageWidget( ) {
+        }
+
+        virtual inline ~fsImage( ) {
+            fsImageWidget::~fsImageWidget( );
         }
 
         inline void load( const std::string& p_path, u16 p_cx = 0, u16 p_cy = 0, u16 p_cw = 0,
@@ -108,7 +165,7 @@ namespace UI {
             }
         }
 
-        inline u16 getWidth( ) const {
+        inline u16 getWidth( ) const override {
             switch( t_type ) {
             case imageType::IT_SPRITE_ICON_16x16: return 16 - _cropx;
             case imageType::IT_SPRITE_ICON_32x32: return 32 - _cropx;
@@ -120,7 +177,7 @@ namespace UI {
             return 0;
         }
 
-        inline u16 getHeight( ) const {
+        inline u16 getHeight( ) const override {
             switch( t_type ) {
             case imageType::IT_SPRITE_ICON_16x16: return 16 - _cropy;
             case imageType::IT_SPRITE_ICON_32x32: return 32 - _cropy;
@@ -131,45 +188,46 @@ namespace UI {
             }
             return 0;
         }
+    };
 
-        inline void setScale( u16 p_scale = 1 ) {
-            if( p_scale ) { _scale = p_scale; }
+    /*
+     * @brief: A widget to display a single gfx object from FSROOT
+     */
+    template <>
+    class fsImage<imageType::IT_SPRITE_ANIMATED> : public fsImageWidget {
+        u16 m_width;
+        u16 m_height;
+
+      public:
+        inline fsImage( ) : fsImageWidget( ) {
         }
 
-      protected:
-        inline Gtk::SizeRequestMode get_request_mode_vfunc( ) const override {
-            return Gtk::SizeRequestMode::CONSTANT_SIZE;
+        virtual inline ~fsImage( ) {
+            fsImageWidget::~fsImageWidget( );
         }
 
-        inline void measure_vfunc( Gtk::Orientation p_orientation, int, int& p_minimum,
-                                   int& p_natural, int& p_minimumBaseline,
-                                   int& p_naturalBaseline ) const override {
-            p_minimumBaseline = -1;
-            p_naturalBaseline = -1;
-
-            if( p_orientation == Gtk::Orientation::HORIZONTAL ) {
-                p_minimum = getWidth( ) * _scale;
-                p_natural = getWidth( ) * _scale;
-            } else {
-                p_minimum = getHeight( ) * _scale;
-                p_natural = getHeight( ) * _scale;
+        inline void load( const std::string& p_path, u8 p_frame, u16 p_cx = 0, u16 p_cy = 0,
+                          u16 p_cw = 0, u16 p_ch = 0 ) {
+            auto btm = DATA::bitmap::fromAnimatedSprite( p_path.c_str( ), p_frame );
+            m_width  = btm.m_width;
+            m_height = btm.m_height;
+            if( p_ch && p_cw ) {
+                btm.crop( p_cx, p_cy, p_cw, p_ch );
+                _cropx = btm.m_width - p_cw;
+                _cropy = btm.m_height - p_ch;
             }
+            _data = btm.pixbuf( );
+            _image.set( _data );
+            return;
         }
 
-        inline void size_allocate_vfunc( int, int, int p_baseline ) override {
-            // make dummy calls to measure to suppress warnings (yes we do know how big
-            // every block should be.)
-            int ignore;
-            _image.measure( Gtk::Orientation::HORIZONTAL, -1, ignore, ignore, ignore, ignore );
+        inline u16 getWidth( ) const override {
+            return m_width;
+        }
 
-            Gtk::Allocation allo;
-            allo.set_x( 0 );
-            allo.set_y( 0 );
-            auto width  = _scale * getWidth( );
-            auto height = _scale * getHeight( );
-            allo.set_width( width );
-            allo.set_height( height );
-            _image.size_allocate( allo, p_baseline );
+        inline u16 getHeight( ) const override {
+            return m_height;
         }
     };
+
 } // namespace UI

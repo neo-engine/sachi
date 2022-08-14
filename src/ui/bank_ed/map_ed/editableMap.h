@@ -103,6 +103,6 @@ namespace UI::MED {
          */
         void updateSelectedBlock( DATA::mapBlockAtom p_block );
 
-        void redraw( );
+        void redraw( bool p_full = true );
     };
 } // namespace UI::MED

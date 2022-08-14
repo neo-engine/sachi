@@ -136,6 +136,8 @@ namespace DATA {
 
         static bitmap fromPkmnSprite( const char* p_path );
 
+        static bitmap fromAnimatedSprite( const char* p_path, u8 p_frame );
+
         static bitmap fromBGImage( const char* p_path );
 
         static bitmap fromPlatformSprite( const char* p_path );

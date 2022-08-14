@@ -10,6 +10,7 @@ namespace UI {
         if( _itemImage ) {
             _itemImage->set_valign( Gtk::Align::CENTER );
             _itemImage->set_margin_end( MARGIN );
+            _itemImage->setScale( 2 );
             _outerBox.append( *_itemImage );
         }
 

@@ -75,6 +75,8 @@ namespace UI {
 
         void redraw( );
 
+        void redrawMap( bool p_full = true );
+
         /*
          * @brief: Sets the mode of the map editor (edit blocks, movements, events, etc)
          */

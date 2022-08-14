@@ -18,6 +18,8 @@ namespace DATA {
     constexpr u16 MAX_FLAG = 255;
     constexpr u16 MAX_VARS = 255;
 
+    constexpr u16 PKMN_SPRITE = 1000;
+
     constexpr u16 SIZE          = 32;
     constexpr s16 dir[ 4 ][ 2 ] = { { 0, -1 }, { 1, 0 }, { 0, 1 }, { -1, 0 } };
 
@@ -282,7 +284,7 @@ namespace DATA {
         constexpr auto operator<=>( const flyPos& ) const = default;
     };
 
-    enum moveMode {
+    enum moveMode : u8 {
         // Player modes
         WALK       = 0,
         BIKE       = ( 1 << 2 ),
@@ -306,6 +308,51 @@ namespace DATA {
         WALK_AROUND_LEFT_RIGHT = 19,
         WALK_AROUND_UP_DOWN    = 20,
     };
+
+    constexpr u8 getFrame( direction p_direction ) {
+        switch( p_direction ) {
+        case UP: return 3;
+        case RIGHT: return 9;
+        case DOWN: return 0;
+        case LEFT: return 6;
+        }
+        return 0;
+    }
+
+    constexpr u8 getOWPKMNFrame( direction p_direction ) {
+        switch( p_direction ) {
+        case UP: return 2;
+        case RIGHT: return 6;
+        case DOWN: return 0;
+        case LEFT: return 4;
+        }
+        return 0;
+    }
+
+    inline std::function<u8( direction )> frameFuncionForIdx( u16 p_owSprite ) {
+        if( p_owSprite > PKMN_SPRITE ) {
+            return getOWPKMNFrame;
+        } else {
+            return getFrame;
+        }
+    }
+
+    inline u8 moveModeToFrame( moveMode p_moveMode, std::function<u8( direction )> p_dirToFrame ) {
+        if( p_moveMode & LOOK_UP ) { return p_dirToFrame( UP ); }
+        if( p_moveMode & LOOK_DOWN ) { return p_dirToFrame( DOWN ); }
+        if( p_moveMode & LOOK_LEFT ) { return p_dirToFrame( LEFT ); }
+        if( p_moveMode & LOOK_RIGHT ) { return p_dirToFrame( RIGHT ); }
+        if( p_moveMode == WALK_LEFT_RIGHT || p_moveMode == WALK_AROUND_LEFT_RIGHT ) {
+            return p_dirToFrame( LEFT );
+        }
+        if( p_moveMode == WALK_UP_DOWN || p_moveMode == WALK_AROUND_UP_DOWN
+            || p_moveMode == WALK_CIRCLE ) {
+            return p_dirToFrame( DOWN );
+        }
+
+        return p_dirToFrame( DOWN );
+    }
+
     enum eventType : u8 {
         EVENT_NONE        = 0,
         EVENT_MESSAGE     = 1,
@@ -429,6 +476,8 @@ namespace DATA {
         "(Obtain Item)", "Sign",        "Wait for Interact", "Interact (Info)" };
 
     const std::vector<std::string> ITEM_TYPE_NAMES{ "Hidden", "Normal", "HM/TM/TR" };
+    const std::vector<std::string> SCRIPT_TYPE_NAMES{ "Unrestricted", "Player is Brendan",
+                                                      "Player is May" };
 
     constexpr u8 MAX_EVENTS_PER_SLICE = 64;
     constexpr u8 MAX_PKMN_PER_SLICE   = 30;
