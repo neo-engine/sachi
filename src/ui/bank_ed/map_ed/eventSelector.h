@@ -15,6 +15,7 @@
 #include "../../pure/mapPosition.h"
 #include "../../pure/multiButton.h"
 #include "../../pure/owSpriteSelector.h"
+#include "../../pure/pokeSelector.h"
 #include "../../pure/switchButton.h"
 
 namespace UI {
@@ -63,6 +64,7 @@ namespace UI::MED {
             _trainerSightE;
         std::shared_ptr<locationDropDown> _flyLocation;
         std::shared_ptr<itemSelector>     _item;
+        std::shared_ptr<pokeSelector>     _pkmn;
 
         std::shared_ptr<switchButton> _npcMessageAutoDeact;
 

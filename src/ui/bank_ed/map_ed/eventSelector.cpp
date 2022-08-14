@@ -312,6 +312,8 @@ namespace UI::MED {
                 ( (Gtk::Widget&) ( *_trainerOWSprite ) ).set_hexpand( true );
             }
 
+            // TODO movement
+
             Gtk::Grid  g2{ };
             Gtk::Label til{ "Trainer Idx" };
             g2.attach( til, 0, 0 );
@@ -367,6 +369,29 @@ namespace UI::MED {
             frame.set_label_align( Gtk::Align::CENTER );
             _generalData.append( frame );
 
+            Gtk::Box fbox{ Gtk::Orientation::VERTICAL };
+            fbox.set_margin( MARGIN );
+            frame.set_child( fbox );
+
+            _pkmn = std::make_shared<pokeSelector>( _model );
+            if( _pkmn ) {
+                fbox.append( *_pkmn );
+
+                _pkmn->connect( [ this ]( std::pair<u16, u8> p_pkmn ) {
+                    if( _disableRedraw ) { return; }
+                    _model.mapEvent( ).m_data.m_owPkmn.m_speciesId = p_pkmn.first;
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redrawPanel( );
+                    _parent.redrawMap( false );
+                    redraw( );
+                } );
+
+                ( (Gtk::Widget&) ( *_pkmn ) ).set_hexpand( true );
+            }
+
+            // TODO movement
+
+            fbox.set_hexpand( false );
             _detailFrames.push_back( std::move( frame ) );
         }
 
@@ -415,6 +440,8 @@ namespace UI::MED {
                 ( (Gtk::Widget&) ( *_npcOWSprite ) ).set_hexpand( true );
                 ( (Gtk::Widget&) ( *_npcOWSprite ) ).set_margin_top( MARGIN );
             }
+
+            // TODO movement
 
             Gtk::Box ibox{ Gtk::Orientation::HORIZONTAL };
             ibox.set_margin_top( MARGIN );
@@ -610,6 +637,8 @@ namespace UI::MED {
             fbox.set_margin( MARGIN );
             frame.set_child( fbox );
 
+            // TODO
+
             fbox.set_hexpand( false );
             _detailFrames.push_back( std::move( frame ) );
         }
@@ -717,6 +746,8 @@ namespace UI::MED {
                 ( (Gtk::Widget&) ( *_npcMessageOWSprite ) ).set_hexpand( true );
                 ( (Gtk::Widget&) ( *_npcMessageOWSprite ) ).set_margin_top( MARGIN );
             }
+
+            // TODO movement
 
             Gtk::Box ibox{ Gtk::Orientation::HORIZONTAL };
             ibox.set_margin_top( MARGIN );
@@ -833,6 +864,12 @@ namespace UI::MED {
             break;
         }
         case DATA::EVENT_OW_PKMN: {
+            if( _pkmn ) {
+                _pkmn->refreshModel( );
+                _pkmn->setData( { evt.m_data.m_owPkmn.m_speciesId,
+                                  evt.m_data.m_owPkmn.m_forme & ~( 1 << 6 | 1 << 7 ) } );
+            }
+
             // TODO
             break;
         }
