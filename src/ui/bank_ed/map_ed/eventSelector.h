@@ -43,6 +43,7 @@ namespace UI::MED {
         bool _disableDF     = false;
         bool _disableTI     = false;
         bool _disableTS     = false;
+        bool _disablePL     = false;
 
         Gtk::Frame _mainFrame;
         Gtk::Box   _generalData{ Gtk::Orientation::VERTICAL },
@@ -54,19 +55,19 @@ namespace UI::MED {
         std::shared_ptr<Gtk::Button> _warpJumpTo;
         std::shared_ptr<mapPosition> _eventPosition, _warpTarget;
         std::shared_ptr<dropDown>    _eventType, _messageType1, _warpType, _itemType, _scriptType1,
-            _scriptType2, _messageType2;
-        std::shared_ptr<multiButton>     _eventTrigger;
+            _scriptType2, _messageType2, _owPkmnShininess, _hmType;
+        std::shared_ptr<multiButton>     _eventTrigger, _npcMove, _npcMsgMove, _trainerMove;
         std::shared_ptr<Gtk::Adjustment> _selectedEventA, _aFlagA, _dFlagA, _messageIdx1A,
             _messageIdx2A, _warpScriptIdxA, _scriptIdx1A, _scriptIdx2A, _flyLocationIdxA,
-            _berryTreeIdxA, _trainerIdxA, _trainerSightA;
+            _berryTreeIdxA, _trainerIdxA, _trainerSightA, _owPkmnLevelA;
         Gtk::SpinButton _selectedEventE, _aFlagE, _dFlagE, _messageIdx1E, _messageIdx2E,
             _warpScriptIdxE, _scriptIdx1E, _scriptIdx2E, _berryTreeIdxE, _trainerIdxE,
-            _trainerSightE;
+            _trainerSightE, _owPkmnLevelE;
         std::shared_ptr<locationDropDown> _flyLocation;
         std::shared_ptr<itemSelector>     _item;
         std::shared_ptr<pokeSelector>     _pkmn;
 
-        std::shared_ptr<switchButton> _npcMessageAutoDeact;
+        std::shared_ptr<switchButton> _npcMessageAutoDeact, _owPkmnHA, _owPkmnFE;
 
         std::shared_ptr<owSpriteSelector> _npcOWSprite, _npcMessageOWSprite, _trainerOWSprite;
 

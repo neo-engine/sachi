@@ -7,6 +7,35 @@
 #include "eventSelector.h"
 
 namespace UI::MED {
+    u8 moveModeFromChoice( u32 p_choice ) {
+        if( !p_choice ) { return 0; }
+
+        u8 res = 0;
+
+        for( u8 i{ 0 }; i < 4; ++i ) {
+            if( p_choice & ( 1 << i ) ) { res |= ( 1 << i ); }
+        }
+
+        if( res ) { return res; }
+
+        for( size_t i{ 4 }; i < DATA::MOVE_MODE_NAMES.size( ); ++i ) {
+            if( p_choice & ( 1 << i ) ) { return 16 + i - 4; }
+        }
+
+        return 0;
+    }
+
+    u32 choiceFromMoveMode( u8 p_moveMode ) {
+        if( p_moveMode < 16 ) { return p_moveMode; }
+
+        return 1 << ( 4 + p_moveMode - 16 );
+    }
+
+    u32 moveModeTransition( u32 p_state, u8 p_choice ) {
+        if( p_state < 16 && p_choice < 4 ) { return p_state ^ ( 1 << p_choice ); }
+        return ( p_state & ( 1 << p_choice ) ) ^ ( 1 << p_choice );
+    }
+
     eventSelector::eventSelector( model& p_model, mapEditor& p_parent, root& p_root )
         : _model{ p_model }, _parent{ p_parent }, _rootWindow{ p_root },
           _selectedEventA{ Gtk::Adjustment::create( 0.0, 0.0, DATA::MAX_EVENTS_PER_SLICE - 1.0, 1.0,
@@ -22,11 +51,13 @@ namespace UI::MED {
           _berryTreeIdxA{ Gtk::Adjustment::create( 0.0, 0.0, (u8) -1, 1.0, 1.0, 0.0 ) },
           _trainerIdxA{ Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) },
           _trainerSightA{ Gtk::Adjustment::create( 0.0, 0.0, 31, 1.0, 1.0, 0.0 ) },
+          _owPkmnLevelA{ Gtk::Adjustment::create( 0.0, 1, 100, 1.0, 1.0, 0.0 ) },
           _selectedEventE{ _selectedEventA }, _aFlagE{ _aFlagA }, _dFlagE{ _dFlagA },
           _messageIdx1E{ _messageIdx1A }, _messageIdx2E{ _messageIdx2A },
           _warpScriptIdxE{ _warpScriptIdxA }, _scriptIdx1E{ _scriptIdx1A },
           _scriptIdx2E{ _scriptIdx2A }, _berryTreeIdxE{ _berryTreeIdxA },
-          _trainerIdxE{ _trainerIdxA }, _trainerSightE{ _trainerSightA } {
+          _trainerIdxE{ _trainerIdxA }, _trainerSightE{ _trainerSightA }, _owPkmnLevelE{
+                                                                              _owPkmnLevelA } {
         _mainFrame = Gtk::Frame{ "Event Data" };
 
         Gtk::Box mainBox{ Gtk::Orientation::VERTICAL };
@@ -312,7 +343,20 @@ namespace UI::MED {
                 ( (Gtk::Widget&) ( *_trainerOWSprite ) ).set_hexpand( true );
             }
 
-            // TODO movement
+            _trainerMove = std::make_shared<multiButton>( DATA::MOVE_MODE_NAMES, moveModeTransition,
+                                                          0, Gtk::Orientation::VERTICAL );
+            if( _trainerMove ) {
+                fbox.append( *_trainerMove );
+                _trainerMove->connect( [ this ]( u32 p_newChoice ) {
+                    if( _disableRedraw ) { return; }
+                    auto& evt                           = _model.mapEvent( );
+                    evt.m_data.m_trainer.m_movementType = moveModeFromChoice( p_newChoice );
+                    _model.markSelectedBankChanged( );
+                    redraw( );
+                    _parent.redrawMap( false );
+                    _rootWindow.redrawPanel( );
+                } );
+            }
 
             Gtk::Grid  g2{ };
             Gtk::Label til{ "Trainer Idx" };
@@ -389,8 +433,103 @@ namespace UI::MED {
                 ( (Gtk::Widget&) ( *_pkmn ) ).set_hexpand( true );
             }
 
-            // TODO movement
+            Gtk::Grid  g2{ };
+            Gtk::Label til{ "Level" };
+            g2.attach( til, 0, 0 );
+            til.set_margin_end( MARGIN );
+            til.set_hexpand( );
+            g2.attach( _owPkmnLevelE, 1, 0 );
 
+            _owPkmnLevelE.signal_value_changed( ).connect( [ this ]( ) {
+                if( _disableRedraw
+                    || _model.mapEvent( ).m_data.m_owPkmn.m_level
+                           == _owPkmnLevelE.get_value_as_int( ) ) {
+                    return;
+                }
+                _disablePL = true;
+                _owPkmnLevelE.update( );
+                _model.mapEvent( ).m_data.m_owPkmn.m_level = _owPkmnLevelE.get_value_as_int( );
+                _model.markSelectedBankChanged( );
+                _rootWindow.redrawPanel( );
+                redraw( );
+                _disablePL = false;
+            } );
+
+            Gtk::Label tsl{ "Shininess" };
+            g2.attach( tsl, 0, 1 );
+            tsl.set_margin_end( MARGIN );
+            tsl.set_hexpand( );
+
+            _owPkmnShininess = std::make_shared<dropDown>( std::vector<std::string>{
+                "Random", "Never", "Forced", "1 Extra Roll", "2 Extra Rolls", "3 Extra Rolls",
+                // technically more possible
+            } );
+            if( _owPkmnShininess ) {
+                g2.attach( *_owPkmnShininess, 1, 1 );
+                _owPkmnShininess->connect( [ this ]( u8 p_newValue ) {
+                    if( _disableRedraw
+                        || ( _model.mapEvent( ).m_data.m_owPkmn.m_shiny & ~( 1 << 6 | 1 << 7 ) )
+                               == p_newValue ) {
+                        return;
+                    }
+                    _model.mapEvent( ).m_data.m_owPkmn.m_shiny
+                        = ( _model.mapEvent( ).m_data.m_owPkmn.m_shiny & ( 1 << 6 | 1 << 7 ) )
+                          | p_newValue;
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redrawPanel( );
+                    redraw( );
+                } );
+                ( (Gtk::Widget&) ( *_owPkmnShininess ) ).set_hexpand( true );
+                ( (Gtk::Widget&) ( *_owPkmnShininess ) ).set_margin_top( MARGIN );
+            }
+
+            Gtk::Label l3{ "Hidden Ability" };
+            g2.attach( l3, 0, 2 );
+            l3.set_margin_end( MARGIN );
+            l3.set_hexpand( );
+
+            _owPkmnHA = std::make_shared<switchButton>( std::vector<std::string>{ "_No", "_Yes" } );
+            if( _owPkmnHA ) {
+                g2.attach( *_owPkmnHA, 1, 2 );
+                _owPkmnHA->connect( [ this ]( u8 p_newChoice ) {
+                    if( _disableRedraw ) { return; }
+                    _model.mapEvent( ).m_data.m_owPkmn.m_shiny
+                        = ( _model.mapEvent( ).m_data.m_owPkmn.m_shiny & ~( 1 << 6 ) )
+                          | ( p_newChoice << 6 );
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redrawPanel( );
+                    redraw( );
+                } );
+                ( (Gtk::Widget&) ( *_owPkmnHA ) ).set_hexpand( true );
+                ( (Gtk::Widget&) ( *_owPkmnHA ) ).set_halign( Gtk::Align::END );
+                ( (Gtk::Widget&) ( *_owPkmnHA ) ).set_margin( 0 );
+                ( (Gtk::Widget&) ( *_owPkmnHA ) ).set_margin_top( MARGIN );
+            }
+
+            Gtk::Label l4{ "Fateful Enc." };
+            g2.attach( l4, 0, 3 );
+            l4.set_margin_end( MARGIN );
+            l4.set_hexpand( );
+
+            _owPkmnFE = std::make_shared<switchButton>( std::vector<std::string>{ "_No", "_Yes" } );
+            if( _owPkmnFE ) {
+                g2.attach( *_owPkmnFE, 1, 3 );
+                _owPkmnFE->connect( [ this ]( u8 p_newChoice ) {
+                    if( _disableRedraw ) { return; }
+                    _model.mapEvent( ).m_data.m_owPkmn.m_shiny
+                        = ( _model.mapEvent( ).m_data.m_owPkmn.m_shiny & ~( 1 << 7 ) )
+                          | ( p_newChoice << 7 );
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redrawPanel( );
+                    redraw( );
+                } );
+                ( (Gtk::Widget&) ( *_owPkmnFE ) ).set_hexpand( true );
+                ( (Gtk::Widget&) ( *_owPkmnFE ) ).set_halign( Gtk::Align::END );
+                ( (Gtk::Widget&) ( *_owPkmnFE ) ).set_margin( 0 );
+                ( (Gtk::Widget&) ( *_owPkmnFE ) ).set_margin_top( MARGIN );
+            }
+
+            fbox.append( g2 );
             fbox.set_hexpand( false );
             _detailFrames.push_back( std::move( frame ) );
         }
@@ -441,7 +580,20 @@ namespace UI::MED {
                 ( (Gtk::Widget&) ( *_npcOWSprite ) ).set_margin_top( MARGIN );
             }
 
-            // TODO movement
+            _npcMove = std::make_shared<multiButton>( DATA::MOVE_MODE_NAMES, moveModeTransition, 0,
+                                                      Gtk::Orientation::VERTICAL );
+            if( _npcMove ) {
+                fbox.append( *_npcMove );
+                _npcMove->connect( [ this ]( u32 p_newChoice ) {
+                    if( _disableRedraw ) { return; }
+                    auto& evt                       = _model.mapEvent( );
+                    evt.m_data.m_npc.m_movementType = moveModeFromChoice( p_newChoice );
+                    _model.markSelectedBankChanged( );
+                    redraw( );
+                    _parent.redrawMap( false );
+                    _rootWindow.redrawPanel( );
+                } );
+            }
 
             Gtk::Box ibox{ Gtk::Orientation::HORIZONTAL };
             ibox.set_margin_top( MARGIN );
@@ -637,7 +789,25 @@ namespace UI::MED {
             fbox.set_margin( MARGIN );
             frame.set_child( fbox );
 
-            // TODO
+            _hmType = std::make_shared<dropDown>(
+                std::vector<std::string>{ "None", "Strength", "Rock Smash", "Cut" } );
+            if( _hmType ) {
+                fbox.append( *_hmType );
+                ( (Gtk::Widget&) ( *_hmType ) ).set_hexpand( true );
+
+                _hmType->connect( [ this ]( u64 p_newChoice ) {
+                    if( _disableRedraw ) { return; }
+                    if( p_newChoice ) {
+                        _model.mapEvent( ).m_data.m_hmObject.m_hmType = 2 + p_newChoice;
+                    } else {
+                        _model.mapEvent( ).m_data.m_hmObject.m_hmType = 0;
+                    }
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redrawPanel( );
+                    _parent.redrawMap( false );
+                    redraw( );
+                } );
+            }
 
             fbox.set_hexpand( false );
             _detailFrames.push_back( std::move( frame ) );
@@ -747,7 +917,20 @@ namespace UI::MED {
                 ( (Gtk::Widget&) ( *_npcMessageOWSprite ) ).set_margin_top( MARGIN );
             }
 
-            // TODO movement
+            _npcMsgMove = std::make_shared<multiButton>( DATA::MOVE_MODE_NAMES, moveModeTransition,
+                                                         0, Gtk::Orientation::VERTICAL );
+            if( _npcMsgMove ) {
+                fbox.append( *_npcMsgMove );
+                _npcMsgMove->connect( [ this ]( u32 p_newChoice ) {
+                    if( _disableRedraw ) { return; }
+                    auto& evt                       = _model.mapEvent( );
+                    evt.m_data.m_npc.m_movementType = moveModeFromChoice( p_newChoice );
+                    _model.markSelectedBankChanged( );
+                    redraw( );
+                    _parent.redrawMap( false );
+                    _rootWindow.redrawPanel( );
+                } );
+            }
 
             Gtk::Box ibox{ Gtk::Orientation::HORIZONTAL };
             ibox.set_margin_top( MARGIN );
@@ -850,7 +1033,6 @@ namespace UI::MED {
             break;
         }
         case DATA::EVENT_TRAINER: {
-            // TODO
             if( !_disableTI ) { _trainerIdxE.set_value( evt.m_data.m_trainer.m_trainerId ); }
             if( !_disableTS ) { _trainerSightE.set_value( evt.m_data.m_trainer.m_sight ); }
             if( _trainerOWSprite ) {
@@ -861,6 +1043,9 @@ namespace UI::MED {
                         DATA::frameFuncionForIdx( evt.m_data.m_trainer.m_spriteId ) ) );
             }
 
+            if( _trainerMove ) {
+                _trainerMove->choose( choiceFromMoveMode( evt.m_data.m_trainer.m_movementType ) );
+            }
             break;
         }
         case DATA::EVENT_OW_PKMN: {
@@ -869,12 +1054,22 @@ namespace UI::MED {
                 _pkmn->setData( { evt.m_data.m_owPkmn.m_speciesId,
                                   evt.m_data.m_owPkmn.m_forme & ~( 1 << 6 | 1 << 7 ) } );
             }
-
-            // TODO
+            if( !_disablePL ) {
+                _owPkmnLevelE.set_value( _model.mapEvent( ).m_data.m_owPkmn.m_level );
+            }
+            if( _owPkmnShininess ) {
+                _owPkmnShininess->choose( _model.mapEvent( ).m_data.m_owPkmn.m_shiny
+                                          & ~( 1 << 6 | 1 << 7 ) );
+            }
+            if( _owPkmnHA ) {
+                _owPkmnHA->choose( !!( _model.mapEvent( ).m_data.m_owPkmn.m_shiny & ( 1 << 6 ) ) );
+            }
+            if( _owPkmnFE ) {
+                _owPkmnFE->choose( !!( _model.mapEvent( ).m_data.m_owPkmn.m_shiny & ( 1 << 7 ) ) );
+            }
             break;
         }
         case DATA::EVENT_NPC: {
-            // TODO: movemode
             if( _scriptType2 ) {
                 if( !( evt.m_data.m_npc.m_scriptType & 127 ) ) {
                     _scriptType2->choose( 0 );
@@ -890,6 +1085,11 @@ namespace UI::MED {
                         DATA::moveMode( evt.m_data.m_npc.m_movementType ),
                         DATA::frameFuncionForIdx( evt.m_data.m_npc.m_spriteId ) ) );
             }
+
+            if( _npcMove ) {
+                _npcMove->choose( choiceFromMoveMode( evt.m_data.m_npc.m_movementType ) );
+            }
+
             break;
         }
         case DATA::EVENT_WARP: {
@@ -926,7 +1126,20 @@ namespace UI::MED {
             break;
         }
         case DATA::EVENT_HMOBJECT: {
-            // TODO
+            if( _hmType ) {
+                switch( evt.m_data.m_hmObject.m_hmType ) {
+                case 3: // strength
+                    _hmType->choose( 1 );
+                    break;
+                case 4: // rock smash
+                    _hmType->choose( 2 );
+                    break;
+                case 5: // cut
+                    _hmType->choose( 3 );
+                    break;
+                default: _hmType->choose( 0 ); break;
+                }
+            }
             break;
         }
         case DATA::EVENT_BERRYTREE: {
@@ -934,7 +1147,6 @@ namespace UI::MED {
             break;
         }
         case DATA::EVENT_NPC_MESSAGE: {
-            // TODO
             if( _messageType2 ) { _messageType2->choose( evt.m_data.m_npc.m_scriptType & 127 ); }
 
             if( !_disableMI2E ) { _messageIdx2E.set_value( evt.m_data.m_npc.m_scriptId ); }
@@ -950,6 +1162,10 @@ namespace UI::MED {
                     DATA::moveModeToFrame(
                         DATA::moveMode( evt.m_data.m_npc.m_movementType ),
                         DATA::frameFuncionForIdx( evt.m_data.m_npc.m_spriteId ) ) );
+            }
+
+            if( _npcMsgMove ) {
+                _npcMsgMove->choose( choiceFromMoveMode( evt.m_data.m_npc.m_movementType ) );
             }
 
             break;

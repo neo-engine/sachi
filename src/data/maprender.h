@@ -297,17 +297,35 @@ namespace DATA {
         STRENGTH   = ( 1 << 6 ),
         SURF       = ( 1 << 7 ),
         // NPC modes
-        NO_MOVEMENT            = 0,
-        LOOK_UP                = 1,
-        LOOK_DOWN              = 2,
-        LOOK_RIGHT             = 4,
-        LOOK_LEFT              = 8,
-        WALK_LEFT_RIGHT        = 16,
-        WALK_UP_DOWN           = 17,
-        WALK_CIRCLE            = 18,
-        WALK_AROUND_LEFT_RIGHT = 19,
-        WALK_AROUND_UP_DOWN    = 20,
+        NO_MOVEMENT             = 0,
+        LOOK_UP                 = 1,
+        LOOK_DOWN               = 2,
+        LOOK_RIGHT              = 4,
+        LOOK_LEFT               = 8,
+        WALK_LEFT_RIGHT         = 16,
+        WALK_UP_DOWN            = 17,
+        WALK_CIRCLE             = 18,
+        WALK_AROUND_LEFT_RIGHT  = 19,
+        WALK_AROUND_UP_DOWN     = 20,
+        WALK_CONT_LEFT_RIGHT    = 21,
+        WALK_CONT_UP_DOWN       = 22,
+        WALK_AROUND_SQUARE      = 23, // randomly walks around in a 3x3 square
+        WALK_CONT_FOLLOW_OBJECT = 24, // walks along the edge of an object, touching w/ right hand
+
     };
+    const std::vector<std::string> MOVE_MODE_NAMES{ "Look Up",
+                                                    "Look Down",
+                                                    "Look Right",
+                                                    "Look Left",
+                                                    "Walk Left-Right",
+                                                    "Walk Up-Down",
+                                                    "Walk Circle",
+                                                    "Walk Around Left-Right",
+                                                    "Walk Around Up-Down",
+                                                    "Walk Non-Stop Left-Right",
+                                                    "Walk Non-Stop Up-Down",
+                                                    "Walk Around Square",
+                                                    "Walk Follow Edge" };
 
     constexpr u8 getFrame( direction p_direction ) {
         switch( p_direction ) {
