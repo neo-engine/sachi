@@ -62,7 +62,8 @@ namespace UI::MED {
                 if( _model.selectedBank( ) == -1 ) { return; }
                 _model.mapData( ).m_mapType = p_newChoice >> 1;
                 _model.markSelectedBankChanged( );
-                _rootWindow.redraw( );
+                _rootWindow.redrawPanel( );
+                redraw( );
             } );
         }
 
@@ -108,7 +109,8 @@ namespace UI::MED {
                 if( _model.selectedBank( ) == -1 ) { return; }
                 _model.mapData( ).m_weather = p_newChoice;
                 _model.markSelectedBankChanged( );
-                _rootWindow.redraw( );
+                _rootWindow.redrawPanel( );
+                redraw( );
             } );
         }
 
@@ -132,7 +134,8 @@ namespace UI::MED {
                 _model.mapData( ).m_battlePlat1 = p_p1;
                 _model.mapData( ).m_battlePlat2 = p_p2;
                 _model.markSelectedBankChanged( );
-                _rootWindow.redraw( );
+                _rootWindow.redrawPanel( );
+                redraw( );
             } );
         }
         Gtk::Separator s2{ };
@@ -148,7 +151,8 @@ namespace UI::MED {
                 _model.mapData( ).m_surfBattlePlat1 = p_p1;
                 _model.mapData( ).m_surfBattlePlat2 = p_p2;
                 _model.markSelectedBankChanged( );
-                _rootWindow.redraw( );
+                _rootWindow.redrawPanel( );
+                redraw( );
             } );
         }
 

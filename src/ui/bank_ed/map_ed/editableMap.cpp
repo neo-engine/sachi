@@ -66,7 +66,8 @@ namespace UI::MED {
                     if( _model.mapData( ).m_locationIds[ y ][ x ] == p_newChoice ) { return; }
                     _model.mapData( ).m_locationIds[ y ][ x ] = p_newChoice;
                     _model.markSelectedBankChanged( );
-                    _rootWindow.redraw( );
+                    _rootWindow.redrawPanel( );
+                    redraw( false );
                 } );
                 _locations[ x ].push_back( l );
 
