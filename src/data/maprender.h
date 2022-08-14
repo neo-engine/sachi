@@ -338,8 +338,8 @@ namespace DATA {
     }
 
     inline u8 moveModeToFrame( moveMode p_moveMode, std::function<u8( direction )> p_dirToFrame ) {
-        if( p_moveMode & LOOK_UP ) { return p_dirToFrame( UP ); }
         if( p_moveMode & LOOK_DOWN ) { return p_dirToFrame( DOWN ); }
+        if( p_moveMode & LOOK_UP ) { return p_dirToFrame( UP ); }
         if( p_moveMode & LOOK_LEFT ) { return p_dirToFrame( LEFT ); }
         if( p_moveMode & LOOK_RIGHT ) { return p_dirToFrame( RIGHT ); }
         if( p_moveMode == WALK_LEFT_RIGHT || p_moveMode == WALK_AROUND_LEFT_RIGHT ) {

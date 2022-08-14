@@ -15,11 +15,11 @@ namespace DATA {
     //
     ///////////////////////////////////////////////////////////////////////////////
 
-    bitmap::bitmap( size_t p_width, size_t p_height ) {
+    bitmap::bitmap( size_t p_width, size_t p_height, u8 p_trans ) {
         m_width  = p_width;
         m_height = p_height;
         m_pixels = std::vector<std::vector<pixel>>(
-            p_width, std::vector<pixel>( p_height, { 0, 0, 0, 255 } ) );
+            p_width, std::vector<pixel>( p_height, { 0, 0, 0, p_trans } ) );
     }
 
     bitmap::bitmap( const char* p_path ) {
@@ -189,7 +189,7 @@ namespace DATA {
         if( !f ) {
             std::memset( TEMP, 0, sizeof( TEMP ) );
             std::memset( TEMP_PAL, 0, sizeof( TEMP_PAL ) );
-            return bitmap{ 8, 8 };
+            return bitmap{ 32, 32 };
         }
 
         DATA::read( f, TEMP_PAL, sizeof( u16 ), 16 );
@@ -202,9 +202,13 @@ namespace DATA {
 
         TEMP_PAL[ 0 ] = 0;
 
-        auto res = bitmap{ width, height };
+        auto dimen{ std::max( u8( 32 ), std::max( width, height ) ) };
+
+        auto res = bitmap{ dimen, dimen, 0 };
         if( p_frame >= frameCount ) { p_frame = 0; }
-        res.addFromSprite( TEMP + ( width * height * p_frame / 8 ), TEMP_PAL, width, height );
+        res.addFromSprite( TEMP + ( width * height * p_frame / 8 ), TEMP_PAL, width, height,
+                           dimen > width ? ( dimen - width ) / 2 : 0,
+                           dimen > height ? dimen - height : 0 );
         return res;
     }
 

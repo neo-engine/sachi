@@ -119,6 +119,9 @@ std::string parseMapString( const std::string& p_text ) {
         if( u8( p_text[ i ] ) == 0xe9 ) {
             res += "é";
             continue;
+        } else if( u8( p_text[ i ] ) == '|' ) {
+            res += "…";
+            continue;
         } else if( u8( p_text[ i ] ) == '"' ) {
             res += "”";
             continue;

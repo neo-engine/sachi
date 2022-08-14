@@ -14,15 +14,19 @@ namespace UI::MED {
           _aFlagA{ Gtk::Adjustment::create( 0.0, 0.0, DATA::MAX_FLAG, 1.0, 1.0, 0.0 ) },
           _dFlagA{ Gtk::Adjustment::create( 0.0, 0.0, DATA::MAX_FLAG, 1.0, 1.0, 0.0 ) },
           _messageIdx1A{ Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) },
+          _messageIdx2A{ Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) },
           _warpScriptIdxA{ Gtk::Adjustment::create( 0.0, 0.0, (u8) -1, 1.0, 1.0, 0.0 ) },
           _scriptIdx1A{ Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) },
           _scriptIdx2A{ Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) },
           _flyLocationIdxA{ Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) },
           _berryTreeIdxA{ Gtk::Adjustment::create( 0.0, 0.0, (u8) -1, 1.0, 1.0, 0.0 ) },
+          _trainerIdxA{ Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) },
+          _trainerSightA{ Gtk::Adjustment::create( 0.0, 0.0, 31, 1.0, 1.0, 0.0 ) },
           _selectedEventE{ _selectedEventA }, _aFlagE{ _aFlagA }, _dFlagE{ _dFlagA },
-          _messageIdx1E{ _messageIdx1A }, _warpScriptIdxE{ _warpScriptIdxA },
-          _scriptIdx1E{ _scriptIdx1A }, _scriptIdx2E{ _scriptIdx2A }, _berryTreeIdxE{
-                                                                          _berryTreeIdxA } {
+          _messageIdx1E{ _messageIdx1A }, _messageIdx2E{ _messageIdx2A },
+          _warpScriptIdxE{ _warpScriptIdxA }, _scriptIdx1E{ _scriptIdx1A },
+          _scriptIdx2E{ _scriptIdx2A }, _berryTreeIdxE{ _berryTreeIdxA },
+          _trainerIdxE{ _trainerIdxA }, _trainerSightE{ _trainerSightA } {
         _mainFrame = Gtk::Frame{ "Event Data" };
 
         Gtk::Box mainBox{ Gtk::Orientation::VERTICAL };
@@ -288,6 +292,71 @@ namespace UI::MED {
             frame.set_label_align( Gtk::Align::CENTER );
             _generalData.append( frame );
 
+            Gtk::Box fbox{ Gtk::Orientation::VERTICAL };
+            fbox.set_margin( MARGIN );
+            frame.set_child( fbox );
+
+            _trainerOWSprite = std::make_shared<owSpriteSelector>( _model, false );
+            if( _trainerOWSprite ) {
+                fbox.append( *_trainerOWSprite );
+
+                _trainerOWSprite->connect( [ this ]( std::pair<u16, u8> p_sprite ) {
+                    if( _disableRedraw ) { return; }
+                    _model.mapEvent( ).m_data.m_trainer.m_spriteId = p_sprite.first;
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redrawPanel( );
+                    _parent.redrawMap( false );
+                    redraw( );
+                } );
+
+                ( (Gtk::Widget&) ( *_trainerOWSprite ) ).set_hexpand( true );
+            }
+
+            Gtk::Grid  g2{ };
+            Gtk::Label til{ "Trainer Idx" };
+            g2.attach( til, 0, 0 );
+            til.set_margin_end( MARGIN );
+            til.set_hexpand( );
+            g2.attach( _trainerIdxE, 1, 0 );
+
+            _trainerIdxE.signal_value_changed( ).connect( [ this ]( ) {
+                if( _disableRedraw
+                    || _model.mapEvent( ).m_data.m_trainer.m_trainerId
+                           == _trainerIdxE.get_value_as_int( ) ) {
+                    return;
+                }
+                _disableTI = true;
+                _trainerIdxE.update( );
+                _model.mapEvent( ).m_data.m_trainer.m_trainerId = _trainerIdxE.get_value_as_int( );
+                _model.markSelectedBankChanged( );
+                _rootWindow.redrawPanel( );
+                redraw( );
+                _disableTI = false;
+            } );
+
+            Gtk::Label tsl{ "Trainer Sight" };
+            g2.attach( tsl, 0, 1 );
+            tsl.set_margin_end( MARGIN );
+            tsl.set_hexpand( );
+            g2.attach( _trainerSightE, 1, 1 );
+
+            _trainerSightE.signal_value_changed( ).connect( [ this ]( ) {
+                if( _disableRedraw
+                    || _model.mapEvent( ).m_data.m_trainer.m_sight
+                           == _trainerSightE.get_value_as_int( ) ) {
+                    return;
+                }
+                _disableTS = true;
+                _trainerSightE.update( );
+                _model.mapEvent( ).m_data.m_trainer.m_sight = _trainerSightE.get_value_as_int( );
+                _model.markSelectedBankChanged( );
+                _rootWindow.redrawPanel( );
+                redraw( );
+                _disableTS = false;
+            } );
+
+            fbox.append( g2 );
+            fbox.set_hexpand( false );
             _detailFrames.push_back( std::move( frame ) );
         }
 
@@ -597,6 +666,87 @@ namespace UI::MED {
             fbox.set_margin( MARGIN );
             frame.set_child( fbox );
 
+            _messageType2 = std::make_shared<dropDown>( DATA::MESSAGE_TYPE_NAMES );
+            if( _messageType2 ) {
+                fbox.append( *_messageType2 );
+                ( (Gtk::Widget&) ( *_messageType2 ) ).set_hexpand( true );
+
+                _messageType2->connect( [ this ]( u64 p_newChoice ) {
+                    if( _disableRedraw ) { return; }
+                    _model.mapEvent( ).m_data.m_npc.m_scriptType = p_newChoice;
+                    if( _npcMessageAutoDeact ) {
+                        _model.mapEvent( ).m_data.m_npc.m_scriptType
+                            |= _npcMessageAutoDeact->currentChoice( ) << 7;
+                    }
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redrawPanel( );
+                    redraw( );
+                } );
+            }
+
+            _npcMessageAutoDeact = std::make_shared<switchButton>(
+                std::vector<std::string>{ "Repeatable", "Auto-Destroy" } );
+            if( _npcMessageAutoDeact ) {
+                fbox.append( *_npcMessageAutoDeact );
+                _npcMessageAutoDeact->connect( [ this ]( u8 p_newChoice ) {
+                    if( _disableRedraw ) { return; }
+                    _model.mapEvent( ).m_data.m_npc.m_scriptType = p_newChoice << 7;
+                    if( _messageType2 ) {
+                        _model.mapEvent( ).m_data.m_npc.m_scriptType
+                            |= _messageType2->currentChoice( );
+                    }
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redrawPanel( );
+                    redraw( );
+                } );
+            }
+
+            _npcMessageOWSprite = std::make_shared<owSpriteSelector>( _model, false );
+            if( _npcMessageOWSprite ) {
+                fbox.append( *_npcMessageOWSprite );
+
+                _npcMessageOWSprite->connect( [ this ]( std::pair<u16, u8> p_sprite ) {
+                    if( _disableRedraw ) { return; }
+                    _model.mapEvent( ).m_data.m_npc.m_spriteId = p_sprite.first;
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redrawPanel( );
+                    _parent.redrawMap( false );
+                    redraw( );
+                } );
+
+                ( (Gtk::Widget&) ( *_npcMessageOWSprite ) ).set_hexpand( true );
+                ( (Gtk::Widget&) ( *_npcMessageOWSprite ) ).set_margin_top( MARGIN );
+            }
+
+            Gtk::Box ibox{ Gtk::Orientation::HORIZONTAL };
+            ibox.set_margin_top( MARGIN );
+            Gtk::Label ilabel{ "Message Idx" };
+            ilabel.set_hexpand( );
+
+            fbox.append( ibox );
+            ibox.append( ilabel );
+            ibox.append( _messageIdx2E );
+            _messageIdx2E.signal_value_changed( ).connect( [ this ]( ) {
+                if( _disableRedraw
+                    || _model.mapEvent( ).m_data.m_npc.m_scriptId
+                           == _messageIdx2E.get_value_as_int( ) ) {
+                    return;
+                }
+                _disableMI2E = true;
+                _messageIdx2E.update( );
+                _model.mapEvent( ).m_data.m_npc.m_scriptId = _messageIdx2E.get_value_as_int( );
+                _model.markSelectedBankChanged( );
+                _rootWindow.redrawPanel( );
+                redraw( );
+                _disableMI2E = false;
+            } );
+
+            _messageLabel2.set_hexpand( );
+            _messageLabel2.set_wrap( );
+            fbox.append( _messageLabel2 );
+
+            _messageLabel2.set_margin_top( MARGIN );
+
             fbox.set_hexpand( false );
             _detailFrames.push_back( std::move( frame ) );
         }
@@ -668,6 +818,20 @@ namespace UI::MED {
             }
             break;
         }
+        case DATA::EVENT_TRAINER: {
+            // TODO
+            if( !_disableTI ) { _trainerIdxE.set_value( evt.m_data.m_trainer.m_trainerId ); }
+            if( !_disableTS ) { _trainerSightE.set_value( evt.m_data.m_trainer.m_sight ); }
+            if( _trainerOWSprite ) {
+                _trainerOWSprite->setData(
+                    evt.m_data.m_trainer.m_spriteId,
+                    DATA::moveModeToFrame(
+                        DATA::moveMode( evt.m_data.m_trainer.m_movementType ),
+                        DATA::frameFuncionForIdx( evt.m_data.m_trainer.m_spriteId ) ) );
+            }
+
+            break;
+        }
         case DATA::EVENT_OW_PKMN: {
             // TODO
             break;
@@ -734,6 +898,23 @@ namespace UI::MED {
         }
         case DATA::EVENT_NPC_MESSAGE: {
             // TODO
+            if( _messageType2 ) { _messageType2->choose( evt.m_data.m_npc.m_scriptType & 127 ); }
+
+            if( !_disableMI2E ) { _messageIdx2E.set_value( evt.m_data.m_npc.m_scriptId ); }
+            _messageLabel2.set_text( _model.getMapString( evt.m_data.m_npc.m_scriptId ) );
+
+            if( _npcMessageAutoDeact ) {
+                _npcMessageAutoDeact->choose( evt.m_data.m_npc.m_scriptType >> 7 );
+            }
+
+            if( _npcMessageOWSprite ) {
+                _npcMessageOWSprite->setData(
+                    evt.m_data.m_npc.m_spriteId,
+                    DATA::moveModeToFrame(
+                        DATA::moveMode( evt.m_data.m_npc.m_movementType ),
+                        DATA::frameFuncionForIdx( evt.m_data.m_npc.m_spriteId ) ) );
+            }
+
             break;
         }
         case DATA::EVENT_FLY_POS: {

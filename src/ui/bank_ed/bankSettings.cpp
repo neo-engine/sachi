@@ -61,7 +61,7 @@ namespace UI {
         _shbox3.set_hexpand( true );
         auto shbox3l = Gtk::Label( "Default Overworld Location" );
         _shbox3.set_start_widget( shbox3l );
-        _bankDefaultLocation = std::make_shared<locationDropDown>( );
+        _bankDefaultLocation = std::make_shared<locationDropDown>( Gtk::Orientation::HORIZONTAL );
         if( _bankDefaultLocation ) {
             _shbox3.set_end_widget( *_bankDefaultLocation );
             _bankDefaultLocation->connect( [ this ]( u64 p_newChoice ) {

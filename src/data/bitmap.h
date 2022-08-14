@@ -116,7 +116,7 @@ namespace DATA {
       public:
         size_t m_width;  ///< The image width
         size_t m_height; ///< The image height
-        bitmap( size_t p_width, size_t p_height );
+        bitmap( size_t p_width, size_t p_height, u8 p_bgOpacity = 255 );
         bitmap( const char* p_path );
 
         void crop( u16 p_cx, u16 p_cy, u16 p_cw, u16 p_ch );
