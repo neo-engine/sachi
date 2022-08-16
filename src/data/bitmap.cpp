@@ -1,13 +1,20 @@
+#include <cassert>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
+#include <map>
 #include <png.h>
 
 #include "bitmap.h"
 #include "fs/util.h"
 
 namespace DATA {
+    // Computes distance between colors
+    int col_dis( int p_1, int p_2 ) {
+        return abs( red( p_1 ) - red( p_2 ) ) + abs( green( p_1 ) - green( p_2 ) )
+               + abs( blue( p_1 ) - blue( p_2 ) );
+    }
 
     ///////////////////////////////////////////////////////////////////////////////
     //
@@ -109,35 +116,99 @@ namespace DATA {
         }
     }
 
-    unsigned int   TEMP[ 12288 ]   = { 0 };
+    unsigned int   TEMP[ 49152 ]   = { 0 };
     unsigned short TEMP_PAL[ 256 ] = { 0 };
-    bitmap         bitmap::fromBGImage( const char* p_path ) {
-                auto res = bitmap{ 256, 192 };
-                if( !readPictureData( TEMP, TEMP_PAL, p_path ) ) {
-                    std::memset( TEMP, 0, sizeof( TEMP ) );
-                    std::memset( TEMP_PAL, 0, sizeof( TEMP_PAL ) );
+
+    bitmap bitmap::fromBGImage( const char* p_path ) {
+        // fprintf( stderr, "Reading %s\n", p_path );
+        auto res = bitmap{ 256, 192 };
+        if( !readPictureData( TEMP, TEMP_PAL, p_path ) ) {
+            std::memset( TEMP, 0, sizeof( TEMP ) );
+            std::memset( TEMP_PAL, 0, sizeof( TEMP_PAL ) );
         }
 
-                u8* ptr = reinterpret_cast<u8*>( TEMP );
+        u8* ptr = reinterpret_cast<u8*>( TEMP );
 
-                auto pos{ 0 };
-                for( auto y{ 0 }; y < 192; ++y ) {
-                    for( auto x{ 0 }; x < 256; ++x, ++pos ) {
-                        auto colidx{ ptr[ pos ] };
-                        auto col{ TEMP_PAL[ colidx ] };
-                        //                printf( "\x1b[48;2;%u;%u;%um \x1b[0;00m", red( col ), green( col
-                        //                ), blue( col ) );
-                        if( colidx ) {
-                            res( x, y ) = pixel( red( col ), green( col ), blue( col ), 255 );
+        auto pos{ 0 };
+        for( auto y{ 0 }; y < 192; ++y ) {
+            for( auto x{ 0 }; x < 256; ++x, ++pos ) {
+                auto colidx{ ptr[ pos ] };
+                auto col{ TEMP_PAL[ colidx ] };
+                //                printf( "\x1b[48;2;%u;%u;%um \x1b[0;00m", red( col ), green( col
+                //                ), blue( col ) );
+                if( colidx ) {
+                    res( x, y ) = pixel( red( col ), green( col ), blue( col ), 255 );
                 } else {
-                            res( x, y ) = pixel{ 0, 0, 0, 0 };
+                    res( x, y ) = pixel{ 0, 0, 0, 0 };
                 }
             }
-                    //            printf( "\n" );
+            //            printf( "\n" );
         }
 
-                // res->writeToFile( "test.png" );
-                return res;
+        // res->writeToFile( "test.png" );
+        return res;
+    }
+
+    int bitmap::dumpToFile( const char* p_path, u16 p_colorLimit, u8 p_palStart,
+                            u8 p_colorReplacementThrs ) const {
+        if( m_width != 256 || m_height != 192 ) { return 1; }
+        std::map<unsigned short, u8> palidx;
+        u8*                          ptr = reinterpret_cast<u8*>( TEMP );
+
+        u8 col = 0, SCALE = 1;
+        memset( TEMP_PAL, 0, sizeof( TEMP_PAL ) );
+        for( size_t y = 0; y < m_height; ++y )
+            for( size_t x = 0; x < m_width; ++x ) {
+                unsigned short conv_color
+                    = ( conv( operator( )( x* SCALE, y* SCALE ).m_red ) )
+                      | ( conv( operator( )( x* SCALE, y* SCALE ).m_green ) << 5 )
+                      | ( conv( operator( )( x* SCALE, y* SCALE ).m_blue ) << 10 ) | ( 1 << 15 );
+
+                if( !palidx.count( conv_color ) ) {
+                    // Check if the new color is very close to an existing color
+                    u8 min_del = 255, del_p = 0;
+                    for( u8 p = 2 + p_palStart; p < 16; ++p ) {
+                        if( col_dis( conv_color, TEMP_PAL[ p ] ) < min_del ) {
+                            min_del = col_dis( conv_color, TEMP_PAL[ p ] );
+                            del_p   = p;
+                        }
+                    }
+
+                    if( min_del < p_colorReplacementThrs && col + p_palStart ) {
+                        fprintf( stderr,
+                                 "[%s] replacing \x1b[48;2;%u;%u;%um%3hx\x1b[0;00m"
+                                 " with \x1b[48;2;%u;%u;%um%3hx\x1b[0;00m (%hu)\n",
+                                 p_path, red( conv_color ), blue( conv_color ), green( conv_color ),
+                                 conv_color, red( TEMP_PAL[ del_p ] ), blue( TEMP_PAL[ del_p ] ),
+                                 green( TEMP_PAL[ del_p ] ), TEMP_PAL[ del_p ], del_p );
+                        palidx[ conv_color ] = del_p;
+                    } else if( col + p_palStart > p_colorLimit ) {
+                        fprintf( stderr, "[%s] Too COLORFUL:", p_path );
+                        fprintf( stderr,
+                                 " replacing \x1b[48;2;%u;%u;%um%3hx\x1b[0;00m"
+                                 " with \x1b[48;2;%u;%u;%um%3hx\x1b[0;00m\n",
+                                 red( conv_color ), blue( conv_color ), green( conv_color ),
+                                 conv_color, red( TEMP_PAL[ del_p ] ), blue( TEMP_PAL[ del_p ] ),
+                                 green( TEMP_PAL[ del_p ] ), TEMP_PAL[ del_p ] );
+                        palidx[ conv_color ] = del_p;
+                    } else {
+                        TEMP_PAL[ col + p_palStart ] = conv_color;
+                        palidx[ conv_color ]         = col++;
+                    }
+                }
+
+                ptr[ y * m_width + x ] = p_palStart + palidx[ conv_color ];
+            }
+
+        FILE* fout = fopen( p_path, "wb" );
+
+        if( !fout ) { return 2; }
+        int numTiles = m_height * m_width, numColors = 256;
+        fwrite( ptr, sizeof( u8 ), numTiles, fout );
+        fwrite( TEMP_PAL, sizeof( unsigned short int ), numColors, fout );
+        fclose( fout );
+
+        return 0;
     }
 
     void bitmap::addFromSprite( unsigned* p_imgData, unsigned short* p_palData, size_t p_width,

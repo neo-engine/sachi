@@ -1,14 +1,19 @@
 #include <gtkmm/centerbox.h>
 #include <gtkmm/frame.h>
 #include <gtkmm/label.h>
+#include <gtkmm/separator.h>
 
 #include "../../log.h"
+#include "../pure/util.h"
 #include "../root.h"
 #include "bankSettings.h"
 
 namespace UI {
     bankSettings::bankSettings( model& p_model, root& p_root )
-        : _model{ p_model }, _rootWindow{ p_root } {
+        : _model{ p_model }, _rootWindow{ p_root }, _shiftXA{ Gtk::Adjustment::create(
+                                                        0.0, 0.0, 255.0, 1.0, 5.0, 0.0 ) },
+          _shiftYA{ Gtk::Adjustment::create( 0.0, 0.0, 191.0, 1.0, 5.0, 0.0 ) },
+          _shiftXE{ _shiftXA }, _shiftYE{ _shiftYA } {
 
         _mapSettingsBox.set_margin( MARGIN );
 
@@ -95,10 +100,180 @@ namespace UI {
         sboxv1.append( _shbox4 );
 
         _mapSettingsBox.append( shbox1f1 );
+
+        // ow map
+
+        _owMapFrame = Gtk::Frame{ "Overworld Map" };
+        _owMapFrame.set_label_align( Gtk::Align::CENTER );
+        _owMapFrame.set_margin_top( MARGIN );
+        _mapSettingsBox.append( _owMapFrame );
+
+        auto sboxv2 = Gtk::Box( Gtk::Orientation::VERTICAL );
+        _owMapFrame.set_child( sboxv2 );
+
+        // map image
+        Gtk::Overlay ov{ };
+        ov.set_child( _owImage );
+        ov.add_overlay( _navBorder );
+        ov.add_overlay( _touchArea );
+        ov.set_hexpand( );
+        ov.set_valign( Gtk::Align::CENTER );
+        sboxv2.append( ov );
+        _owImage.setScale( 2 );
+        _navBorder.setScale( 2 );
+        _touchArea.get_style_context( )->add_class( "mapblock-selected" );
+        ov.set_halign( Gtk::Align::CENTER );
+
+        {
+            auto sboxh2 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+            ov.add_overlay( sboxh2 );
+            sboxh2.set_margin_top( 2 * 192 - 45 );
+            sboxh2.set_valign( Gtk::Align::CENTER );
+            sboxh2.set_expand( false );
+
+            _recomputeMapBG = createButton( "", "Recompute OW Map Image", [ this ]( ) {
+                _model.recomputeBankPic( );
+                _model.markSelectedBankChanged( );
+                _rootWindow.redrawPanel( );
+                redraw( );
+            } );
+            if( _recomputeMapBG ) {
+                sboxh2.append( *_recomputeMapBG );
+                _recomputeMapBG->set_hexpand( true );
+                _recomputeMapBG->set_vexpand( false );
+                _recomputeMapBG->set_margin_end( MARGIN );
+            }
+
+            _recomputeOverlay = createButton( "", "Add Location Overlay", [ this ]( ) {
+                _model.recomputeBankLocationOverlay( );
+                _model.markSelectedBankChanged( );
+                _rootWindow.redrawPanel( );
+                redraw( );
+            } );
+            if( _recomputeOverlay ) {
+                sboxh2.append( *_recomputeOverlay );
+                _recomputeMapBG->set_hexpand( true );
+                _recomputeMapBG->set_vexpand( false );
+            }
+        }
+
+        {
+            auto sboxh2 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+            sboxv2.append( sboxh2 );
+
+            {
+                auto bx5 = Gtk::CenterBox( );
+                bx5.set_hexpand( true );
+                auto shbox1l = Gtk::Label( "Show Border" );
+                bx5.set_margin_top( MARGIN );
+                shbox1l.set_margin_start( MARGIN );
+                bx5.set_start_widget( shbox1l );
+
+                _showNavBorder = std::make_shared<switchButton>(
+                    std::vector<std::string>{ "_No", "_Yes" }, 1 );
+                if( _showNavBorder ) {
+                    ( (Gtk::Widget&) ( *_showNavBorder ) ).set_margin_top( 0 );
+                    bx5.set_end_widget( *_showNavBorder );
+                    _showNavBorder->connect( [ this ]( u8 p_newChoice ) {
+                        if( _model.selectedBank( ) == -1 ) { return; }
+                        _navBorder.set_visible( p_newChoice );
+                    } );
+                }
+
+                sboxh2.append( bx5 );
+            }
+            Gtk::Separator s1{ };
+            sboxh2.append( s1 );
+            {
+                auto bx5 = Gtk::CenterBox( );
+                bx5.set_hexpand( true );
+                auto shbox1l = Gtk::Label( "Touch Area Left Margin" );
+                bx5.set_margin_end( MARGIN );
+                bx5.set_margin_bottom( MARGIN );
+                shbox1l.set_margin_start( MARGIN );
+                bx5.set_start_widget( shbox1l );
+
+                bx5.set_end_widget( _shiftXE );
+                _shiftXE.signal_changed( ).connect( [ this ]( ) {
+                    if( _model.selectedBank( ) == -1
+                        || _shiftXE.get_value( ) == _model.bank( ).m_mapImageShiftX ) {
+                        return;
+                    }
+                    _disableSB                      = true;
+                    _model.bank( ).m_mapImageShiftX = _shiftXE.get_value( );
+
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redrawPanel( );
+                    redraw( );
+                    _disableSB = false;
+                } );
+
+                sboxh2.append( bx5 );
+            }
+        }
+
+        // xshift, yshift
+        {
+            auto sboxh2 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+            sboxv2.append( sboxh2 );
+
+            {
+                auto bx5 = Gtk::CenterBox( );
+                bx5.set_hexpand( true );
+                auto shbox1l = Gtk::Label( "Show Touch Area" );
+                shbox1l.set_margin_start( MARGIN );
+                bx5.set_start_widget( shbox1l );
+
+                _showTouchArea = std::make_shared<switchButton>(
+                    std::vector<std::string>{ "_No", "_Yes" }, 1 );
+                if( _showTouchArea ) {
+                    ( (Gtk::Widget&) ( *_showTouchArea ) ).set_margin_top( 0 );
+                    bx5.set_end_widget( *_showTouchArea );
+                    _showTouchArea->connect( [ this ]( u8 p_newChoice ) {
+                        if( _model.selectedBank( ) == -1 ) { return; }
+                        _touchArea.set_visible( p_newChoice );
+                    } );
+                }
+
+                sboxh2.append( bx5 );
+            }
+
+            Gtk::Separator s1{ };
+            sboxh2.append( s1 );
+            {
+                auto bx5 = Gtk::CenterBox( );
+                bx5.set_hexpand( true );
+                auto shbox1l = Gtk::Label( "Touch Area Top Margin" );
+                bx5.set_margin_end( MARGIN );
+                bx5.set_margin_bottom( MARGIN );
+                shbox1l.set_margin_start( MARGIN );
+                bx5.set_start_widget( shbox1l );
+
+                bx5.set_end_widget( _shiftYE );
+                _shiftYE.signal_changed( ).connect( [ this ]( ) {
+                    if( _model.selectedBank( ) == -1
+                        || _shiftYE.get_value( ) == _model.bank( ).m_mapImageShiftY ) {
+                        return;
+                    }
+                    _disableSB                      = true;
+                    _model.bank( ).m_mapImageShiftY = _shiftYE.get_value( );
+
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redrawPanel( );
+                    redraw( );
+                    _disableSB = false;
+                } );
+
+                sboxh2.append( bx5 );
+            }
+        }
+
+        // location color selector
     }
 
     void bankSettings::redraw( ) {
         if( _model.selectedBank( ) == -1 ) { return; }
+        _owMapFrame.hide( );
 
         if( _mapBankSettingsMapModeToggles ) {
             _mapBankSettingsMapModeToggles->choose( _model.bank( ).getMapMode( ) );
@@ -121,6 +296,22 @@ namespace UI {
             if( _model.bank( ).getOWStatus( ) ) {
                 // draw the ow map, default location selector
                 _shbox3.show( );
+                _owMapFrame.show( );
+                _navBorder.load( _model.m_fsdata.navBorderPath( ).c_str( ) );
+                _owImage.load( _model.bank( ).m_owMap );
+                _touchArea.set_valign( Gtk::Align::START );
+                _touchArea.set_halign( Gtk::Align::START );
+                _touchArea.set_size_request(
+                    ( DATA::MAP_LOCATION_RES / _model.bank( ).m_mapImageRes )
+                        * _model.bank( ).getSizeX( ) * 6,
+                    ( DATA::MAP_LOCATION_RES / _model.bank( ).m_mapImageRes )
+                        * _model.bank( ).getSizeY( ) * 6 );
+                _touchArea.set_margin_top( 32 + _model.bank( ).m_mapImageShiftY * 2 );
+                _touchArea.set_margin_start( 64 + _model.bank( ).m_mapImageShiftX * 2 );
+                if( !_disableSB ) {
+                    _shiftXE.set_value( _model.bank( ).m_mapImageShiftX );
+                    _shiftYE.set_value( _model.bank( ).m_mapImageShiftY );
+                }
             } else {
                 _shbox3.hide( );
             }

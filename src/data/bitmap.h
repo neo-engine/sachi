@@ -21,10 +21,17 @@ namespace DATA {
 
         constexpr auto operator<=>( const pixel& p_other ) const = default;
 
+        constexpr pixel round( u16 p_factor ) {
+            this->m_red   = this->m_red / p_factor * p_factor + p_factor - 1;
+            this->m_green = this->m_green / p_factor * p_factor + p_factor - 1;
+            this->m_blue  = this->m_blue / p_factor * p_factor + p_factor - 1;
+            return *this;
+        }
+
         constexpr pixel operator^=( const pixel& p_other ) {
-            u16 tp        = 510 - ( this->m_transparent + p_other.m_transparent );
-            u16 ttp       = 255 - ( this->m_transparent );
-            u16 otp       = 255 - ( p_other.m_transparent );
+            u16 tp        = 512 - ( this->m_transparent + p_other.m_transparent );
+            u16 ttp       = 256 - ( this->m_transparent );
+            u16 otp       = 256 - ( p_other.m_transparent );
             this->m_red   = this->m_red * ttp / tp + p_other.m_red * otp / tp;
             this->m_green = this->m_green * ttp / tp + p_other.m_green * otp / tp;
             this->m_blue  = this->m_blue * ttp / tp + p_other.m_blue * otp / tp;
@@ -129,6 +136,13 @@ namespace DATA {
          * @return Non-zero if an error occured.
          */
         int writeToFile( const char* p_path ) const;
+
+        /*
+         * @brief: Dumps the 256x192 px bitmap to the specified path, using at most p_colorLomit
+         * colors.
+         */
+        int dumpToFile( const char* p_path, u16 p_colorLimit = 256, u8 p_palStart = 0,
+                        u8 p_colorReplacementThrs = 0 ) const;
 
         std::shared_ptr<Gdk::Pixbuf> pixbuf( ) const;
 

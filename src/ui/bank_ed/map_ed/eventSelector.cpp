@@ -142,6 +142,7 @@ namespace UI::MED {
         afL.set_margin_end( MARGIN );
         afL.set_margin_start( MARGIN );
         afL.set_hexpand( );
+        afL.set_halign( Gtk::Align::START );
         _aFlagE.set_margin_end( MARGIN );
         g1.attach( _aFlagE, 1, 0 );
 
@@ -164,6 +165,7 @@ namespace UI::MED {
         dfL.set_margin_end( MARGIN );
         dfL.set_margin_start( MARGIN );
         dfL.set_hexpand( );
+        dfL.set_halign( Gtk::Align::START );
         _dFlagE.set_margin_end( MARGIN );
         g1.attach( _dFlagE, 1, 1 );
 
@@ -238,6 +240,7 @@ namespace UI::MED {
             Gtk::Box ibox{ Gtk::Orientation::HORIZONTAL };
             ibox.set_margin_top( MARGIN );
             Gtk::Label ilabel{ "Message Idx" };
+            ilabel.set_halign( Gtk::Align::START );
             ilabel.set_hexpand( );
 
             fbox.append( ibox );
@@ -362,6 +365,7 @@ namespace UI::MED {
             Gtk::Label til{ "Trainer Idx" };
             g2.attach( til, 0, 0 );
             til.set_margin_end( MARGIN );
+            til.set_halign( Gtk::Align::START );
             til.set_hexpand( );
             g2.attach( _trainerIdxE, 1, 0 );
 
@@ -383,6 +387,7 @@ namespace UI::MED {
             Gtk::Label tsl{ "Trainer Sight" };
             g2.attach( tsl, 0, 1 );
             tsl.set_margin_end( MARGIN );
+            tsl.set_halign( Gtk::Align::START );
             tsl.set_hexpand( );
             g2.attach( _trainerSightE, 1, 1 );
 
@@ -437,6 +442,7 @@ namespace UI::MED {
             Gtk::Label til{ "Level" };
             g2.attach( til, 0, 0 );
             til.set_margin_end( MARGIN );
+            til.set_halign( Gtk::Align::START );
             til.set_hexpand( );
             g2.attach( _owPkmnLevelE, 1, 0 );
 
@@ -457,6 +463,7 @@ namespace UI::MED {
 
             Gtk::Label tsl{ "Shininess" };
             g2.attach( tsl, 0, 1 );
+            tsl.set_halign( Gtk::Align::START );
             tsl.set_margin_end( MARGIN );
             tsl.set_hexpand( );
 
@@ -486,6 +493,7 @@ namespace UI::MED {
             Gtk::Label l3{ "Hidden Ability" };
             g2.attach( l3, 0, 2 );
             l3.set_margin_end( MARGIN );
+            l3.set_halign( Gtk::Align::START );
             l3.set_hexpand( );
 
             _owPkmnHA = std::make_shared<switchButton>( std::vector<std::string>{ "_No", "_Yes" } );
@@ -509,6 +517,7 @@ namespace UI::MED {
             Gtk::Label l4{ "Fateful Enc." };
             g2.attach( l4, 0, 3 );
             l4.set_margin_end( MARGIN );
+            l4.set_halign( Gtk::Align::START );
             l4.set_hexpand( );
 
             _owPkmnFE = std::make_shared<switchButton>( std::vector<std::string>{ "_No", "_Yes" } );
@@ -599,6 +608,7 @@ namespace UI::MED {
             ibox.set_margin_top( MARGIN );
             Gtk::Label ilabel{ "Script Idx" };
             ilabel.set_hexpand( );
+            ilabel.set_halign( Gtk::Align::START );
 
             fbox.append( ibox );
             ibox.append( ilabel );
@@ -661,6 +671,7 @@ namespace UI::MED {
             _warpScriptIdxBox.set_margin_top( MARGIN );
             Gtk::Label ilabel{ "Script Idx" };
             ilabel.set_hexpand( );
+            ilabel.set_halign( Gtk::Align::START );
 
             _warpScriptIdxE.set_hexpand( );
             _warpScriptIdxE.set_margin_end( MARGIN );
@@ -753,6 +764,7 @@ namespace UI::MED {
             ibox.set_margin_top( MARGIN );
             Gtk::Label ilabel{ "Script Idx" };
             ilabel.set_hexpand( );
+            ilabel.set_halign( Gtk::Align::START );
 
             fbox.append( ibox );
             ibox.append( ilabel );
@@ -830,6 +842,7 @@ namespace UI::MED {
             ibox.set_margin_top( MARGIN );
             Gtk::Label ilabel{ "Internal Tree No." };
             ilabel.set_hexpand( );
+            ilabel.set_halign( Gtk::Align::START );
 
             fbox.append( ibox );
             ibox.append( ilabel );
@@ -936,6 +949,7 @@ namespace UI::MED {
             ibox.set_margin_top( MARGIN );
             Gtk::Label ilabel{ "Message Idx" };
             ilabel.set_hexpand( );
+            ilabel.set_halign( Gtk::Align::START );
 
             fbox.append( ibox );
             ibox.append( ilabel );
@@ -980,6 +994,7 @@ namespace UI::MED {
             ibox.set_margin_top( MARGIN );
             Gtk::Label ilabel{ "Fly Location" };
             ilabel.set_hexpand( );
+            ilabel.set_halign( Gtk::Align::START );
 
             fbox.append( ibox );
             ibox.append( ilabel );

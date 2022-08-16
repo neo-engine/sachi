@@ -8,8 +8,8 @@ namespace UI {
     battleBG::battleBG( const std::string& p_name )
         : _bg{ Gtk::Adjustment::create( 0.0, 0.0, 99.0, 1.0, 5.0, 0.0 ) },
           _p1{ Gtk::Adjustment::create( 0.0, 0.0, 99.0, 1.0, 5.0, 0.0 ) },
-          _p2{ Gtk::Adjustment::create( 0.0, 0.0, 99.0, 1.0, 5.0, 0.0 ) }, _bgE( _bg ), _p1E( _p1 ),
-          _p2E( _p2 ) {
+          _p2{ Gtk::Adjustment::create( 0.0, 0.0, 99.0, 1.0, 5.0, 0.0 ) }, _bgE{ _bg }, _p1E{ _p1 },
+          _p2E{ _p2 } {
 
         _mainBox  = Gtk::Box{ Gtk::Orientation::VERTICAL };
         auto box1 = Gtk::Box{ Gtk::Orientation::HORIZONTAL };

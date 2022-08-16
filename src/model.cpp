@@ -385,6 +385,27 @@ bool model::checkOrLoadBank( int p_bank, bool p_forceRead ) {
             }
         }
 
+        if( selb.m_info.m_isOWMap ) {
+            // write location file
+            auto owpath = fs::path( m_fsdata.mapLocationPath( ) )
+                          / fs::path( std::to_string( p_bank ) + ".loc.data" );
+            fs::create_directories( owpath.parent_path( ) );
+            FILE* owf = fopen( owpath.c_str( ), "rb" );
+
+            if( owf ) {
+                u8 meta[ 5 ] = { };
+                fread( meta, sizeof( u8 ), 5, owf );
+                selb.m_mapImageRes    = meta[ 2 ];
+                selb.m_mapImageShiftX = meta[ 3 ];
+                selb.m_mapImageShiftY = meta[ 4 ];
+                fclose( owf );
+            }
+
+            // write ow map picture
+            selb.m_owMap = DATA::bitmap::fromBGImage(
+                ( m_fsdata.owMapPicturePath( ) + std::to_string( p_bank ) + ".raw" ).c_str( ) );
+        }
+
         selb.m_loaded = true;
     }
 
@@ -797,7 +818,9 @@ bool model::writeMapBank( u16 p_bank ) {
 
         size_t scale = DATA::SIZE / DATA::MAP_LOCATION_RES;
 
-        u8 meta[] = { u8( info.getSizeX( ) * scale ), u8( info.getSizeY( ) * scale ) };
+        u8 meta[] = { u8( info.getSizeX( ) * scale ), u8( info.getSizeY( ) * scale ),
+                      u8( info.m_mapImageRes ), u8( info.m_mapImageShiftX ),
+                      u8( info.m_mapImageShiftY ) };
 
         u16* tmploc = new u16[ meta[ 0 ] * meta[ 1 ] ];
 
@@ -812,12 +835,16 @@ bool model::writeMapBank( u16 p_bank ) {
             }
         }
 
-        fwrite( &meta, sizeof( u8 ), 2, owf );
+        fwrite( &meta, sizeof( u8 ), 5, owf );
         fwrite( &info.m_info.m_defaultLocation, sizeof( u16 ), 1, owf );
         fwrite( tmploc, sizeof( u16 ), meta[ 0 ] * meta[ 1 ], owf );
 
         delete[] tmploc;
         fclose( owf );
+
+        // write ow map picture
+        info.m_owMap.dumpToFile(
+            ( m_fsdata.owMapPicturePath( ) + std::to_string( p_bank ) + ".raw" ).c_str( ), 191, 1 );
     }
 
     if( !info.isCombined( ) ) {
@@ -1010,4 +1037,143 @@ const model::stringCache& model::itemNames( ) {
     m_itemNameCache.m_valid = true;
     fclose( f );
     return m_itemNameCache;
+}
+
+void model::recomputeBankPic( ) {
+    auto& bnk   = bank( );
+    auto  scale = DATA::SIZE * DATA::BLOCK_SIZE / ( 2 * bnk.m_mapImageRes );
+
+    auto btm = DATA::bitmap{ 256, 192 };
+
+    // render each map slice of the current bank
+    for( u8 y{ 0 }; y <= bnk.getSizeY( ); ++y ) {
+        for( u8 x{ 0 }; x <= bnk.getSizeX( ); ++x ) {
+            auto tmp = DATA::bitmap{ DATA::SIZE * DATA::BLOCK_SIZE, DATA::SIZE * DATA::BLOCK_SIZE };
+            DATA::renderMapSlice( &computedSlice( selectedBank( ), y, x ), &tmp, 0, 0, 1, 0 );
+
+            // scale down
+
+            for( u8 by{ 0 }; by < DATA::SIZE * DATA::BLOCK_SIZE / scale; ++by ) {
+                for( u8 bx{ 0 }; bx < DATA::SIZE * DATA::BLOCK_SIZE / scale; ++bx ) {
+                    DATA::pixel res = tmp( bx * scale, by * scale );
+                    for( u8 y2{ 0 }; y2 < scale; ++y2 ) {
+                        for( u8 x2{ 0 }; x2 < scale; ++x2 ) {
+                            res ^= tmp( bx * scale + x2, by * scale + y2 );
+                        }
+                    }
+                    res.round( 16 );
+                    btm( bnk.m_mapImageShiftX + x * 2 * bnk.m_mapImageRes + bx,
+                         bnk.m_mapImageShiftY + y * 2 * bnk.m_mapImageRes + by )
+                        = res;
+                }
+            }
+        }
+    }
+
+    auto bgcol = btm( bnk.m_mapImageShiftX, bnk.m_mapImageShiftY );
+
+    for( u8 y{ 0 }; y < 192; ++y ) {
+        for( u16 x{ 0 }; x < 256; ++x ) {
+            if( btm( x, y ) == DATA::pixel{ 0, 0, 0 } ) { btm( x, y ) = bgcol; }
+        }
+    }
+
+    bnk.m_owMap = std::move( btm );
+}
+
+auto routecol    = DATA::pixel( 230, 200, 30, 100 );
+auto searoutecol = DATA::pixel( 7, 211, 255, 100 );
+auto citycol     = DATA::pixel( 255, 68, 119, 100 );
+auto specialcol  = DATA::pixel( 0, 255, 0, 100 );
+auto bordercol   = DATA::pixel( 255, 255, 255, 20 );
+
+DATA::pixel model::colorForLocation( u16 p_loc ) {
+
+    /*
+        if( !strcmp( p_str, "none" ) ) return 0;
+    if( !strcmp( p_str, "route" ) ) return 0;
+    if( !strcmp( p_str, "coastroute" ) ) return 11;
+
+    // water
+    if( !strcmp( p_str, "water" ) ) return 2;
+    if( !strcmp( p_str, "beach" ) ) return 3;
+
+    // special
+    if( !strcmp( p_str, "cave" ) ) return 4;
+    if( !strcmp( p_str, "forest" ) ) return 5;
+    if( !strcmp( p_str, "special" ) ) return 10;
+    if( !strcmp( p_str, "coast" ) ) return 7;
+    if( !strcmp( p_str, "inside" ) ) return 1;
+
+    // city
+    if( !strcmp( p_str, "forestcity" ) ) return 12;
+    if( !strcmp( p_str, "city" ) ) return 6;
+    if( !strcmp( p_str, "town" ) ) return 8;
+    if( !strcmp( p_str, "field" ) ) return 9;
+*/
+
+    switch( DATA::frameForLocation( m_fsdata.locationDataPath( ).c_str( ), p_loc ) ) {
+    case 2:
+    case 3: return searoutecol;
+    case 4:
+    case 5:
+    case 10:
+    case 7:
+    case 1: return specialcol;
+    case 12:
+    case 6:
+    case 8:
+    case 9: return citycol;
+    default: return routecol;
+    }
+}
+
+void model::recomputeBankLocationOverlay( ) {
+    auto& bnk   = bank( );
+    auto  scale = DATA::SIZE * DATA::BLOCK_SIZE / ( 2 * bnk.m_mapImageRes );
+
+    auto divs = DATA::SIZE / DATA::MAP_LOCATION_RES;
+
+#define locs( y, x )                                     \
+    bnk.m_bank.m_mapData[ ( y ) / divs ][ ( x ) / divs ] \
+        .m_locationIds[ ( y ) % divs ][ ( x ) % divs ]
+
+    for( u16 y = 0; y < divs * bnk.getSizeY( ); ++y ) {
+        for( u16 x = 0; x < divs * bnk.getSizeX( ); ++x ) {
+            if( !locs( y, x ) ) { continue; }
+            u8 border = 0;
+
+            if( !y || locs( y, x ) != locs( y - 1, x ) ) { border |= 1; }
+            if( !x || locs( y, x ) != locs( y, x - 1 ) ) { border |= 2; }
+            if( y + 1 >= divs * bnk.getSizeY( ) || locs( y, x ) != locs( y + 1, x ) ) {
+                border |= 4;
+            }
+            if( x + 1 >= divs * bnk.getSizeX( ) || locs( y, x ) != locs( y, x + 1 ) ) {
+                border |= 8;
+            }
+
+            u8 borsize = std::max( 1, DATA::BLOCK_SIZE / scale );
+            if( borsize == 1 && std::popcount( border ) >= 3
+                && colorForLocation( locs( y, x ) ) != routecol ) {
+                borsize = 0;
+            }
+            if( borsize == 1 && ( border == 0b101 || border == 0b1010 )
+                && colorForLocation( locs( y, x ) ) == specialcol ) {
+                borsize = 0;
+            }
+
+            DATA::tintRectangle(
+                bnk.m_owMap,
+                bnk.m_mapImageShiftX + x * ( DATA::SIZE / divs ) * DATA::BLOCK_SIZE / scale,
+                bnk.m_mapImageShiftY + y * ( DATA::SIZE / divs ) * DATA::BLOCK_SIZE / scale,
+                bnk.m_mapImageShiftX + ( x + 1 ) * ( DATA::SIZE / divs ) * DATA::BLOCK_SIZE / scale,
+                bnk.m_mapImageShiftY + ( y + 1 ) * ( DATA::SIZE / divs ) * DATA::BLOCK_SIZE / scale,
+                colorForLocation( locs( y, x ) ), borsize, bordercol, border );
+        }
+    }
+#undef locs
+
+    for( u8 y{ 0 }; y < 192; ++y ) {
+        for( u16 x{ 0 }; x < 256; ++x ) { bnk.m_owMap( x, y ).round( 32 ); }
+    }
 }

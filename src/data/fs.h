@@ -350,4 +350,6 @@ namespace DATA {
             return true;
         }
     };
+
+    u16 frameForLocation( const char* p_path, u16 p_location );
 } // namespace DATA

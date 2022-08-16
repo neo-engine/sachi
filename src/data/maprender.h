@@ -601,14 +601,13 @@ namespace DATA {
         u8 m_sizeX   = 0;
         u8 m_sizeY   = 0;
         u8 m_mapMode = 2; // 0: normal maps/data in folder, 1: scattered in subfolders, 2: combined
-        u8 m_isOWMap : 1 = false;    // stores whether the map bank has location data and hence
-                                     // should appear in the fsinfo owmap list
-        u8 m_hasDiveMap : 1 = false; // stores whether there is a seperate map for hm dive
-        u8 : 6;
-        u16 m_defaultLocation = 3002;
-        u8  m_mapMug          = 0; // preview image shown when switching to this bank (0
-                                   // for none)
-        u8 : 8;
+        u8 m_isOWMap : 1 = false; // stores whether the map bank has location data and hence
+                                  // should appear in the fsinfo owmap list
+        u8  m_hasDiveMap : 1      = false; // stores whether there is a seperate map for hm dive
+        u8  m_owMapResolution : 6 = 4;
+        u16 m_defaultLocation     = 3002;
+        u8  m_owMapShiftX         = 0;
+        u8  m_owMapShiftY         = 0;
 
         constexpr mapBankInfo( u8 p_sizeX = 0, u8 p_sizeY = 0, u8 p_mapMode = MAPMODE_DEFAULT,
                                bool p_isOWMap = false )
@@ -649,13 +648,4 @@ namespace DATA {
                         u32 p_borderStrength = 0, pixel p_border = pixel( 0, 0, 0 ),
                         u8 p_borderSides = 0 << 0 | 0 << 1 | 0 << 2 | 0 << 3 );
 
-    constexpr pixel colorForLocation( u16 p_loc ) {
-        (void) p_loc;
-        auto routecol = pixel( 230, 200, 30, 100 );
-        //        auto searoutecol = pixel( 7, 211, 255, 100 );
-        //        auto citycol     = pixel( 255, 68, 119, 100 );
-        //        auto specialcol  = pixel( 0, 255, 0, 100 );
-        // TODO
-        return routecol;
-    }
 } // namespace DATA

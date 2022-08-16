@@ -14,6 +14,7 @@ namespace UI {
         IT_SPRITE_ANIMATED,   // animated rsd
         IT_SPRITE_PLATFORM,   // multi-part platform
         IT_BG_IMAGE,          // 256x192 bg image
+        IT_BITMAP,
     };
 
     /*
@@ -217,6 +218,39 @@ namespace UI {
                 _cropy = btm.m_height - p_ch;
             }
             _data = btm.pixbuf( );
+            _image.set( _data );
+            return;
+        }
+
+        inline u16 getWidth( ) const override {
+            return m_width;
+        }
+
+        inline u16 getHeight( ) const override {
+            return m_height;
+        }
+    };
+
+    /*
+     * @brief: A widget to display a single gfx object from FSROOT
+     */
+    template <>
+    class fsImage<imageType::IT_BITMAP> : public fsImageWidget {
+        u16 m_width;
+        u16 m_height;
+
+      public:
+        inline fsImage( ) : fsImageWidget( ) {
+        }
+
+        virtual inline ~fsImage( ) {
+            fsImageWidget::~fsImageWidget( );
+        }
+
+        inline void load( const DATA::bitmap& p_data ) {
+            m_width  = p_data.m_width;
+            m_height = p_data.m_height;
+            _data    = p_data.pixbuf( );
             _image.set( _data );
             return;
         }

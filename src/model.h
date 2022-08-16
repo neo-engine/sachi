@@ -7,6 +7,7 @@
 
 #include <gtkmm/stringlist.h>
 
+#include "data/bitmap.h"
 #include "data/fs.h"
 #include "data/maprender.h"
 
@@ -42,6 +43,11 @@ struct model {
             bool              m_loaded = false;
             DATA::mapBankInfo m_info{ };
             status            m_status;
+
+            u8           m_mapImageRes    = 4;
+            u8           m_mapImageShiftX = 4;
+            u8           m_mapImageShiftY = 36;
+            DATA::bitmap m_owMap{ 0, 0 };
 
             inline status getStatus( ) const {
                 return m_status;
@@ -124,6 +130,14 @@ struct model {
 
         inline std::string mapPath( ) const {
             return m_fsrootPath + "/MAPS/";
+        }
+
+        inline std::string owMapPicturePath( ) const {
+            return m_fsrootPath + "/PICS/NAV_APP/map";
+        }
+
+        inline std::string navBorderPath( ) const {
+            return m_fsrootPath + "/PICS/Border.raw";
         }
 
         inline std::string mapStringPath( ) const {
@@ -229,6 +243,10 @@ struct model {
 
         inline std::string locationNamePath( ) const {
             return m_fsrootPath + "/DATA/LOC_NAME/locname";
+        }
+
+        inline std::string locationDataPath( ) const {
+            return m_fsrootPath + "/DATA/location.datab";
         }
 
         inline std::string itemNamePath( ) const {
@@ -660,4 +678,10 @@ struct model {
     inline void updateSelectedBlock( DATA::mapBlockAtom p_block ) {
         m_settings.m_currentlySelectedBlock = p_block;
     }
+
+    DATA::pixel colorForLocation( u16 p_loc );
+
+    void recomputeBankPic( );
+
+    void recomputeBankLocationOverlay( );
 };

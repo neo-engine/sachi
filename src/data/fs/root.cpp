@@ -63,19 +63,8 @@ namespace DATA {
         u8  m_mugType    = 0;
     };
 
-    u16 BGMforLocation( u16 p_locationId ) {
-        if( !checkOrOpen( LOCATION_DATA_FILE, LOCDATA_PATH ) ) { return 0; }
-
-        if( std::fseek( LOCATION_DATA_FILE, p_locationId * 4, SEEK_SET ) ) { return 0; }
-
-        auto l = locationData( );
-        fread( &l, sizeof( locationData ), 1, LOCATION_DATA_FILE );
-
-        return l.m_bgmNameIdx;
-    }
-
-    u16 frameForLocation( u16 p_locationId ) {
-        if( !checkOrOpen( LOCATION_DATA_FILE, LOCDATA_PATH ) ) { return 0; }
+    u16 frameForLocation( const char* p_path, u16 p_locationId ) {
+        if( !checkOrOpen( LOCATION_DATA_FILE, p_path ) ) { return 0; }
         if( std::fseek( LOCATION_DATA_FILE, p_locationId * sizeof( locationData ), SEEK_SET ) ) {
             return 0;
         }
@@ -84,18 +73,6 @@ namespace DATA {
         fread( &l, sizeof( locationData ), 1, LOCATION_DATA_FILE );
 
         return l.m_frameType;
-    }
-
-    u16 mugForLocation( u16 p_locationId ) {
-        if( !checkOrOpen( LOCATION_DATA_FILE, LOCDATA_PATH ) ) { return 0; }
-        if( std::fseek( LOCATION_DATA_FILE, p_locationId * sizeof( locationData ), SEEK_SET ) ) {
-            return 0;
-        }
-
-        auto l = locationData( );
-        fread( &l, sizeof( locationData ), 1, LOCATION_DATA_FILE );
-
-        return l.m_mugType;
     }
 
     FILE* openScript( u16 p_scriptId ) {
