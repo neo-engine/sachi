@@ -365,34 +365,12 @@ namespace UI::MED {
             }
 
             Gtk::Grid  g2{ };
-            Gtk::Label til{ "Trainer Idx" };
-            g2.attach( til, 0, 0 );
-            til.set_margin_end( MARGIN );
-            til.set_halign( Gtk::Align::START );
-            til.set_hexpand( );
-            g2.attach( _trainerIdxE, 1, 0 );
-
-            _trainerIdxE.signal_value_changed( ).connect( [ this ]( ) {
-                if( _disableRedraw
-                    || _model.mapEvent( ).m_data.m_trainer.m_trainerId
-                           == _trainerIdxE.get_value_as_int( ) ) {
-                    return;
-                }
-                _disableTI = true;
-                _trainerIdxE.update( );
-                _model.mapEvent( ).m_data.m_trainer.m_trainerId = _trainerIdxE.get_value_as_int( );
-                _model.markSelectedBankChanged( );
-                _rootWindow.redrawPanel( );
-                redraw( );
-                _disableTI = false;
-            } );
-
             Gtk::Label tsl{ "Trainer Sight" };
-            g2.attach( tsl, 0, 1 );
+            g2.attach( tsl, 0, 0 );
             tsl.set_margin_end( MARGIN );
             tsl.set_halign( Gtk::Align::START );
             tsl.set_hexpand( );
-            g2.attach( _trainerSightE, 1, 1 );
+            g2.attach( _trainerSightE, 1, 0 );
 
             _trainerSightE.signal_value_changed( ).connect( [ this ]( ) {
                 if( _disableRedraw
@@ -408,6 +386,28 @@ namespace UI::MED {
                 _parent.redrawMap( false );
                 redraw( );
                 _disableTS = false;
+            } );
+
+            Gtk::Label til{ "Trainer Idx" };
+            g2.attach( til, 0, 1 );
+            til.set_margin_end( MARGIN );
+            til.set_halign( Gtk::Align::START );
+            til.set_hexpand( );
+            g2.attach( _trainerIdxE, 1, 1 );
+
+            _trainerIdxE.signal_value_changed( ).connect( [ this ]( ) {
+                if( _disableRedraw
+                    || _model.mapEvent( ).m_data.m_trainer.m_trainerId
+                           == _trainerIdxE.get_value_as_int( ) ) {
+                    return;
+                }
+                _disableTI = true;
+                _trainerIdxE.update( );
+                _model.mapEvent( ).m_data.m_trainer.m_trainerId = _trainerIdxE.get_value_as_int( );
+                _model.markSelectedBankChanged( );
+                _rootWindow.redrawPanel( );
+                redraw( );
+                _disableTI = false;
             } );
 
             fbox.append( g2 );
