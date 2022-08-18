@@ -156,6 +156,7 @@ namespace UI::MED {
             _model.mapEvent( ).m_activateFlag = _aFlagE.get_value_as_int( );
             _model.markSelectedBankChanged( );
             _rootWindow.redrawPanel( );
+            _parent.redrawMap( false );
             redraw( );
             _disableAF = false;
         } );
@@ -179,6 +180,7 @@ namespace UI::MED {
             _model.mapEvent( ).m_deactivateFlag = _dFlagE.get_value_as_int( );
             _model.markSelectedBankChanged( );
             _rootWindow.redrawPanel( );
+            _parent.redrawMap( false );
             redraw( );
             _disableDF = false;
         } );
@@ -195,6 +197,7 @@ namespace UI::MED {
                 evt.m_trigger = p_newChoice;
                 _model.markSelectedBankChanged( );
                 redraw( );
+                _parent.redrawMap( false );
                 _rootWindow.redrawPanel( );
             } );
         }
@@ -402,6 +405,7 @@ namespace UI::MED {
                 _model.mapEvent( ).m_data.m_trainer.m_sight = _trainerSightE.get_value_as_int( );
                 _model.markSelectedBankChanged( );
                 _rootWindow.redrawPanel( );
+                _parent.redrawMap( false );
                 redraw( );
                 _disableTS = false;
             } );
@@ -482,6 +486,7 @@ namespace UI::MED {
                     _model.mapEvent( ).m_data.m_owPkmn.m_shiny
                         = ( _model.mapEvent( ).m_data.m_owPkmn.m_shiny & ( 1 << 6 | 1 << 7 ) )
                           | p_newValue;
+                    _parent.redrawMap( false );
                     _model.markSelectedBankChanged( );
                     _rootWindow.redrawPanel( );
                     redraw( );

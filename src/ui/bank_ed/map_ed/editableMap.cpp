@@ -308,6 +308,57 @@ namespace UI::MED {
                     } else {
                         switch( evt.m_data.m_trainer.m_movementType ) {
                         default: break;
+                        case DATA::WALK_AROUND_SQUARE: {
+                            for( s8 ssx{ -1 }; ssx <= 1; ++ssx ) {
+                                for( u8 st{ 2 }; st <= evt.m_data.m_trainer.m_sight + 1; ++st ) {
+                                    sx = evt.m_posX + ssx;
+                                    sy = evt.m_posY - 1 * st;
+                                    if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy,
+                                                                       mapSlice::MARK_SIGHT );
+                                    }
+                                }
+                                for( u8 st{ 2 }; st <= evt.m_data.m_trainer.m_sight + 1; ++st ) {
+                                    sx = evt.m_posX + ssx;
+                                    sy = evt.m_posY + 1 * st;
+                                    if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy,
+                                                                       mapSlice::MARK_SIGHT );
+                                    }
+                                }
+                            }
+                            for( s8 ssy{ -1 }; ssy <= 1; ++ssy ) {
+                                for( u8 st{ 2 }; st <= evt.m_data.m_trainer.m_sight + 1; ++st ) {
+                                    sx = evt.m_posX - 1 * st;
+                                    sy = evt.m_posY + ssy;
+                                    if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy,
+                                                                       mapSlice::MARK_SIGHT );
+                                    }
+                                }
+                                for( u8 st{ 2 }; st <= evt.m_data.m_trainer.m_sight + 1; ++st ) {
+                                    sx = evt.m_posX + 1 * st;
+                                    sy = evt.m_posY + ssy;
+                                    if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy,
+                                                                       mapSlice::MARK_SIGHT );
+                                    }
+                                }
+                            }
+                            for( s8 ssx{ -1 }; ssx <= 1; ++ssx ) {
+                                for( s8 ssy{ -1 }; ssy <= 1; ++ssy ) {
+                                    sx = evt.m_posX + ssx;
+                                    sy = evt.m_posY + ssy;
+                                    if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy,
+                                                                       mapSlice::MARK_MOVEMENT );
+                                    }
+                                }
+                            }
+
+                            break;
+                        }
+
                         case DATA::WALK_AROUND_LEFT_RIGHT: {
                             for( s8 ssx{ -1 }; ssx <= 1; ++ssx ) {
                                 for( u8 st{ 1 }; st <= evt.m_data.m_trainer.m_sight; ++st ) {
