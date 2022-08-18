@@ -188,14 +188,327 @@ namespace UI::MED {
 
         if( _currentMapDisplayMode == mapEditor::MODE_EDIT_EVENTS ) {
             // add selection box for currently selected event
+            _currentMap[ 1 ][ 1 ].clearMarks( );
+            _currentMap[ 1 ][ 1 ].setMarksHidden( false );
+            _currentMap[ 1 ][ 1 ].setMarksOpacity( .7 );
             auto evt = _model.mapEvent( );
             if( evt.m_type ) {
                 _currentMap[ 1 ][ 1 ].selectBlock( evt.m_posX, evt.m_posY );
             } else {
                 _currentMap[ 1 ][ 1 ].selectBlock( -1 );
             }
+
+            for( auto i : _eventWidgets ) {
+                if( i && i->is_visible( ) ) {
+                    _centerMapOverlay.remove_overlay( *i );
+                    i->hide( );
+                }
+            }
+            //            _eventWidgets.clear( );
+
+            for( u16 i = 0; i < DATA::MAX_EVENTS_PER_SLICE; ++i ) {
+                auto& evt = _model.mapData( ).m_events[ i ];
+
+                auto tx = evt.m_posX * DATA::BLOCK_SIZE * _model.m_settings.m_blockScale
+                          + evt.m_posX * _model.m_settings.m_blockSpacing;
+                auto ty = evt.m_posY * DATA::BLOCK_SIZE * _model.m_settings.m_blockScale
+                          + evt.m_posY * _model.m_settings.m_blockSpacing;
+
+                switch( evt.m_type ) {
+                case DATA::EVENT_MESSAGE: {
+                    _currentMap[ 1 ][ 1 ].addMark( evt.m_posX, evt.m_posY, mapSlice::MARK_MESSAGE );
+                    break;
+                }
+                case DATA::EVENT_ITEM: {
+                    if( evt.m_data.m_item.m_itemType == 0 ) {
+                        break; // hidden
+                    }
+                    auto itm = std::make_shared<fsImage<imageType::IT_SPRITE_ANIMATED>>( );
+
+                    itm->set_can_target( false );
+
+                    itm->load( _model.m_fsdata.owSpritePath(
+                                   256 | ( 248 + evt.m_data.m_item.m_itemType ) ),
+                               0, 8, 16, 16, 16 );
+
+                    itm->set_margin_top( ty );
+                    itm->set_margin_start( tx );
+                    itm->set_valign( Gtk::Align::START );
+                    itm->set_halign( Gtk::Align::START );
+                    itm->setScale( _model.m_settings.m_blockScale );
+
+                    _centerMapOverlay.add_overlay( *itm );
+                    _eventWidgets.push_back( std::move( itm ) );
+
+                    break;
+                }
+                case DATA::EVENT_TRAINER: {
+                    auto itm = std::make_shared<fsImage<imageType::IT_SPRITE_ANIMATED>>( );
+                    itm->set_can_target( false );
+
+                    itm->load(
+                        _model.m_fsdata.owSpritePath( 256 | evt.m_data.m_trainer.m_spriteId ),
+                        DATA::moveModeToFrame(
+                            DATA::moveMode( evt.m_data.m_trainer.m_movementType ),
+                            DATA::frameFuncionForIdx( evt.m_data.m_trainer.m_spriteId ) ) );
+
+                    itm->set_margin_top( ty - 16 * _model.m_settings.m_blockScale );
+                    itm->set_margin_start( tx - 8 * _model.m_settings.m_blockScale );
+                    itm->set_valign( Gtk::Align::START );
+                    itm->set_halign( Gtk::Align::START );
+                    itm->setScale( _model.m_settings.m_blockScale );
+
+                    if( evt.m_activateFlag || evt.m_deactivateFlag ) { itm->set_opacity( 0.5 ); }
+
+                    _centerMapOverlay.add_overlay( *itm );
+                    _eventWidgets.push_back( std::move( itm ) );
+
+                    // add movement
+                    s8 sx = evt.m_posX;
+                    s8 sy = evt.m_posY;
+                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_MOVEMENT );
+                    if( evt.m_data.m_trainer.m_movementType < 16 ) {
+                        if( evt.m_data.m_trainer.m_movementType & DATA::LOOK_UP ) {
+                            for( u8 st{ 1 }; st <= evt.m_data.m_trainer.m_sight; ++st ) {
+                                sx = evt.m_posX + 0;
+                                sy = evt.m_posY - 1 * st;
+                                if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_SIGHT );
+                                }
+                            }
+                        }
+                        if( evt.m_data.m_trainer.m_movementType & DATA::LOOK_DOWN ) {
+                            for( u8 st{ 1 }; st <= evt.m_data.m_trainer.m_sight; ++st ) {
+                                sx = evt.m_posX + 0;
+                                sy = evt.m_posY + 1 * st;
+                                if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_SIGHT );
+                                }
+                            }
+                        }
+                        if( evt.m_data.m_trainer.m_movementType & DATA::LOOK_LEFT ) {
+                            for( u8 st{ 1 }; st <= evt.m_data.m_trainer.m_sight; ++st ) {
+                                sx = evt.m_posX - 1 * st;
+                                sy = evt.m_posY + 0;
+                                if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_SIGHT );
+                                }
+                            }
+                        }
+                        if( evt.m_data.m_trainer.m_movementType & DATA::LOOK_RIGHT ) {
+                            for( u8 st{ 1 }; st <= evt.m_data.m_trainer.m_sight; ++st ) {
+                                sx = evt.m_posX + 1 * st;
+                                sy = evt.m_posY + 0;
+                                if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_SIGHT );
+                                }
+                            }
+                        }
+
+                    } else {
+                        switch( evt.m_data.m_trainer.m_movementType ) {
+                        default: break;
+                        case DATA::WALK_AROUND_LEFT_RIGHT: {
+                            for( s8 ssx{ -1 }; ssx <= 1; ++ssx ) {
+                                for( u8 st{ 1 }; st <= evt.m_data.m_trainer.m_sight; ++st ) {
+                                    sx = evt.m_posX + ssx;
+                                    sy = evt.m_posY - 1 * st;
+                                    if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy,
+                                                                       mapSlice::MARK_SIGHT );
+                                    }
+                                }
+                                for( u8 st{ 1 }; st <= evt.m_data.m_trainer.m_sight; ++st ) {
+                                    sx = evt.m_posX + ssx;
+                                    sy = evt.m_posY + 1 * st;
+                                    if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy,
+                                                                       mapSlice::MARK_SIGHT );
+                                    }
+                                }
+                            }
+
+                            [[fallthrough]];
+                        }
+                        case DATA::WALK_LEFT_RIGHT:
+                        case DATA::WALK_CONT_LEFT_RIGHT: {
+                            // pos left
+                            sx = evt.m_posX - 1;
+                            sy = evt.m_posY + 0;
+                            if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_MOVEMENT );
+                            }
+                            for( u8 st{ 2 }; st <= evt.m_data.m_trainer.m_sight + 1; ++st ) {
+                                sx = evt.m_posX - 1 * st;
+                                sy = evt.m_posY + 0;
+                                if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_SIGHT );
+                                }
+                            }
+                            // pos right
+                            sx = evt.m_posX + 1;
+                            sy = evt.m_posY + 0;
+                            if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_MOVEMENT );
+                            }
+                            for( u8 st{ 2 }; st <= evt.m_data.m_trainer.m_sight + 1; ++st ) {
+                                sx = evt.m_posX + 1 * st;
+                                sy = evt.m_posY + 0;
+                                if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_SIGHT );
+                                }
+                            }
+                            break;
+                        }
+                        case DATA::WALK_AROUND_UP_DOWN: {
+                            for( s8 ssy{ -1 }; ssy <= 1; ++ssy ) {
+                                for( u8 st{ 1 }; st <= evt.m_data.m_trainer.m_sight; ++st ) {
+                                    sx = evt.m_posX - 1 * st;
+                                    sy = evt.m_posY + ssy;
+                                    if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy,
+                                                                       mapSlice::MARK_SIGHT );
+                                    }
+                                }
+                                for( u8 st{ 1 }; st <= evt.m_data.m_trainer.m_sight; ++st ) {
+                                    sx = evt.m_posX + 1 * st;
+                                    sy = evt.m_posY + ssy;
+                                    if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy,
+                                                                       mapSlice::MARK_SIGHT );
+                                    }
+                                }
+                            }
+
+                            [[fallthrough]];
+                        }
+                        case DATA::WALK_UP_DOWN:
+                        case DATA::WALK_CONT_UP_DOWN: {
+                            // pos up
+                            sx = evt.m_posX + 0;
+                            sy = evt.m_posY - 1;
+                            if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_MOVEMENT );
+                            }
+                            for( u8 st{ 2 }; st <= evt.m_data.m_trainer.m_sight + 1; ++st ) {
+                                sx = evt.m_posX + 0;
+                                sy = evt.m_posY - 1 * st;
+                                if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_SIGHT );
+                                }
+                            }
+                            // pos down
+                            sx = evt.m_posX + 0;
+                            sy = evt.m_posY + 1;
+                            if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_MOVEMENT );
+                            }
+                            for( u8 st{ 2 }; st <= evt.m_data.m_trainer.m_sight + 1; ++st ) {
+                                sx = evt.m_posX + 0;
+                                sy = evt.m_posY + 1 * st;
+                                if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
+                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_SIGHT );
+                                }
+                            }
+                            break;
+                        }
+                        }
+                    }
+                    break;
+                }
+                case DATA::EVENT_OW_PKMN: {
+                    auto itm = std::make_shared<fsImage<imageType::IT_SPRITE_ANIMATED>>( );
+                    itm->set_can_target( false );
+
+                    itm->load(
+                        _model.m_fsdata.owSpritePath(
+                            1000 + evt.m_data.m_owPkmn.m_speciesId,
+                            evt.m_data.m_owPkmn.m_forme & ~( 1 << 6 | 1 << 7 ),
+                            _model.mapEvent( ).m_data.m_owPkmn.m_shiny & ~( 1 << 6 | 1 << 7 ) ),
+                        0 );
+
+                    itm->set_margin_top( ty - 16 * _model.m_settings.m_blockScale );
+                    itm->set_margin_start( tx - 8 * _model.m_settings.m_blockScale );
+                    itm->set_valign( Gtk::Align::START );
+                    itm->set_halign( Gtk::Align::START );
+                    itm->setScale( _model.m_settings.m_blockScale );
+
+                    _centerMapOverlay.add_overlay( *itm );
+                    _eventWidgets.push_back( std::move( itm ) );
+
+                    break;
+                }
+                case DATA::EVENT_NPC_MESSAGE:
+                case DATA::EVENT_NPC: {
+                    auto itm = std::make_shared<fsImage<imageType::IT_SPRITE_ANIMATED>>( );
+                    itm->set_can_target( false );
+
+                    itm->load( _model.m_fsdata.owSpritePath( 256 | evt.m_data.m_npc.m_spriteId ),
+                               DATA::moveModeToFrame(
+                                   DATA::moveMode( evt.m_data.m_npc.m_movementType ),
+                                   DATA::frameFuncionForIdx( evt.m_data.m_npc.m_spriteId ) ) );
+
+                    itm->set_margin_top( ty - 16 * _model.m_settings.m_blockScale );
+                    itm->set_margin_start( tx - 8 * _model.m_settings.m_blockScale );
+                    itm->set_valign( Gtk::Align::START );
+                    itm->set_halign( Gtk::Align::START );
+                    itm->setScale( _model.m_settings.m_blockScale );
+
+                    if( evt.m_activateFlag || evt.m_deactivateFlag ) { itm->set_opacity( 0.5 ); }
+
+                    _centerMapOverlay.add_overlay( *itm );
+                    _eventWidgets.push_back( std::move( itm ) );
+
+                    break;
+                }
+                case DATA::EVENT_WARP: {
+                    _currentMap[ 1 ][ 1 ].addMark( evt.m_posX, evt.m_posY, mapSlice::MARK_WARP );
+                    break;
+                }
+                case DATA::EVENT_GENERIC: {
+                    if( evt.m_trigger && evt.m_trigger != DATA::TRIGGER_ON_MAP_ENTER ) {
+                        _currentMap[ 1 ][ 1 ].addMark( evt.m_posX, evt.m_posY,
+                                                       mapSlice::MARK_SCRIPT );
+                    }
+                    break;
+                }
+                case DATA::EVENT_HMOBJECT: {
+                    if( evt.m_data.m_hmObject.m_hmType == 0 ) {
+                        break; // none
+                    }
+                    auto itm = std::make_shared<fsImage<imageType::IT_SPRITE_ANIMATED>>( );
+                    itm->set_can_target( false );
+
+                    itm->load( _model.m_fsdata.owSpritePath(
+                                   256 | ( 248 + evt.m_data.m_hmObject.m_hmType ) ),
+                               0, 8, 16, 16, 16 );
+
+                    itm->set_margin_top( ty );
+                    itm->set_margin_start( tx );
+                    itm->set_valign( Gtk::Align::START );
+                    itm->set_halign( Gtk::Align::START );
+                    itm->setScale( _model.m_settings.m_blockScale );
+
+                    _centerMapOverlay.add_overlay( *itm );
+                    _eventWidgets.push_back( std::move( itm ) );
+
+                    break;
+                }
+                case DATA::EVENT_BERRYTREE: {
+                    _currentMap[ 1 ][ 1 ].addMark( evt.m_posX, evt.m_posY, mapSlice::MARK_BERRY );
+                    break;
+                }
+                case DATA::EVENT_FLY_POS: {
+                    _currentMap[ 1 ][ 1 ].addMark( evt.m_posX, evt.m_posY, mapSlice::MARK_FLYPOS );
+                    break;
+                }
+                default: break;
+                }
+            }
         } else {
             _currentMap[ 1 ][ 1 ].selectBlock( -1 );
+            for( auto& i : _eventWidgets ) { i->hide( ); }
+            _currentMap[ 1 ][ 1 ].setMarksHidden( true );
         }
     }
 

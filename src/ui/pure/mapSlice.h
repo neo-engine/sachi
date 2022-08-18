@@ -24,6 +24,16 @@ namespace UI {
             MIDDLE = GDK_BUTTON_MIDDLE
         };
 
+        enum mark {
+            MARK_WARP = 0,
+            MARK_FLYPOS,
+            MARK_SCRIPT,
+            MARK_MESSAGE,
+            MARK_SIGHT,
+            MARK_MOVEMENT,
+            MARK_BERRY,
+        };
+
       private:
         u16 _currentScale = 1;
         u16 _blockSpacing = 0;
@@ -31,12 +41,16 @@ namespace UI {
         s16 _currentSelectionIndex = -1;
 
         double _overlayOpacity      = .3;
+        double _marksOpacity        = .3;
         double _extraOverlayOpacity = 1.;
         bool   _showOverlay         = false;
+        bool   _showMarks           = false;
 
         std::vector<std::shared_ptr<Gtk::Overlay>> _images;
         std::vector<std::shared_ptr<Gdk::Pixbuf>>  _imageData;
         std::vector<std::shared_ptr<Gtk::Label>>   _overlayMovement;
+        std::vector<std::shared_ptr<Gtk::Label>>   _overlayMarks;
+        std::vector<std::vector<mark>>             _marks;
 
         std::shared_ptr<Gtk::GestureClick> _clickEvent;
         std::shared_ptr<Gtk::GestureDrag>  _dragEvent;
@@ -52,6 +66,10 @@ namespace UI {
         virtual inline bool colorMovement( ) const {
             return true;
         }
+
+        std::shared_ptr<Gtk::Label> computeMarkLabel( u16 p_pos );
+
+        virtual void computeMarkLabel( u16 p_pos, std::shared_ptr<Gtk::Label> p_label );
 
       public:
         inline mapSlice( ) {
@@ -72,6 +90,20 @@ namespace UI {
             _currentSelectionIndex = -1;
         }
         virtual ~mapSlice( );
+
+        virtual void addMark( s16 p_blockIdx, mark p_mark );
+
+        virtual inline void addMark( u16 p_x, u16 p_y, mark p_mark ) {
+            addMark( p_y * getWidth( ) + p_x, p_mark );
+        }
+
+        virtual void removeMark( s16 p_blockIdx, mark p_mark );
+
+        virtual inline void removeMark( u16 p_x, u16 p_y, mark p_mark ) {
+            removeMark( p_y * getWidth( ) + p_x, p_mark );
+        }
+
+        virtual void clearMarks( );
 
         virtual u16 getWidth( ) const  = 0;
         virtual u16 getHeight( ) const = 0;
@@ -125,8 +157,10 @@ namespace UI {
         virtual void setScale( u16 p_scale = 1 );
         virtual void setSpacing( u16 p_blockSpacing = 0 );
         virtual void setOverlayHidden( bool p_hidden = true );
+        virtual void setMarksHidden( bool p_hidden = true );
 
         virtual void setOverlayOpacity( double p_newValue = .4 );
+        virtual void setMarksOpacity( double p_newValue = .4 );
 
       protected:
         Gtk::SizeRequestMode get_request_mode_vfunc( ) const override;

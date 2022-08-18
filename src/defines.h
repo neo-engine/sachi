@@ -58,6 +58,13 @@ const std::string EXTRA_CSS
       ".movement-bridge { color: black; background-color: #fcfa79; }\n"   /* 0x3c */
       ".movement-border { color: white; background-color: purple; }\n"    /* 0x3f */
       ".movement-weird { color: white; background-color: black; }\n"      /* anything else */
+      ".mark-warp { color: white; background-color: purple; }\n"
+      ".mark-flypos { color: black; background-color: #7bfc79; }\n"
+      ".mark-script { color: black; background-color: #fc79bd; }\n"
+      ".mark-message { color: black; background-color: #fc797b; }\n"
+      ".mark-sight { color: black; background-color: #79bdfc; }\n"
+      ".mark-movement { color: black; background-color: #bdfc79; }\n"
+      ".mark-berry { color: black; background-color: #f0cdc5; }\n"
       ".encounter-grass { color: black; background-color: #1bf579; }\n"
       ".encounter-long-grass { color: white; background-color: #037333; }\n"
       ".encounter-water { color: black; background-color: #4f85db; }\n"

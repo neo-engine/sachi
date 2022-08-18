@@ -22,6 +22,39 @@ namespace UI {
             block::classForMovement( p_movement ) );
     }
 
+    std::shared_ptr<Gtk::Label> mapSlice::computeMarkLabel( u16 p_pos ) {
+        auto res = std::make_shared<Gtk::Label>( );
+        computeMarkLabel( p_pos, res );
+        return res;
+    }
+
+    void mapSlice::computeMarkLabel( u16 p_pos, std::shared_ptr<Gtk::Label> p_label ) {
+        if( !p_label || p_pos >= _marks.size( ) ) { return; }
+
+        std::sort( _marks[ p_pos ].begin( ), _marks[ p_pos ].end( ) );
+
+        std::string text  = "";
+        std::string style = "";
+
+        auto styles = std::vector<std::string>{ "mark-warp",    "mark-flypos", "mark-script",
+                                                "mark-message", "mark-sight",  "mark-movement",
+                                                "mark-berry" };
+        auto names  = std::vector<std::string>{ "W", "F", "S", "T", "", "", "B" };
+
+        for( auto m : _marks[ p_pos ] ) {
+            if( style == "" ) { style = styles[ u8( m ) ]; }
+            text += names[ u8( m ) ];
+        }
+
+        for( auto s : styles ) {
+            if( p_label->get_style_context( )->has_class( s ) ) {
+                p_label->get_style_context( )->remove_class( s );
+            }
+        }
+        p_label->set_text( text );
+        if( style != "" ) { p_label->get_style_context( )->add_class( style ); }
+    }
+
     void mapSlice::selectBlock( s16 p_blockIdx ) {
         if( _currentSelectionIndex > -1 && _currentSelectionIndex < (int) _images.size( )
             && _images[ _currentSelectionIndex ] ) {
@@ -55,6 +88,11 @@ namespace UI {
         for( auto mnt : _overlayMovement ) { mnt->set_opacity( _overlayOpacity ); }
     }
 
+    void mapSlice::setMarksOpacity( double p_newValue ) {
+        _marksOpacity = p_newValue;
+        for( auto mnt : _overlayMarks ) { mnt->set_opacity( _marksOpacity ); }
+    }
+
     void mapSlice::setOverlayHidden( bool p_hidden ) {
         _showOverlay = !p_hidden;
         for( auto i : _overlayMovement ) {
@@ -64,6 +102,37 @@ namespace UI {
                 i->hide( );
             }
         }
+    }
+
+    void mapSlice::setMarksHidden( bool p_hidden ) {
+        _showMarks = !p_hidden;
+        for( auto i : _overlayMarks ) {
+            if( _showMarks ) {
+                i->show( );
+            } else {
+                i->hide( );
+            }
+        }
+    }
+
+    void mapSlice::addMark( s16 p_blockIdx, mark p_mark ) {
+        _marks[ p_blockIdx ].push_back( p_mark );
+        computeMarkLabel( p_blockIdx, _overlayMarks[ p_blockIdx ] );
+    }
+
+    void mapSlice::removeMark( s16 p_blockIdx, mark p_mark ) {
+        for( auto it = _marks[ p_blockIdx ].begin( ); it != _marks[ p_blockIdx ].end( ); ++it ) {
+            if( *it == p_mark ) {
+                _marks[ p_blockIdx ].erase( it );
+                break;
+            }
+        }
+        computeMarkLabel( p_blockIdx, _overlayMarks[ p_blockIdx ] );
+    }
+
+    void mapSlice::clearMarks( ) {
+        for( auto& m : _marks ) { m.clear( ); }
+        for( auto l : _overlayMarks ) { computeMarkLabel( 0, l ); }
     }
 
     void mapSlice::redrawBlock( u16 p_blockIdx ) {
@@ -78,18 +147,27 @@ namespace UI {
 
         auto movement                  = computeMovementData( p_blockIdx );
         _overlayMovement[ p_blockIdx ] = std::make_shared<Gtk::Label>( toHexString( movement ) );
+        _overlayMarks[ p_blockIdx ]    = computeMarkLabel( p_blockIdx );
         if( colorMovement( ) ) {
             _overlayMovement[ p_blockIdx ]->get_style_context( )->add_class(
                 block::classForMovement( movement ) );
         }
         _overlayMovement[ p_blockIdx ]->set_opacity( _overlayOpacity );
+        _overlayMarks[ p_blockIdx ]->set_opacity( _marksOpacity );
         if( _showOverlay ) {
             _overlayMovement[ p_blockIdx ]->show( );
         } else {
             _overlayMovement[ p_blockIdx ]->hide( );
         }
 
+        if( _showMarks ) {
+            _overlayMarks[ p_blockIdx ]->show( );
+        } else {
+            _overlayMarks[ p_blockIdx ]->hide( );
+        }
+
         _images[ p_blockIdx ]->add_overlay( *_overlayMovement[ p_blockIdx ] );
+        _images[ p_blockIdx ]->add_overlay( *_overlayMarks[ p_blockIdx ] );
     }
 
     void mapSlice::draw( ) {
@@ -99,8 +177,11 @@ namespace UI {
         _images.clear( );
         _imageData.clear( );
         _overlayMovement.clear( );
+        _overlayMarks.clear( );
 
         auto numblocks = getWidth( ) * getHeight( );
+
+        if( _marks.empty( ) ) { _marks.assign( numblocks, std::vector<mapSlice::mark>{ } ); }
 
         for( u16 pos{ 0 }; pos < numblocks; ++pos ) {
             auto pb = computeImageData( pos );
@@ -113,20 +194,34 @@ namespace UI {
             overlay->set_parent( *this );
             _images.push_back( overlay );
 
-            auto movement = computeMovementData( pos );
-            auto mnt      = std::make_shared<Gtk::Label>( toHexString( movement ) );
-            if( colorMovement( ) ) {
-                mnt->get_style_context( )->add_class( block::classForMovement( movement ) );
-            }
-            mnt->set_opacity( _overlayOpacity );
-            overlay->add_overlay( *mnt );
-            if( !_showOverlay ) {
-                mnt->hide( );
-            } else {
-                mnt->show( );
-            }
+            {
+                auto movement = computeMovementData( pos );
+                auto mnt      = std::make_shared<Gtk::Label>( toHexString( movement ) );
+                if( colorMovement( ) ) {
+                    mnt->get_style_context( )->add_class( block::classForMovement( movement ) );
+                }
+                mnt->set_opacity( _overlayOpacity );
+                overlay->add_overlay( *mnt );
+                if( !_showOverlay ) {
+                    mnt->hide( );
+                } else {
+                    mnt->show( );
+                }
 
-            _overlayMovement.push_back( mnt );
+                _overlayMovement.push_back( mnt );
+            }
+            {
+                auto mnt = computeMarkLabel( pos );
+                mnt->set_opacity( _marksOpacity );
+                overlay->add_overlay( *mnt );
+                if( !_showMarks ) {
+                    mnt->hide( );
+                } else {
+                    mnt->show( );
+                }
+
+                _overlayMarks.push_back( mnt );
+            }
         }
         selectBlock( oldsel );
     }

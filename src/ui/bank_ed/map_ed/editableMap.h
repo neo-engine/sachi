@@ -3,6 +3,7 @@
 #include <tuple>
 #include <vector>
 
+#include <gtkmm/box.h>
 #include <gtkmm/grid.h>
 #include <gtkmm/overlay.h>
 #include <gtkmm/scrolledwindow.h>
@@ -33,6 +34,8 @@ namespace UI::MED {
 
         Gtk::Overlay _centerMapOverlay;
         Gtk::Grid    _locationGrid;
+
+        std::vector<std::shared_ptr<Gtk::Widget>> _eventWidgets;
 
         std::shared_ptr<blockStamp> _blockStamp;
 

@@ -35,7 +35,7 @@ namespace UI {
         }
 
         virtual inline ~fsImageWidget( ) {
-            _image.unparent( );
+            if( _image.get_parent( ) ) { _image.unparent( ); }
         }
 
         virtual u16 getWidth( ) const = 0;
@@ -210,14 +210,10 @@ namespace UI {
         inline void load( const std::string& p_path, u8 p_frame, u16 p_cx = 0, u16 p_cy = 0,
                           u16 p_cw = 0, u16 p_ch = 0 ) {
             auto btm = DATA::bitmap::fromAnimatedSprite( p_path.c_str( ), p_frame );
+            if( p_ch && p_cw ) { btm.crop( p_cx, p_cy, p_cw, p_ch ); }
             m_width  = btm.m_width;
             m_height = btm.m_height;
-            if( p_ch && p_cw ) {
-                btm.crop( p_cx, p_cy, p_cw, p_ch );
-                _cropx = btm.m_width - p_cw;
-                _cropy = btm.m_height - p_ch;
-            }
-            _data = btm.pixbuf( );
+            _data    = btm.pixbuf( );
             _image.set( _data );
             return;
         }
