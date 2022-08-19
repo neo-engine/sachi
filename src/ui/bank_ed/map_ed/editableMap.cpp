@@ -944,7 +944,20 @@ namespace UI::MED {
             if( _currentMapDisplayMode == mapEditor::MODE_EDIT_TILES
                 || _currentMapDisplayMode == mapEditor::MODE_EDIT_MOVEMENT ) {
                 updateSelectedBlock( block );
+            } else if( _currentMapDisplayMode == mapEditor::MODE_EDIT_EVENTS ) {
+                // select event at current position
+                auto bx{ p_blockX + xcorr }, by{ p_blockY + ycorr };
+
+                for( u8 ev{ 0 }; ev < DATA::MAX_EVENTS_PER_SLICE; ++ev ) {
+                    if( _model.mapData( ).m_events[ ev ].m_posX == bx
+                        && _model.mapData( ).m_events[ ev ].m_posY == by ) {
+                        _model.selectEvent( ev );
+                        _rootWindow.redraw( );
+                        break;
+                    }
+                }
             }
+
             break;
         case mapSlice::clickType::MIDDLE:
             if( p_allowEdit ) {

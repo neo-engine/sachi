@@ -45,6 +45,9 @@ namespace UI {
         DATA::mapData::event _cachedEvent;
         bool                 _hasCachedEvent = false;
 
+        DATA::mapData::wildPkmnData _cachedPkmn[ DATA::MAX_PKMN_PER_SLICE ];
+        bool                        _hasCachedPkmn = false;
+
         // sub widgets
         Gtk::Box _mapEditorMainBox{ Gtk::Orientation::VERTICAL };
 

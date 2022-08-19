@@ -152,6 +152,14 @@ namespace UI {
             _hasCachedEvent = true;
             break;
         }
+        case MODE_EDIT_PKMN: {
+            for( u8 i{ 0 }; i < DATA::MAX_PKMN_PER_SLICE; ++i ) {
+                _cachedPkmn[ i ] = _model.mapData( ).m_pokemon[ i ];
+            }
+            _hasCachedPkmn = true;
+            break;
+        }
+
         default: break;
         }
     }
@@ -161,6 +169,16 @@ namespace UI {
         case MODE_EDIT_EVENTS: {
             if( _hasCachedEvent ) {
                 _model.mapEvent( ) = _cachedEvent;
+                _model.markSelectedBankChanged( );
+                redraw( );
+            }
+            break;
+        }
+        case MODE_EDIT_PKMN: {
+            if( _hasCachedPkmn ) {
+                for( u8 i{ 0 }; i < DATA::MAX_PKMN_PER_SLICE; ++i ) {
+                    _model.mapData( ).m_pokemon[ i ] = _cachedPkmn[ i ];
+                }
                 _model.markSelectedBankChanged( );
                 redraw( );
             }
@@ -176,6 +194,12 @@ namespace UI {
         case MODE_EDIT_EVENTS: {
             _model.mapEvent( ) = DATA::mapData::event{ };
 
+            _model.markSelectedBankChanged( );
+            redraw( );
+            break;
+        }
+        case MODE_EDIT_PKMN: {
+            memset( _model.mapData( ).m_pokemon, 0, sizeof( _model.mapData( ).m_pokemon ) );
             _model.markSelectedBankChanged( );
             redraw( );
             break;
