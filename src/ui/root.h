@@ -43,6 +43,7 @@ namespace UI {
         std::shared_ptr<Gio::SimpleAction>      _specialCacheAction;
         std::shared_ptr<Gio::SimpleAction>      _specialPasteAction;
         std::shared_ptr<Gio::SimpleAction>      _specialDeleteAction;
+        std::shared_ptr<Gio::SimpleAction>      _specialSelectnewAction;
 
         context _context;
         model   _model;

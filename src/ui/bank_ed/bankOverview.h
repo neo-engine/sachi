@@ -51,5 +51,7 @@ namespace UI {
         }
         void deleteAction( ) {
         }
+        void selectnewAction( ) {
+        }
     };
 } // namespace UI

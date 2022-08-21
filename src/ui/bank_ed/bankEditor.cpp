@@ -56,4 +56,17 @@ namespace UI {
         }
     }
 
+    void bankEditor::selectnewAction( ) {
+        if( _model.selectedBank( ) == -1 ) { return; }
+        switch( _mapNotebook.get_current_page( ) ) {
+        case 0:
+            if( _mapEditor ) { _mapEditor->selectnewAction( ); }
+            break;
+        case 1:
+            if( _bankOverview ) { _bankOverview->selectnewAction( ); }
+            break;
+        default: break;
+        }
+    }
+
 } // namespace UI

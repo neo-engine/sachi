@@ -220,9 +220,6 @@ namespace UI::MED {
                     break;
                 }
                 case DATA::EVENT_ITEM: {
-                    if( evt.m_data.m_item.m_itemType == 0 ) {
-                        break; // hidden
-                    }
                     auto itm = std::make_shared<fsImage<imageType::IT_SPRITE_ANIMATED>>( );
 
                     itm->set_can_target( false );
@@ -236,6 +233,7 @@ namespace UI::MED {
                     itm->set_valign( Gtk::Align::START );
                     itm->set_halign( Gtk::Align::START );
                     itm->setScale( _model.m_settings.m_blockScale );
+                    if( evt.m_data.m_item.m_itemType == 0 ) { itm->set_opacity( .3 ); }
 
                     _centerMapOverlay.add_overlay( *itm );
                     _eventWidgets.push_back( std::move( itm ) );
@@ -246,11 +244,13 @@ namespace UI::MED {
                     auto itm = std::make_shared<fsImage<imageType::IT_SPRITE_ANIMATED>>( );
                     itm->set_can_target( false );
 
-                    itm->load(
-                        _model.m_fsdata.owSpritePath( 256 | evt.m_data.m_trainer.m_spriteId ),
-                        DATA::moveModeToFrame(
-                            DATA::moveMode( evt.m_data.m_trainer.m_movementType ),
-                            DATA::frameFuncionForIdx( evt.m_data.m_trainer.m_spriteId ) ) );
+                    auto sid = evt.m_data.m_trainer.m_spriteId;
+                    if( sid < DATA::PKMN_SPRITE ) { sid |= 256; }
+
+                    itm->load( _model.m_fsdata.owSpritePath( sid ),
+                               DATA::moveModeToFrame(
+                                   DATA::moveMode( evt.m_data.m_trainer.m_movementType ),
+                                   DATA::frameFuncionForIdx( sid ) ) );
 
                     itm->set_margin_top( ty - 16 * _model.m_settings.m_blockScale );
                     itm->set_margin_start( tx - 8 * _model.m_settings.m_blockScale );
@@ -494,10 +494,12 @@ namespace UI::MED {
                     auto itm = std::make_shared<fsImage<imageType::IT_SPRITE_ANIMATED>>( );
                     itm->set_can_target( false );
 
-                    itm->load( _model.m_fsdata.owSpritePath( 256 | evt.m_data.m_npc.m_spriteId ),
-                               DATA::moveModeToFrame(
-                                   DATA::moveMode( evt.m_data.m_npc.m_movementType ),
-                                   DATA::frameFuncionForIdx( evt.m_data.m_npc.m_spriteId ) ) );
+                    auto sid = evt.m_data.m_npc.m_spriteId;
+                    if( sid < DATA::PKMN_SPRITE ) { sid |= 256; }
+                    itm->load(
+                        _model.m_fsdata.owSpritePath( sid ),
+                        DATA::moveModeToFrame( DATA::moveMode( evt.m_data.m_npc.m_movementType ),
+                                               DATA::frameFuncionForIdx( sid ) ) );
 
                     itm->set_margin_top( ty - 16 * _model.m_settings.m_blockScale );
                     itm->set_margin_start( tx - 8 * _model.m_settings.m_blockScale );

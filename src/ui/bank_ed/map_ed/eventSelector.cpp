@@ -1025,6 +1025,9 @@ namespace UI::MED {
     void eventSelector::redraw( ) {
         _disableRedraw = true;
         auto evt       = _model.mapEvent( );
+
+        _selectedEventE.set_value( _model.selectedMapEvent( ) );
+
         if( _eventType ) { _eventType->choose( (u8) evt.m_type ); }
         for( auto& f : _detailFrames ) { f.hide( ); }
 

@@ -208,4 +208,20 @@ namespace UI {
         }
     }
 
+    void mapEditor::selectnewAction( ) {
+        switch( _currentMapDisplayMode ) {
+        case MODE_EDIT_EVENTS: {
+            for( u8 ev{ 0 }; ev < DATA::MAX_EVENTS_PER_SLICE; ++ev ) {
+                if( !_model.mapData( ).m_events[ ev ].m_type ) {
+                    _model.selectEvent( ev );
+                    redraw( );
+                    break;
+                }
+            }
+            break;
+        }
+        default: break;
+        }
+    }
+
 } // namespace UI

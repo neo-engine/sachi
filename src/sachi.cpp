@@ -75,6 +75,7 @@ int main( int p_argc, char* p_argv[] ) {
     app->set_accel_for_action( "special.copy", "<Primary>c" );
     app->set_accel_for_action( "special.paste", "<Primary>v" );
     app->set_accel_for_action( "special.delete", "<Primary>x" );
+    app->set_accel_for_action( "special.selectnew", "<Primary>n" );
 
     return app->run( p_argc, p_argv );
 }

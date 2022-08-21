@@ -501,6 +501,9 @@ namespace UI {
         _specialDeleteAction         = _specialActions->add_action( "delete", [ this ]( ) {
             if( _bankEditor ) { _bankEditor->deleteAction( ); }
         } );
+        _specialSelectnewAction      = _specialActions->add_action( "selectnew", [ this ]( ) {
+            if( _bankEditor ) { _bankEditor->selectnewAction( ); }
+        } );
 
         insert_action_group( "load", _loadActions );
         insert_action_group( "save", _saveActions );
@@ -616,6 +619,7 @@ namespace UI {
         _specialCacheAction->set_enabled( false );
         _specialPasteAction->set_enabled( false );
         _specialDeleteAction->set_enabled( false );
+        _specialSelectnewAction->set_enabled( false );
 
         _loadMapLabel.hide( );
         if( _tileSetEditor ) { _tileSetEditor->hide( ); }
@@ -648,6 +652,7 @@ namespace UI {
             _specialCacheAction->set_enabled( true );
             _specialPasteAction->set_enabled( true );
             _specialDeleteAction->set_enabled( true );
+            _specialSelectnewAction->set_enabled( true );
             break;
         case CONTEXT_TILE_EDITOR:
             _mainBox.show( );

@@ -98,5 +98,6 @@ namespace UI {
         void copyAction( );
         void pasteAction( );
         void deleteAction( );
+        void selectnewAction( );
     };
 } // namespace UI
