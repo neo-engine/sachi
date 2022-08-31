@@ -487,11 +487,13 @@ namespace DATA {
         MSG_SIGN            = 6,
         MSG_NORMAL_CONT     = 7,
         MSG_INFO_CONT       = 8,
+        MSG_BRAILLE         = 9,
         MSG_SHOW_MONEY_FLAG = 128, // show the current money
     };
     const std::vector<std::string> MESSAGE_TYPE_NAMES{
-        "Normal",        "Information", "No-redraw",         "No-redraw Info", "(Mart Item)",
-        "(Obtain Item)", "Sign",        "Wait for Interact", "Interact (Info)" };
+        "Normal",        "Information", "No-redraw",         "No-redraw Info",  "(Mart Item)",
+        "(Obtain Item)", "Sign",        "Wait for Interact", "Interact (Info)", "Braille",
+    };
 
     const std::vector<std::string> ITEM_TYPE_NAMES{ "Hidden", "Normal", "HM/TM/TR" };
     const std::vector<std::string> SCRIPT_TYPE_NAMES{ "Unrestricted", "Player is Brendan",
