@@ -1039,6 +1039,60 @@ const model::stringCache& model::itemNames( ) {
     return m_itemNameCache;
 }
 
+const model::stringCache& model::moveNames( ) {
+    if( m_moveNameCache.m_valid ) { return m_moveNameCache; }
+
+    m_moveNameCache.m_lastRefresh++;
+    m_moveNameCache.m_strings.clear( );
+
+    // open pkmn name file
+    auto  path = m_fsdata.moveNamePath( ) + ".0.strb";
+    FILE* f    = fopen( path.c_str( ), "rb" );
+
+    if( !f ) {
+        m_moveNameCache.m_valid = false;
+        return m_moveNameCache;
+    }
+
+    char tmp[ MOVE_NAMELENGTH + 10 ];
+    for( u16 i{ 0 };; ++i ) {
+        memset( tmp, 0, sizeof( tmp ) );
+        if( !fread( tmp, MOVE_NAMELENGTH, 1, f ) ) { break; }
+        m_moveNameCache.m_strings.push_back( parseMapString( std::string{ tmp } ) );
+    }
+
+    m_moveNameCache.m_valid = true;
+    fclose( f );
+    return m_moveNameCache;
+}
+
+const model::stringCache& model::abilityNames( ) {
+    if( m_abilityNameCache.m_valid ) { return m_abilityNameCache; }
+
+    m_abilityNameCache.m_lastRefresh++;
+    m_abilityNameCache.m_strings.clear( );
+
+    // open pkmn name file
+    auto  path = m_fsdata.abilityNamePath( ) + ".0.strb";
+    FILE* f    = fopen( path.c_str( ), "rb" );
+
+    if( !f ) {
+        m_abilityNameCache.m_valid = false;
+        return m_abilityNameCache;
+    }
+
+    char tmp[ ABILITY_NAMELENGTH + 10 ];
+    for( u16 i{ 0 };; ++i ) {
+        memset( tmp, 0, sizeof( tmp ) );
+        if( !fread( tmp, ABILITY_NAMELENGTH, 1, f ) ) { break; }
+        m_abilityNameCache.m_strings.push_back( parseMapString( std::string{ tmp } ) );
+    }
+
+    m_abilityNameCache.m_valid = true;
+    fclose( f );
+    return m_abilityNameCache;
+}
+
 void model::recomputeBankPic( ) {
     auto& bnk   = bank( );
     auto  scale = DATA::SIZE * DATA::BLOCK_SIZE / ( 2 * bnk.m_mapImageRes );

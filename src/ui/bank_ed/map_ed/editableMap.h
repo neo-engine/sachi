@@ -39,7 +39,7 @@ namespace UI::MED {
 
         std::shared_ptr<blockStamp> _blockStamp;
 
-        std::vector<std::vector<std::shared_ptr<locationDropDown>>> _locations;
+        std::vector<std::vector<std::shared_ptr<numberedStringCacheDropDown>>> _locations;
 
         std::tuple<u16, u16, s8, s8> _dragStart;
         std::tuple<s16, s16>         _dragLast;

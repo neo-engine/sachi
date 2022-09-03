@@ -61,7 +61,7 @@ namespace UI::MED {
         for( u8 x{ 0 }; x < scale; ++x ) {
             _locations.push_back( { } );
             for( u8 y{ 0 }; y < scale; ++y ) {
-                auto l = std::make_shared<locationDropDown>( );
+                auto l = std::make_shared<numberedStringCacheDropDown>( );
                 l->connect( [ this, x, y ]( u64 p_newChoice ) {
                     if( _model.mapData( ).m_locationIds[ y ][ x ] == p_newChoice ) { return; }
                     _model.mapData( ).m_locationIds[ y ][ x ] = p_newChoice;
@@ -174,7 +174,7 @@ namespace UI::MED {
                 for( u8 y{ 0 }; y < scale; ++y ) {
                     if( !_locations[ x ][ y ] ) { continue; }
 
-                    _locations[ x ][ y ]->refreshModel( _model );
+                    _locations[ x ][ y ]->refreshModel( _model.locationNames( ) );
                     _locations[ x ][ y ]->choose( _model.mapData( ).m_locationIds[ y ][ x ] );
                     ( (Gtk::Widget&) *_locations[ x ][ y ] ).set_opacity( .65 );
                     ( (Gtk::Widget&) *_locations[ x ][ y ] ).set_expand( true );
@@ -478,8 +478,13 @@ namespace UI::MED {
                             _model.mapEvent( ).m_data.m_owPkmn.m_shiny & ~( 1 << 6 | 1 << 7 ) ),
                         0 );
 
-                    itm->set_margin_top( ty - 16 * _model.m_settings.m_blockScale );
-                    itm->set_margin_start( tx - 8 * _model.m_settings.m_blockScale );
+                    if( itm->getWidth( ) < 64 ) {
+                        itm->set_margin_top( ty - 16 * _model.m_settings.m_blockScale );
+                        itm->set_margin_start( tx - 8 * _model.m_settings.m_blockScale );
+                    } else {
+                        itm->set_margin_top( ty - 48 * _model.m_settings.m_blockScale );
+                        itm->set_margin_start( tx - 24 * _model.m_settings.m_blockScale );
+                    }
                     itm->set_valign( Gtk::Align::START );
                     itm->set_halign( Gtk::Align::START );
                     itm->setScale( _model.m_settings.m_blockScale );

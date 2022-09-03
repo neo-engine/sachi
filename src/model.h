@@ -256,6 +256,13 @@ struct model {
         inline std::string itemDscrPath( ) const {
             return m_fsrootPath + "/DATA/ITEM_DSCR/itemdscr";
         }
+
+        inline std::string moveNamePath( ) const {
+            return m_fsrootPath + "/DATA/MOVE_NAME/movename";
+        }
+        inline std::string abilityNamePath( ) const {
+            return m_fsrootPath + "/DATA/ABTY_NAME/abtyname";
+        }
     };
     struct settings {
         int m_selectedBank = -1;
@@ -313,6 +320,8 @@ struct model {
     stringCache m_pkmnNameCache;
     stringCache m_locationNameCache;
     stringCache m_itemNameCache;
+    stringCache m_moveNameCache;
+    stringCache m_abilityNameCache;
 
     /*
      * @brief: sets the ow status of the current map and correspondingly adds/removes
@@ -326,6 +335,8 @@ struct model {
         m_pkmnNameCache.m_valid     = false;
         m_locationNameCache.m_valid = false;
         m_itemNameCache.m_valid     = false;
+        m_moveNameCache.m_valid     = false;
+        m_abilityNameCache.m_valid  = false;
     }
 
     inline u16 maxItem( ) const {
@@ -346,6 +357,8 @@ struct model {
         pkmnNames( );
         locationNames( );
         itemNames( );
+        moveNames( );
+        abilityNames( );
 
         m_needsRefresh = false;
     }
@@ -367,6 +380,10 @@ struct model {
      * cache, which is returned.
      */
     const stringCache& itemNames( );
+
+    const stringCache& moveNames( );
+
+    const stringCache& abilityNames( );
 
     std::string getMapString( u16 p_stringId, u8 p_language = 0 );
 

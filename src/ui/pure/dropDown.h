@@ -82,19 +82,18 @@ namespace UI {
         /*
          * @brief: update the available choices
          */
-        void refreshModel( const model::stringCache& p_model );
+        virtual void refreshModel( const model::stringCache& p_model );
     };
 
-    class locationDropDown : public dropDown {
-        u16  _lastRefresh = 0;
-        bool _disableE    = false;
+    class numberedStringCacheDropDown : public stringCacheDropDown {
+        bool _disableE = false;
 
-        std::shared_ptr<Gtk::Adjustment> _locationA;
-        Gtk::SpinButton                  _locationE;
+        std::shared_ptr<Gtk::Adjustment> _idxA;
+        Gtk::SpinButton                  _idxE;
         Gtk::Box                         _mainBox;
 
       public:
-        locationDropDown( Gtk::Orientation p_orientation = Gtk::Orientation::VERTICAL );
+        numberedStringCacheDropDown( Gtk::Orientation p_orientation = Gtk::Orientation::VERTICAL );
 
         inline operator Gtk::Widget&( ) override {
             return _mainBox;
@@ -109,13 +108,13 @@ namespace UI {
             _currentSelection = p_choice;
             _popoverBtnSelect[ _currentSelection ].show( );
 
-            if( !_disableE ) { _locationE.set_value( p_choice ); }
+            if( !_disableE ) { _idxE.set_value( p_choice ); }
         }
 
         /*
          * @brief: update the available choices
          */
-        void refreshModel( model& p_model );
+        void refreshModel( const model::stringCache& p_model ) override;
     };
 
 } // namespace UI

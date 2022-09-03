@@ -136,90 +136,34 @@ namespace UI {
         choose( _currentSelection );
     }
 
-    locationDropDown::locationDropDown( Gtk::Orientation p_orientation )
-        : dropDown( { }, 0 ),
-          _locationA( Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) ),
-          _locationE{ _locationA }, _mainBox{ p_orientation } {
+    numberedStringCacheDropDown::numberedStringCacheDropDown( Gtk::Orientation p_orientation )
+        : stringCacheDropDown{ },
+          _idxA( Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) ), _idxE{ _idxA },
+          _mainBox{ p_orientation } {
 
         _mainBox.get_style_context( )->add_class( "linked" );
 
         _dropDown.set_expand( true );
-        _locationE.set_expand( true );
+        _idxE.set_expand( true );
 
-        _mainBox.append( _locationE );
+        _mainBox.append( _idxE );
         _mainBox.append( _dropDown );
     }
 
-    void locationDropDown::connect( const std::function<void( u64 )>& p_choiceChangedCallback ) {
+    void numberedStringCacheDropDown::connect(
+        const std::function<void( u64 )>& p_choiceChangedCallback ) {
         dropDown::connect( p_choiceChangedCallback );
 
-        _locationE.signal_value_changed( ).connect( [ this, p_choiceChangedCallback ]( ) {
+        _idxE.signal_value_changed( ).connect( [ this, p_choiceChangedCallback ]( ) {
             _disableE = true;
-            p_choiceChangedCallback( _locationE.get_value_as_int( ) );
+            p_choiceChangedCallback( _idxE.get_value_as_int( ) );
             _disableE = false;
         } );
     }
 
-    void locationDropDown::refreshModel( model& p_model ) {
-        auto sc = p_model.locationNames( );
-        if( sc.m_lastRefresh <= _lastRefresh ) { return; }
-        _lastRefresh = sc.m_lastRefresh;
-        _choices     = sc.m_strings;
-        _popoverBtnSelect.clear( );
-
-        for( auto btn : _popoverButtons ) {
-            if( btn ) { _popoverBox.remove( *btn ); }
-        }
-        _popoverButtons.clear( );
-
-        if( _currentSelection >= _choices.size( ) ) { _currentSelection = _choices.size( ) - 1; }
-
-        _locationA->set_upper( _choices.size( ) );
-
-        for( u64 i{ 0 }; i < _choices.size( ); ++i ) {
-            auto ch = _choices[ i ];
-            if( ch == "" ) { ch = std::string( "(" ) + std::to_string( i ) + ")"; }
-
-            Gtk::Label lb{ ch };
-            Gtk::Box   bb{ Gtk::Orientation::HORIZONTAL };
-            bb.append( lb );
-
-            auto ic = Gtk::Image{ };
-            ic.set_from_icon_name( "object-select-symbolic" );
-            bb.append( ic );
-            _popoverBtnSelect.push_back( std::move( ic ) );
-
-            auto btn = std::make_shared<Gtk::Button>( );
-            if( !btn ) { break; }
-
-            btn->set_child( bb );
-            _popoverBox.append( *btn );
-            _popoverBox.set_hexpand( );
-            btn->get_style_context( )->add_class( "flat" );
-            btn->set_halign( Gtk::Align::FILL );
-            btn->set_hexpand( true );
-
-            btn->signal_clicked( ).connect( [ this, i ]( ) {
-                choose( i );
-                _popover.popdown( );
-                if( _callback ) { _callback( i ); }
-            } );
-
-            _popoverButtons.push_back( btn );
-        }
-
-        _conn.disconnect( );
-        _conn = _dropDown.signal_clicked( ).connect(
-            [ this ]( ) {
-                if( _currentSelection < _popoverButtons.size( )
-                    && _popoverButtons[ _currentSelection ] ) {
-                    _popoverButtons[ _currentSelection ]->grab_focus( );
-                }
-                _popover.popup( );
-            },
-            false );
-
-        choose( _currentSelection );
+    void numberedStringCacheDropDown::refreshModel( const model::stringCache& p_model ) {
+        _idxA->set_upper( p_model.m_strings.size( ) );
+        stringCacheDropDown::refreshModel( p_model );
     }
 
 } // namespace UI

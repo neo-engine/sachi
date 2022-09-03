@@ -66,7 +66,8 @@ namespace UI {
         _shbox3.set_hexpand( true );
         auto shbox3l = Gtk::Label( "Default Overworld Location" );
         _shbox3.set_start_widget( shbox3l );
-        _bankDefaultLocation = std::make_shared<locationDropDown>( Gtk::Orientation::HORIZONTAL );
+        _bankDefaultLocation
+            = std::make_shared<numberedStringCacheDropDown>( Gtk::Orientation::HORIZONTAL );
         if( _bankDefaultLocation ) {
             _shbox3.set_end_widget( *_bankDefaultLocation );
             _bankDefaultLocation->connect( [ this ]( u64 p_newChoice ) {
@@ -290,7 +291,7 @@ namespace UI {
             if( _mapIsOW ) { _mapIsOW->choose( _model.bank( ).getOWStatus( ) ); }
             if( _mapHasDive ) { _mapHasDive->choose( _model.bank( ).getDiveStatus( ) ); }
             if( _bankDefaultLocation ) {
-                _bankDefaultLocation->refreshModel( _model );
+                _bankDefaultLocation->refreshModel( _model.locationNames( ) );
                 _bankDefaultLocation->choose( _model.bank( ).getDefaultLocation( ) );
             }
             if( _model.bank( ).getOWStatus( ) ) {

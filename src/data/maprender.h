@@ -390,18 +390,21 @@ namespace DATA {
         "Warp",     "Generic", "HM Object", "Berry Tree", "NPC Message", "Fly Target" };
 
     enum eventTrigger : u8 {
-        TRIGGER_NONE           = 0,
-        TRIGGER_STEP_ON        = ( 1 << 0 ),
-        TRIGGER_INTERACT       = ( 1 << 1 ) | ( 1 << 2 ) | ( 1 << 3 ) | ( 1 << 4 ),
-        TRIGGER_INTERACT_DOWN  = ( 1 << 1 ),
-        TRIGGER_INTERACT_LEFT  = ( 1 << 2 ),
-        TRIGGER_INTERACT_UP    = ( 1 << 3 ),
-        TRIGGER_INTERACT_RIGHT = ( 1 << 4 ),
-        TRIGGER_ON_MAP_ENTER   = ( 1 << 5 ),
+        TRIGGER_NONE              = 0,
+        TRIGGER_STEP_ON           = ( 1 << 0 ),
+        TRIGGER_INTERACT          = ( 1 << 1 ) | ( 1 << 2 ) | ( 1 << 3 ) | ( 1 << 4 ),
+        TRIGGER_INTERACT_DOWN     = ( 1 << 1 ),
+        TRIGGER_INTERACT_LEFT     = ( 1 << 2 ),
+        TRIGGER_INTERACT_UP       = ( 1 << 3 ),
+        TRIGGER_INTERACT_RIGHT    = ( 1 << 4 ),
+        TRIGGER_ON_MAP_ENTER      = ( 1 << 5 ),
+        TRIGGER_ON_MOVE_AT_POS    = ( 1 << 6 ), // only for generic events
+        TRIGGER_ON_MOVE_IN_BATTLE = ( 1 << 7 ), // only for generic events
     };
     const std::vector<std::string> EVENT_TRIGGER_NAMES{
-        "On Step-on",        "On Interaction Down",  "On Interaction Left",
-        "On Interaction Up", "On Interaction Right", "On Map Enter" };
+        "On Step-on",        "On Interaction Down",    "On Interaction Left",
+        "On Interaction Up", "On Interaction Right",   "On Map Enter",
+        "On Move Used",      "When Move during Battle" };
 
     enum wildPkmnType : u8 {
         GRASS,
@@ -577,6 +580,7 @@ namespace DATA {
                 struct {
                     u16 m_scriptId;
                     u8  m_scriptType;
+                    u16 m_triggerMove; // used only when event triggered by a pkmn move
                 } m_generic;
                 struct {
                     u8 m_hmType;

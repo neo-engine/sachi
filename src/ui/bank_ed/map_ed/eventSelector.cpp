@@ -765,15 +765,15 @@ namespace UI::MED {
                 } );
             }
 
-            Gtk::Box ibox{ Gtk::Orientation::HORIZONTAL };
-            ibox.set_margin_top( MARGIN );
-            Gtk::Label ilabel{ "Script Idx" };
-            ilabel.set_hexpand( );
-            ilabel.set_halign( Gtk::Align::START );
-
-            fbox.append( ibox );
-            ibox.append( ilabel );
-            ibox.append( _scriptIdx2E );
+            Gtk::Grid  g2{ };
+            Gtk::Label tsl{ "Script Idx" };
+            g2.attach( tsl, 0, 0 );
+            tsl.set_margin_end( MARGIN );
+            tsl.set_halign( Gtk::Align::START );
+            tsl.set_hexpand( );
+            g2.attach( _scriptIdx2E, 1, 0 );
+            _scriptIdx2E.set_margin_top( MARGIN );
+            _scriptIdx2E.set_margin_bottom( MARGIN );
             _scriptIdx2E.signal_value_changed( ).connect( [ this ]( ) {
                 if( _disableRedraw
                     || _model.mapEvent( ).m_data.m_generic.m_scriptId
@@ -788,6 +788,30 @@ namespace UI::MED {
                 redraw( );
                 _disableSI2E = false;
             } );
+
+            Gtk::Label til{ "Trigger Move" };
+            g2.attach( til, 0, 1 );
+            til.set_margin_end( MARGIN );
+            til.set_halign( Gtk::Align::START );
+            til.set_hexpand( );
+
+            _triggerMove = std::make_shared<numberedStringCacheDropDown>( );
+            if( _triggerMove ) {
+                ( (Gtk::Widget&) *_triggerMove ).set_hexpand( true );
+                ( (Gtk::Widget&) *_triggerMove ).set_vexpand( false );
+                g2.attach( *_triggerMove, 1, 1 );
+                _triggerMove->connect( [ this ]( u64 p_newChoice ) {
+                    if( _model.mapEvent( ).m_data.m_generic.m_triggerMove == p_newChoice ) {
+                        return;
+                    }
+                    _model.mapEvent( ).m_data.m_generic.m_triggerMove = p_newChoice;
+                    _model.markSelectedBankChanged( );
+                    _rootWindow.redrawPanel( );
+                    redraw( );
+                } );
+            }
+
+            fbox.append( g2 );
 
             fbox.set_hexpand( false );
             _detailFrames.push_back( std::move( frame ) );
@@ -1004,7 +1028,7 @@ namespace UI::MED {
             fbox.append( ibox );
             ibox.append( ilabel );
 
-            _flyLocation = std::make_shared<locationDropDown>( );
+            _flyLocation = std::make_shared<numberedStringCacheDropDown>( );
             if( _flyLocation ) {
                 ( (Gtk::Widget&) *_flyLocation ).set_hexpand( true );
                 ( (Gtk::Widget&) *_flyLocation ).set_vexpand( false );
@@ -1146,6 +1170,11 @@ namespace UI::MED {
                 }
             }
             if( !_disableSI2E ) { _scriptIdx2E.set_value( evt.m_data.m_generic.m_scriptId ); }
+            if( _triggerMove ) {
+                _triggerMove->refreshModel( _model.moveNames( ) );
+                _triggerMove->choose( evt.m_data.m_generic.m_triggerMove );
+            }
+
             break;
         }
         case DATA::EVENT_HMOBJECT: {
@@ -1195,7 +1224,7 @@ namespace UI::MED {
         }
         case DATA::EVENT_FLY_POS: {
             if( _flyLocation ) {
-                _flyLocation->refreshModel( _model );
+                _flyLocation->refreshModel( _model.locationNames( ) );
                 _flyLocation->choose( evt.m_data.m_flyPos.m_location );
             }
             break;

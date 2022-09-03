@@ -35,7 +35,7 @@ namespace UI {
         std::shared_ptr<switchButton> _showTouchArea;
         std::shared_ptr<Gtk::Button>  _recomputeMapBG, _recomputeOverlay;
 
-        std::shared_ptr<locationDropDown> _bankDefaultLocation;
+        std::shared_ptr<numberedStringCacheDropDown> _bankDefaultLocation;
 
         Gtk::CenterBox _shbox2, _shbox3, _shbox4;
 

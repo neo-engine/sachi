@@ -63,9 +63,9 @@ namespace UI::MED {
         Gtk::SpinButton _selectedEventE, _aFlagE, _dFlagE, _messageIdx1E, _messageIdx2E,
             _warpScriptIdxE, _scriptIdx1E, _scriptIdx2E, _berryTreeIdxE, _trainerIdxE,
             _trainerSightE, _owPkmnLevelE;
-        std::shared_ptr<locationDropDown> _flyLocation;
-        std::shared_ptr<itemSelector>     _item;
-        std::shared_ptr<pokeSelector>     _pkmn;
+        std::shared_ptr<numberedStringCacheDropDown> _flyLocation, _triggerMove;
+        std::shared_ptr<itemSelector>                _item;
+        std::shared_ptr<pokeSelector>                _pkmn;
 
         std::shared_ptr<switchButton> _npcMessageAutoDeact, _owPkmnHA, _owPkmnFE;
 
