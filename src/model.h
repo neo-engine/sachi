@@ -117,10 +117,12 @@ struct model {
         std::map<u16, mapBankContainer> m_mapBanks;
 
         u8                         m_tileSetMode = DATA::TILEMODE_DEFAULT;
-        status                     m_tileStatus;
+        status                     m_tileStatus, m_trainerStatus;
         std::vector<Glib::ustring> m_mapBankStrList; // block set names
         std::map<u8, blockSetInfo> m_blockSets;
         std::set<u8>               m_blockSetNames;
+
+        std::vector<DATA::trainerInfo> m_trainer;
 
         DATA::fsdataInfo m_fsInfo;
 
@@ -178,6 +180,14 @@ struct model {
 
         inline std::string itemSpritePath( ) const {
             return m_fsrootPath + "/PICS/SPRITES/item.icon.rawb";
+        }
+
+        inline size_t trainerCount( ) const {
+            return m_trainer.size( );
+        }
+
+        inline void createTrainer( u16 p_trainerId ) {
+            if( p_trainerId > trainerCount( ) ) { m_trainer.resize( p_trainerId + 1 ); }
         }
 
         inline std::string owSpritePath( u16 p_spriteIdx, u8 p_forme = 0, bool p_shiny = false,
@@ -303,6 +313,8 @@ struct model {
         u16  m_tseBlockSetWidth   = 8;
         u16  m_tseTileSetWidth    = 16;
         bool m_tseTileOverlay     = true;
+
+        u16 m_treId = 0;
     };
 
     struct stringCache {
@@ -669,6 +681,10 @@ struct model {
         m_fsdata.m_tileStatus = p_newStatus;
     }
 
+    inline void markTrainersChanged( status p_newStatus = STATUS_EDITED_UNSAVED ) {
+        m_fsdata.m_trainerStatus = p_newStatus;
+    }
+
     /*
      * @brief: Sets the status of the specified map bank to the specified status,
      * resulting in the specified map bank being highlighted in the sidebar.
@@ -683,6 +699,10 @@ struct model {
 
     inline status tileStatus( ) const {
         return m_fsdata.m_tileStatus;
+    }
+
+    inline status trainerStatus( ) const {
+        return m_fsdata.m_trainerStatus;
     }
 
     /*

@@ -33,6 +33,7 @@ constexpr u16 DIVE_MAP = 1000;
 constexpr s64 MAX_MAPBANK_NAME = 99;
 constexpr s64 MAX_TILESET_NAME = 255;
 constexpr u8  MAX_MAPY         = 255;
+constexpr s64 MAX_TRAINER_NAME = 2048;
 
 const std::string MAPNAME_FORMAT  = "%hhu_%hhu.map";
 const std::string BLOCKSET_FORMAT = "%hhu.bvd";
@@ -79,8 +80,9 @@ const std::string EXTRA_CSS
       "";
 
 enum context : u8 {
-    CONTEXT_NONE,        // nothing loaded
-    CONTEXT_FSROOT_NONE, // fsroot loaded, but nothing else
-    CONTEXT_MAP_EDITOR,  // map bank loaded and map visible
-    CONTEXT_TILE_EDITOR, // tile set editor loaded
+    CONTEXT_NONE,           // nothing loaded
+    CONTEXT_FSROOT_NONE,    // fsroot loaded, but nothing else
+    CONTEXT_MAP_EDITOR,     // map bank loaded and map visible
+    CONTEXT_TILE_EDITOR,    // tile set editor loaded
+    CONTEXT_TRAINER_EDITOR, // trainer editor loaded
 };

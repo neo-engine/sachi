@@ -11,6 +11,11 @@
 namespace DATA {
     constexpr u16 MAPSTRING_LEN = 800;
 
+    struct trainerInfo {
+        u16 m_trainerName; // id in trainer names string file
+        // TODO
+    };
+
     struct pkmnFormeData {
         u8  m_types[ 2 ];
         u16 m_abilities[ 4 ]; // abilities

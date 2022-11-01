@@ -139,6 +139,8 @@ namespace UI {
          */
         void editTileSets( u8 p_ts1, u8 p_ts2 );
 
+        void editTrainer( u16 p_trainerId );
+
         /*
          * @brief: Handler for the "Open FSROOT" button.
          */

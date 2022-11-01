@@ -115,6 +115,11 @@ namespace UI {
             if( _openMenuTSButton ) { _openMenuTSButton->show( ); }
             if( _saveMenuTSButton ) { _saveMenuTSButton->show( ); }
             break;
+        case CONTEXT_TRAINER_EDITOR:
+            if( _saveButton ) { _saveButton->show( ); }
+            // TODO
+            break;
+
         default: setTitle( ); break;
         }
 

@@ -672,6 +672,13 @@ namespace UI {
             _specialRecomputedns2Action->set_enabled( true );
 
             break;
+        case CONTEXT_TRAINER_EDITOR:
+            _mainBox.show( );
+            // if( _trainerEditor ) { _trainerEditor->show( ); }
+
+            _saveFsrootAction->set_enabled( true );
+            break;
+
         default:
             if( _welcome ) { _welcome->show( ); }
             break;
@@ -770,6 +777,34 @@ namespace UI {
         _model.selectMap( _model.selectedMapX( ) + p_dx, _model.selectedMapY( ) + p_dy );
 
         loadMap( _model.selectedBank( ), _model.selectedMapY( ), _model.selectedMapX( ) );
+    }
+
+    void root::editTrainer( u16 p_trainerId ) {
+        if( _context == CONTEXT_NONE ) {
+            message_log( "editTrainer", "No FSROOT loaded. Won't load any trainer data." );
+            return;
+        }
+
+        message_log( "editTrainer",
+                     "Loading trainer editor for " + std::to_string( p_trainerId ) + ".",
+                     LOGLEVEL_STATUS );
+
+        if( _model.selectedBank( ) != -1 ) {
+            onUnloadMap( _model.selectedBank( ), _model.selectedMapY( ), _model.selectedMapX( ) );
+        }
+        _model.selectBank( -1 );
+        _headerBar->setTitle( "", "Trainer " + std::to_string( p_trainerId ),
+                              _model.m_fsdata.m_fsrootPath, false );
+
+        // check if trainer data exists
+        if( _model.m_fsdata.trainerCount( ) <= p_trainerId ) {
+            _model.m_fsdata.createTrainer( p_trainerId );
+        }
+
+        _model.m_settings.m_treId = p_trainerId;
+
+        switchContext( CONTEXT_TRAINER_EDITOR );
+        redraw( );
     }
 
     void root::editTileSets( u8 p_ts1, u8 p_ts2 ) {

@@ -21,7 +21,7 @@ namespace UI {
         model& _model;
 
         u16    _bankName = 0;
-        u8     _sizeX = 0, _sizeY = 0;
+        u32    _sizeX = 0, _sizeY = 0;
         bool   _selected      = false;
         status _currentStatus = STATUS_UNTOUCHED;
         bool   _collapsed     = false;
@@ -35,17 +35,21 @@ namespace UI {
         Gtk::SpinButton                  _mapXEntry, _mapYEntry;
         Gtk::Button                      _loadMapButton{ "Load" }, _loadDiveMapButton{ "Dive" };
 
-        mapBank( model& p_model, const std::string& p_yicon = "view-more-symbolic",
-                 const std::string& p_xicon = "content-loading-symbolic" );
+        // mapBank( model& p_model, const std::string& p_yicon = "view-more-symbolic",
+        //          const std::string& p_xicon = "content-loading-symbolic" );
+
+        mapBank( model& p_model, const std::string& p_yicon, const std::string& p_xicon );
+
+        mapBank( model& p_model, const std::string& p_yicon );
 
       public:
-        mapBank( model& p_model, u16 p_bankname, u8 p_sizeX = 0, u8 p_sizeY = 0,
+        mapBank( model& p_model, u16 p_bankname, u32 p_sizeX = 0, u32 p_sizeY = 0,
                  status p_initialStatus = STATUS_UNTOUCHED );
 
         virtual inline ~mapBank( ) {
         }
 
-        virtual inline void setSelectedMap( u8 p_x, u8 p_y ) {
+        virtual inline void setSelectedMap( u32 p_x, u32 p_y ) {
             _mapXEntry.set_value( p_x );
             _mapYEntry.set_value( p_y );
         }
@@ -107,20 +111,20 @@ namespace UI {
                                     + std::to_string( p_bankName ) + "U</span>" );
         }
 
-        inline u8 getSizeX( ) const {
+        inline u32 getSizeX( ) const {
             return _sizeX;
         }
 
-        inline void setSizeX( u8 p_sizeX ) {
+        inline void setSizeX( u32 p_sizeX ) {
             _sizeX = p_sizeX;
             _mapXAdj->set_upper( p_sizeX );
         }
 
-        inline u8 getSizeY( ) const {
+        inline u32 getSizeY( ) const {
             return _sizeY;
         }
 
-        inline void setSizeY( u8 p_sizeY ) {
+        inline void setSizeY( u32 p_sizeY ) {
             _sizeY = p_sizeY;
             _mapYAdj->set_upper( p_sizeY );
         }
@@ -223,4 +227,26 @@ namespace UI {
             } );
         }
     };
+
+    class editTrainer : public mapBank {
+        // mapy: trainer idx, mapx: unused
+      public:
+        editTrainer( model& p_model );
+
+        inline ~editTrainer( ) override {
+        }
+
+        inline void redraw( ) override {
+            collapse( _model.m_settings.m_focusMode || _collapsed );
+            setStatus( _model.trainerStatus( ) );
+        }
+
+        inline void connect( const std::function<void( u16 )>& p_callback ) {
+            if( !p_callback ) { return; }
+
+            _loadMapButton.signal_clicked( ).connect(
+                [ this, p_callback ]( ) { p_callback( _mapYEntry.get_value_as_int( ) ); } );
+        }
+    };
+
 } // namespace UI

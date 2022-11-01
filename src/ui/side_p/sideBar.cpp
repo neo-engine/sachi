@@ -27,11 +27,42 @@ namespace UI {
             _lMainBox.append( sideBarBarCollapseBox );
         }
         {
+            // trainer
+            auto lFrame = Gtk::Frame( );
+            lFrame.set_margin( MARGIN );
+            lFrame.set_margin_top( 0 );
+            _lMainBox.append( lFrame );
+
+            auto sbTrainerBarLabelBox   = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+            auto sbTrainerBarLabelImage = Gtk::Image( );
+            sbTrainerBarLabelImage.set_from_icon_name( "system-switch-user-symbolic" );
+            sbTrainerBarLabelImage.set_margin( MARGIN );
+            _sbTrainerBarLabel = Gtk::Label( "Trainers" );
+            sbTrainerBarLabelBox.append( sbTrainerBarLabelImage );
+            sbTrainerBarLabelBox.append( _sbTrainerBarLabel );
+
+            lFrame.set_label_widget( sbTrainerBarLabelBox );
+            lFrame.set_label_align( Gtk::Align::CENTER );
+
+            _sbTrainerBox = Gtk::Box( Gtk::Orientation::VERTICAL, MARGIN );
+            lFrame.set_child( _sbTrainerBox );
+            _sbTrainerBox.set_margin( MARGIN );
+            _sbTrainerBox.set_vexpand( false );
+
+            _editTrainer = std::make_shared<editTrainer>( p_model );
+            if( _editTrainer ) {
+                _editTrainer->connect(
+                    [ this ]( u16 p_ts1 ) { _rootWindow.editTrainer( p_ts1 ); } );
+                _sbTrainerBox.append( *_editTrainer );
+            }
+
+            _sbTrainerSel1 = 0;
+        }
+        {
             // tile set
             auto lFrame = Gtk::Frame( );
             lFrame.set_margin( MARGIN );
             lFrame.set_margin_top( 0 );
-            lFrame.set_margin_bottom( 0 );
             _lMainBox.append( lFrame );
 
             auto sbTileSetBarLabelBox   = Gtk::Box( Gtk::Orientation::HORIZONTAL );
@@ -66,6 +97,7 @@ namespace UI {
             _lMainBox.append( lScrolledWindow );
             auto lFrame = Gtk::Frame( );
             lFrame.set_margin( MARGIN );
+            lFrame.set_margin_top( 0 );
             lScrolledWindow.set_child( lFrame );
             lScrolledWindow.set_policy( Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC );
 

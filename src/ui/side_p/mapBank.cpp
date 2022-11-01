@@ -2,7 +2,7 @@
 #include "mapBank.h"
 
 namespace UI {
-    mapBank::mapBank( model& p_model, const std::string& p_yicon, const std::string& p_xicon )
+    mapBank::mapBank( model& p_model, const std::string& p_yicon )
         : _model( p_model ), _mapXAdj( Gtk::Adjustment::create( 0.0, 0.0, 0.0, 1.0, 5.0, 0.0 ) ),
           _mapYAdj( Gtk::Adjustment::create( 0.0, 0.0, 0.0, 1.0, 5.0, 0.0 ) ),
           _mapXEntry( _mapXAdj ), _mapYEntry( _mapYAdj ) {
@@ -45,19 +45,7 @@ namespace UI {
         _mapYEntry.set_max_width_chars( 2 );
         _mapYEntry.set_numeric( true );
 
-        auto XI = Gtk::Image( );
-        auto XL = Gtk::Label( );
-        XI.set_from_icon_name( p_xicon );
-        XI.set_margin( MARGIN );
-        box4.append( XI );
-        box4.append( _mapXEntry );
-        box4.append( XL );
-        _mapXEntry.set_width_chars( 2 );
-        _mapXEntry.set_max_width_chars( 2 );
-        _mapXEntry.set_numeric( true );
-
         _entryBox.append( box3 );
-        _entryBox.append( box4 );
         mainBox.append( _entryBox );
 
         Gtk::Box btnbx{ Gtk::Orientation::VERTICAL };
@@ -71,9 +59,28 @@ namespace UI {
         mainBox.append( btnbx );
     }
 
-    mapBank::mapBank( model& p_model, u16 p_bankName, u8 p_sizeX, u8 p_sizeY,
+    mapBank::mapBank( model& p_model, const std::string& p_yicon, const std::string& p_xicon )
+        : mapBank( p_model, p_yicon ) {
+        auto box4 = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+        box4.get_style_context( )->add_class( "linked" );
+
+        auto XI = Gtk::Image( );
+        auto XL = Gtk::Label( );
+        XI.set_from_icon_name( p_xicon );
+        XI.set_margin( MARGIN );
+        box4.append( XI );
+        box4.append( _mapXEntry );
+        box4.append( XL );
+        _mapXEntry.set_width_chars( 2 );
+        _mapXEntry.set_max_width_chars( 2 );
+        _mapXEntry.set_numeric( true );
+
+        _entryBox.append( box4 );
+    }
+
+    mapBank::mapBank( model& p_model, u16 p_bankName, u32 p_sizeX, u32 p_sizeY,
                       status p_initialStatus )
-        : mapBank( p_model ) {
+        : mapBank( p_model, "view-more-symbolic", "content-loading-symbolic" ) {
         setBankName( p_bankName );
         setSizeX( p_sizeX );
         setSizeY( p_sizeY );
@@ -124,6 +131,15 @@ namespace UI {
         _mapYAdj->set_lower( 0 );
         setSizeX( MAX_TILESET_NAME );
         setSizeY( MAX_TILESET_NAME );
+    }
+
+    editTrainer::editTrainer( model& p_model ) : mapBank( p_model, "view-list-ordered-symbolic" ) {
+        _nameLabel.set_markup( "<span size=\"x-large\" weight=\"bold\">TR</span>" );
+        _loadMapButton.set_label( "Edit" );
+        _loadDiveMapButton.hide( );
+
+        _mapYAdj->set_lower( 0 );
+        setSizeY( MAX_TRAINER_NAME );
     }
 
 } // namespace UI
