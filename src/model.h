@@ -122,7 +122,7 @@ struct model {
         std::map<u8, blockSetInfo> m_blockSets;
         std::set<u8>               m_blockSetNames;
 
-        std::vector<DATA::trainerInfo> m_trainer;
+        std::vector<DATA::battleTrainer> m_trainer;
 
         DATA::fsdataInfo m_fsInfo;
 

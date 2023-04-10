@@ -11,9 +11,53 @@
 namespace DATA {
     constexpr u16 MAPSTRING_LEN = 800;
 
-    struct trainerInfo {
-        u16 m_trainerName; // id in trainer names string file
-        // TODO
+    struct trainerStrings {
+        char m_name[ 16 ];
+        char m_message1[ 200 ];
+        char m_message2[ 200 ];
+        char m_message3[ 200 ];
+    };
+
+    struct trainerPokemon {
+        u16 m_speciesId;
+        u8  m_forme; // BIT( 6 ): pkmn is female, BIT( 7 ): pkmn is genderless
+        u8  m_level;
+        u16 m_ability;
+        u16 m_heldItem;
+        u16 m_moves[ 4 ];
+        u8  m_ev[ 6 ];
+        u8  m_iv[ 6 ];
+        u8  m_shiny;
+        u8  m_nature;
+    };
+
+    struct trainerData {
+        static constexpr u8 NUM_ITEMS = 5;
+        static constexpr u8 NUM_PKMN  = 6;
+
+        u16            m_trainerClass : 8;
+        u16            m_AILevel : 8;
+        u16            m_trainerBG;
+        u16            m_battleBG;
+        u16            m_battlePlat1 : 8;
+        u16            m_battlePlat2 : 8;
+        u16            m_numPokemonEasy : 3;
+        u16            m_numPokemonNormal : 3;
+        u16            m_numPokemonHard : 3;
+        u16            m_targetNumBadges : 6;
+        u16            m_forceDoubleBattle : 1;
+        u16            m_items[ NUM_ITEMS ];
+        u32            m_moneyEarned;
+        trainerPokemon m_pokemon[ NUM_PKMN ];
+    };
+
+    struct battleTrainer {
+        trainerStrings m_strings;
+        trainerData    m_data;
+
+        constexpr u8 getClass( ) const {
+            return m_data.m_trainerClass;
+        }
     };
 
     struct pkmnFormeData {
