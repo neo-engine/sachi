@@ -7,8 +7,8 @@ using namespace std::string_literals;
 const std::string APP_NAME     = std::string( "Sachi" );
 const std::string TITLE_STRING = APP_NAME + " " + std::string( VERSION );
 
-#define conv( a )    ( (u8) ( (a) *31 / 255 ) )
-#define revconv( a ) ( ( (a) *255 / 31 ) )
+#define conv( a )    ( (u8) ( ( a ) * 31 / 255 ) )
+#define revconv( a ) ( ( ( a ) * 255 / 31 ) )
 
 #define green( a ) ( revconv( ( ( a ) >> 5 ) & 31 ) )
 #define blue( a )  ( revconv( ( ( a ) >> 10 ) & 31 ) )

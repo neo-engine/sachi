@@ -15,7 +15,7 @@ OBJDIR := obj
 
 CC=g++
 export LD	:=	$(CC)
-LDFLAGS	=
+LDFLAGS	= -L /opt/homebrew/lib/
 
 LIBS	= -lpng $(shell pkg-config --libs gtkmm-4.0)
 SRCS	:= $(shell find $(SRCDIR) -name "*.cpp")
@@ -23,10 +23,11 @@ OBJS	:= $(SRCS:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 DEPS	:= $(SRCS:$(SRCDIR)/%.cpp=$(OBJDIR)/%.d)
 TREE	:= $(patsubst %/,%,$(dir $(OBJS)))
 
-CFLAGS	=-std=c++23 -MMD -MP -MF $(@:$(OBJDIR)/%.o=$(OBJDIR)/%.d) \
+CFLAGS	=-std=c++20 -MMD -MP -MF $(@:$(OBJDIR)/%.o=$(OBJDIR)/%.d) \
 		 -g3 -ggdb -Wall -Wextra $(shell pkg-config --cflags gtkmm-4.0) \
 		 -DNUM_LANGUAGES=$(NUM_LANGUAGES) -DMAX_ITEMS_PER_DIR=$(MAX_ITEMS_PER_DIR) \
-		 -DVERSION=$(VERSION)
+		 -DVERSION=$(VERSION) \
+		 -I/opt/homebrew/include/
 CPPFLAGS= $(CFLAGS)
 
 .PHONY: all clean
