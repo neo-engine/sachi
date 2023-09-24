@@ -574,6 +574,9 @@ namespace UI {
         _tileSetEditor = std::make_shared<tileSetEditor>( _model, *this );
         if( _tileSetEditor ) { _mainBox.append( *_tileSetEditor ); }
 
+        _trainerBankEditor = std::make_shared<trainerBankEditor>( _model, *this );
+        if( _trainerBankEditor ) { _mainBox.append( *_trainerBankEditor ); }
+
         initEvents( );
 
         switchContext( CONTEXT_NONE );
@@ -623,6 +626,7 @@ namespace UI {
 
         _loadMapLabel.hide( );
         if( _tileSetEditor ) { _tileSetEditor->hide( ); }
+        if( _trainerBankEditor ) { _trainerBankEditor->hide( ); }
         if( _bankEditor ) { _bankEditor->hide( ); }
         if( _welcome ) { _welcome->hide( ); }
         _mainBox.hide( );
@@ -674,7 +678,7 @@ namespace UI {
             break;
         case CONTEXT_TRAINER_EDITOR:
             _mainBox.show( );
-            // if( _trainerEditor ) { _trainerEditor->show( ); }
+            if( _trainerBankEditor ) { _trainerBankEditor->show( ); }
 
             _saveFsrootAction->set_enabled( true );
             break;
@@ -698,6 +702,9 @@ namespace UI {
         }
         if( _context == CONTEXT_TILE_EDITOR ) {
             if( _tileSetEditor ) { _tileSetEditor->redraw( ); }
+        }
+        if( _context == CONTEXT_TRAINER_EDITOR ) {
+            if( _trainerBankEditor ) { _trainerBankEditor->redraw( ); }
         }
     }
 

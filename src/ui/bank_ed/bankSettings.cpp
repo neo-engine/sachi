@@ -10,8 +10,8 @@
 
 namespace UI {
     bankSettings::bankSettings( model& p_model, root& p_root )
-        : _model{ p_model }, _rootWindow{ p_root }, _shiftXA{ Gtk::Adjustment::create(
-                                                        0.0, 0.0, 255.0, 1.0, 5.0, 0.0 ) },
+        : _model{ p_model }, _rootWindow{ p_root },
+          _shiftXA{ Gtk::Adjustment::create( 0.0, 0.0, 255.0, 1.0, 5.0, 0.0 ) },
           _shiftYA{ Gtk::Adjustment::create( 0.0, 0.0, 191.0, 1.0, 5.0, 0.0 ) },
           _shiftXE{ _shiftXA }, _shiftYE{ _shiftYA } {
 
@@ -69,6 +69,7 @@ namespace UI {
         _bankDefaultLocation
             = std::make_shared<numberedStringCacheDropDown>( Gtk::Orientation::HORIZONTAL );
         if( _bankDefaultLocation ) {
+            ( (Gtk::Widget&) ( *_bankDefaultLocation ) ).set_halign( Gtk::Align::END );
             _shbox3.set_end_widget( *_bankDefaultLocation );
             _bankDefaultLocation->connect( [ this ]( u64 p_newChoice ) {
                 if( _model.selectedBank( ) == -1 ) { return; }

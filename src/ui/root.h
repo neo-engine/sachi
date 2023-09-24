@@ -12,6 +12,7 @@
 #include "headerBar.h"
 #include "side_p/sideBar.h"
 #include "tile_ed/tileSetEditor.h"
+#include "trainer_ed/trainerBankEditor.h"
 #include "welcome.h"
 
 namespace UI {
@@ -53,11 +54,12 @@ namespace UI {
         std::shared_ptr<headerBar> _headerBar;
         std::shared_ptr<welcome>   _welcome;
 
-        Gtk::Box                       _mainBox; // main box containing all other widgets
-        std::shared_ptr<sideBar>       _sideBar;
-        Gtk::Label                     _loadMapLabel;
-        std::shared_ptr<bankEditor>    _bankEditor;
-        std::shared_ptr<tileSetEditor> _tileSetEditor;
+        Gtk::Box                           _mainBox; // main box containing all other widgets
+        std::shared_ptr<sideBar>           _sideBar;
+        Gtk::Label                         _loadMapLabel;
+        std::shared_ptr<bankEditor>        _bankEditor;
+        std::shared_ptr<tileSetEditor>     _tileSetEditor;
+        std::shared_ptr<trainerBankEditor> _trainerBankEditor;
 
         Gtk::SpinButton _sb1, _sb2;
 
