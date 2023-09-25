@@ -581,7 +581,7 @@ bool model::readTrainers( ) {
 
     m_fsdata.m_trainer.clear( );
 
-    for( int i = 8;; ++i ) {
+    for( int i = 0;; ++i ) {
         fsdata::trainerDataInfo tinfo{ };
         for( u8 diff = 0; diff < 3; ++diff ) {
 

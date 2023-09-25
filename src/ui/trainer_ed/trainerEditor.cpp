@@ -49,15 +49,13 @@ namespace UI {
         Gtk::ScrolledWindow sb{ };
         sb.set_child( _contentMainBox );
         sb.set_expand( );
+        sb.set_policy( Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC );
 
         _contentMainBox.set_margin_top( MARGIN );
         _mainBox.append( sb );
 
         _trainerInfo = std::make_shared<TRE::trainerInfo>( p_model, p_root );
         if( _trainerInfo ) { _contentMainBox.append( *_trainerInfo ); }
-
-        Gtk::Separator s1{ };
-        _contentMainBox.append( s1 );
 
         _trainerItems = std::make_shared<TRE::trainerItems>( p_model, p_root );
         if( _trainerItems ) { _contentMainBox.append( *_trainerItems ); }

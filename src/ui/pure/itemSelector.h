@@ -37,7 +37,8 @@ namespace UI {
         std::shared_ptr<fsImage<imageType::IT_SPRITE_ICON_32x32>> _itemImage;
 
       public:
-        itemSelector( model& p_model );
+        itemSelector( model&           p_model,
+                      Gtk::Orientation p_orientation = Gtk::Orientation::HORIZONTAL );
 
         /*
          * @brief: reload list of item names from fs and correspondinly update the widget

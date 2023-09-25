@@ -2,13 +2,19 @@
 #include "itemSelector.h"
 
 namespace UI {
-    itemSelector::itemSelector( model& p_model )
+    itemSelector::itemSelector( model& p_model, Gtk::Orientation p_orientation )
         : _model{ p_model }, _itemIdxA{ Gtk::Adjustment::create( 0.0, 0.0, 0.0, 1.0, 50.0, 0.0 ) },
           _itemIdx{ _itemIdxA } {
 
+        _outerBox = Gtk::Box{ p_orientation };
+
         _itemImage = std::make_shared<fsImage<imageType::IT_SPRITE_ICON_32x32>>( );
         if( _itemImage ) {
-            _itemImage->set_valign( Gtk::Align::CENTER );
+            if( p_orientation == Gtk::Orientation::HORIZONTAL ) {
+                _itemImage->set_valign( Gtk::Align::CENTER );
+            } else {
+                _itemImage->set_halign( Gtk::Align::CENTER );
+            }
             _itemImage->set_margin_end( MARGIN );
             _itemImage->setScale( 2 );
             _outerBox.append( *_itemImage );
