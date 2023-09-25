@@ -477,6 +477,17 @@ struct model {
         m_settings.m_treDif = p_newSelection;
     }
 
+
+    inline const auto& selectedTrainerInfo( ) const {
+        return m_fsdata.m_trainer[ selectedTrainerId( ) ];
+    }
+
+    inline auto& selectedTrainerInfo( ) {
+        return m_fsdata.m_trainer[ selectedTrainerId( ) ];
+    }
+
+
+
     inline const auto& selectedTrainer( ) const {
         return m_fsdata.m_trainer[ selectedTrainerId( ) ].data( selectedTrainerDifficulty( ) );
     }

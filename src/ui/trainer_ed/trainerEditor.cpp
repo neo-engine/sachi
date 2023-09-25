@@ -22,8 +22,10 @@ namespace UI {
 
         if( _diffSelector ) {
             diffBox.append( *_diffSelector );
-            _diffSelector->connect(
-                [ this ]( u8 p_newChoice ) { setDifficulty( difficulty( p_newChoice ) ); } );
+            _diffSelector->connect( [ this ]( u8 p_newChoice ) {
+                setDifficulty( difficulty( p_newChoice ) );
+                redraw( );
+            } );
         }
 
         auto diffEnL = Gtk::Label( "Separate Data for this Difficulty" );
@@ -34,8 +36,12 @@ namespace UI {
 
         if( _diffEnabled ) {
             _diffEnabledBox.append( *_diffEnabled );
-            _diffEnabled->connect(
-                [ this ]( u8 p_newChoice ) { enableDifficulty( p_newChoice ); } );
+            _diffEnabled->connect( [ this ]( u8 p_newChoice ) {
+                _model.markTrainersChanged( );
+                _rootWindow.redrawPanel( );
+                enableDifficulty( p_newChoice );
+                redraw( );
+            } );
         }
 
         diffBox.append( _diffEnabledBox );
@@ -65,6 +71,17 @@ namespace UI {
     void trainerEditor::redraw( ) {
         if( _model.selectedBank( ) != -1 ) { return; }
 
+        _contentMainBox.set_visible(
+            _model.selectedTrainerInfo( ).exists( _model.selectedTrainerDifficulty( ) ) );
+
+        if( _diffEnabled ) {
+            _diffEnabled->choose(
+                _model.selectedTrainerInfo( ).exists( _model.selectedTrainerDifficulty( ) ) );
+        }
+        if( _diffSelector ) {
+            _diffSelector->choose( difficulty( _model.selectedTrainerDifficulty( ) ) );
+        }
+
         if( _trainerInfo ) { _trainerInfo->redraw( ); }
         if( _trainerItems ) { _trainerItems->redraw( ); }
         if( _trainerTeam ) { _trainerTeam->redraw( ); }
@@ -80,12 +97,12 @@ namespace UI {
             _diffEnabledBox.hide( );
         }
 
-        // TODO
+        _model.selectTrainerDifficulty( u8( p_newDifficulty ) );
+
         _selectedDifficulty = p_newDifficulty;
     }
 
     void trainerEditor::enableDifficulty( bool p_enabled ) {
-        _contentMainBox.set_visible( p_enabled );
-        // TODO
+        _model.selectedTrainerInfo( ).exists( _model.selectedTrainerDifficulty( ) ) = p_enabled;
     }
 } // namespace UI
