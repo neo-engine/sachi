@@ -6,10 +6,10 @@ namespace UI {
         : _model( p_model ), _rootWindow( p_root ) {
         _treNotebook.set_expand( );
 
-        // _trainerEditor = std::make_shared<trainerEditor>( p_model, p_root );
-        // if( _trainerEditor ) {
-        //    _treNotebook.append_page( *_trainerEditor, "Trainer _Editor", true );
-        //}
+        _trainerEditor = std::make_shared<trainerEditor>( p_model, p_root );
+        if( _trainerEditor ) {
+            _treNotebook.append_page( *_trainerEditor, "Trainer _Editor", true );
+        }
 
         // _trainerBankSettings = std::make_shared<trainerBankSettings>( p_model, p_root );
         // if( _trainerBankSettings ) {

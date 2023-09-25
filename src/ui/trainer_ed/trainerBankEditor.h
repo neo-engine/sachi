@@ -4,7 +4,7 @@
 #include <gtkmm/notebook.h>
 
 #include "../../model.h"
-// #include "trainerEditor.h"
+#include "trainerEditor.h"
 // #include "trainerBankSettings.h"
 
 namespace UI {
@@ -19,7 +19,7 @@ namespace UI {
 
         Gtk::Notebook _treNotebook; // main container for anything tre related
 
-        // std::shared_ptr<trainerEditor>     _trainerEditor;
+        std::shared_ptr<trainerEditor> _trainerEditor;
         // std::shared_ptr<trainerBankSettings> _trainerSettings;
 
       public:
@@ -42,7 +42,7 @@ namespace UI {
         }
 
         inline void redraw( ) {
-            // if( _trainerEditor ) { _trainerEditor->redraw( ); }
+            if( _trainerEditor ) { _trainerEditor->redraw( ); }
             // if( _trainerBankSettings ) { _trainerBankSettings->redraw( ); }
         }
     };

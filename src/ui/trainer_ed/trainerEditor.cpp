@@ -14,6 +14,31 @@ namespace UI {
         // set up boxes
         _mainBox.set_margin( MARGIN );
 
+        Gtk::Box diffBox{ Gtk::Orientation::VERTICAL };
+        _mainBox.append( diffBox );
+        _diffSelector = std::make_shared<switchButton>(
+            std::vector<std::string>{ "_Easy", "_Normal", "_Hard" }, 1 );
+
+        if( _diffSelector ) {
+            diffBox.append( *_diffSelector );
+            _diffSelector->connect(
+                [ this ]( u8 p_newChoice ) { setDifficulty( difficulty( p_newChoice ) ); } );
+        }
+
+        auto diffEnL = Gtk::Label( "Separate Data for this Difficulty" );
+        _diffEnabledBox.set_halign( Gtk::Align::CENTER );
+        _diffEnabledBox.append( diffEnL );
+
+        _diffEnabled = std::make_shared<switchButton>( std::vector<std::string>{ "_No", "_Yes" } );
+
+        if( _diffEnabled ) {
+            _diffEnabledBox.append( *_diffEnabled );
+            _diffEnabled->connect(
+                [ this ]( u8 p_newChoice ) { enableDifficulty( p_newChoice ); } );
+        }
+
+        diffBox.append( _diffEnabledBox );
+
         Gtk::ScrolledWindow sb{ };
         sb.set_child( _contentMainBox );
         sb.set_expand( );
@@ -46,6 +71,8 @@ namespace UI {
         if( _actionBar ) { _mainBox.append( *_actionBar ); }
         setNewEditMode( TSEMODE_EDIT_BLOCKS );
         */
+
+        setDifficulty( DIFF_NORMAL );
     }
 
     void trainerEditor::redraw( ) {
@@ -54,5 +81,24 @@ namespace UI {
         // if( _trainerInfo ) { _trainerInfo->redraw( ); }
         // if( _trainerItems ) { _trainerItems->redraw( ); }
         // if( _trainerTeams ) { _trainerTeams->redraw( ); }
+    }
+
+    void trainerEditor::setDifficulty( difficulty p_newDifficulty ) {
+        if( p_newDifficulty != DIFF_NORMAL ) {
+            // show enable button
+            _diffEnabledBox.show( );
+
+        } else {
+            // hide enable button
+            _diffEnabledBox.hide( );
+        }
+
+        // TODO
+        _selectedDifficulty = p_newDifficulty;
+    }
+
+    void trainerEditor::enableDifficulty( bool p_enabled ) {
+        _contentMainBox.set_visible( p_enabled );
+        // TODO
     }
 } // namespace UI
