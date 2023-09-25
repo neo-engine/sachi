@@ -154,7 +154,77 @@ namespace UI {
                 return;
             }
             if( t_type == imageType::IT_SPRITE_ICON_64x64 ) {
-                auto btm = DATA::bitmap::fromSprite( p_path.c_str( ), 32, 32 );
+                auto btm = DATA::bitmap::fromSprite( p_path.c_str( ), 64, 64 );
+                if( p_ch && p_cw ) {
+                    btm.crop( p_cx, p_cy, p_cw, p_ch );
+                    _cropx = 64 - p_cw;
+                    _cropy = 64 - p_ch;
+                }
+                _data = btm.pixbuf( );
+                _image.set( _data );
+                return;
+            }
+        }
+
+        inline void load2( const std::string& p_path, u16 p_cx = 0, u16 p_cy = 0, u16 p_cw = 0,
+                          u16 p_ch = 0 ) {
+            if( t_type == imageType::IT_BG_IMAGE ) {
+                auto btm = DATA::bitmap::fromBGImage( p_path.c_str( ) );
+                if( p_ch && p_cw ) {
+                    btm.crop( p_cx, p_cy, p_cw, p_ch );
+                    _cropx = 256 - p_cw;
+                    _cropy = 192 - p_ch;
+                }
+                _data = btm.pixbuf( );
+                _image.set( _data );
+                return;
+            }
+            if( t_type == imageType::IT_SPRITE_PLATFORM ) {
+                auto btm = DATA::bitmap::fromPlatformSprite( p_path.c_str( ) );
+                if( p_ch && p_cw ) {
+                    btm.crop( p_cx, p_cy, p_cw, p_ch );
+                    _cropx = 128 - p_cw;
+                    _cropy = 64 - p_ch;
+                }
+                _data = btm.pixbuf( );
+                _image.set( _data );
+                return;
+            }
+            if( t_type == imageType::IT_SPRITE_PKMN ) {
+                auto btm = DATA::bitmap::fromPkmnSprite( p_path.c_str( ) );
+                if( p_ch && p_cw ) {
+                    btm.crop( p_cx, p_cy, p_cw, p_ch );
+                    _cropx = 96 - p_cw;
+                    _cropy = 96 - p_ch;
+                }
+                _data = btm.pixbuf( );
+                _image.set( _data );
+                return;
+            }
+            if( t_type == imageType::IT_SPRITE_ICON_16x16 ) {
+                auto btm = DATA::bitmap::fromSprite2( p_path.c_str( ), 16, 16 );
+                if( p_ch && p_cw ) {
+                    btm.crop( p_cx, p_cy, p_cw, p_ch );
+                    _cropx = 16 - p_cw;
+                    _cropy = 16 - p_ch;
+                }
+                _data = btm.pixbuf( );
+                _image.set( _data );
+                return;
+            }
+            if( t_type == imageType::IT_SPRITE_ICON_32x32 ) {
+                auto btm = DATA::bitmap::fromSprite2( p_path.c_str( ), 32, 32 );
+                if( p_ch && p_cw ) {
+                    btm.crop( p_cx, p_cy, p_cw, p_ch );
+                    _cropx = 32 - p_cw;
+                    _cropy = 32 - p_ch;
+                }
+                _data = btm.pixbuf( );
+                _image.set( _data );
+                return;
+            }
+            if( t_type == imageType::IT_SPRITE_ICON_64x64 ) {
+                auto btm = DATA::bitmap::fromSprite2( p_path.c_str( ), 64, 64 );
                 if( p_ch && p_cw ) {
                     btm.crop( p_cx, p_cy, p_cw, p_ch );
                     _cropx = 64 - p_cw;

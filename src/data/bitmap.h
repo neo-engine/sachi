@@ -157,5 +157,7 @@ namespace DATA {
         static bitmap fromPlatformSprite( const char* p_path );
 
         static bitmap fromSprite( const char* p_path, size_t p_width, size_t p_height );
+
+        static bitmap fromSprite2( const char* p_path, size_t p_width, size_t p_height );
     };
 } // namespace DATA

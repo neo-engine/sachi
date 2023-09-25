@@ -314,6 +314,37 @@ namespace DATA {
         return res;
     }
 
+    bitmap bitmap::fromSprite2( const char* p_path, size_t p_width, size_t p_height ) {
+        FILE* f;
+        if( p_path[ 0 ] == '@' ) {
+            // sprite bank, need to seek correct position first
+
+            u16  species = 0;
+            char buffer[ 100 ];
+            sscanf( p_path, "@%hu@%90s", &species, buffer );
+            f = fopen( buffer, "rb" );
+            if( f ) {
+                fseek( f, species * ( 16 * sizeof( u16 ) + p_width * p_height / 8 * sizeof( u32 ) ),
+                       SEEK_SET );
+            }
+        } else {
+            f = fopen( p_path, "rb" );
+        }
+
+        auto res = bitmap{ p_width, p_height };
+        if( !f ) {
+            std::memset( TEMP, 0, sizeof( TEMP ) );
+            std::memset( TEMP_PAL, 0, sizeof( TEMP_PAL ) );
+        } else {
+            DATA::read( f, TEMP, sizeof( unsigned ), p_width * p_height / 8 );
+            DATA::read( f, TEMP_PAL, sizeof( unsigned short ), 16 );
+            res.addFromSprite( TEMP, TEMP_PAL, p_width, p_height );
+            fclose( f );
+        }
+
+        return res;
+    }
+
     bitmap bitmap::fromPlatformSprite( const char* p_path ) {
         if( !readData<unsigned short, unsigned int>( p_path, 16, TEMP_PAL, 128 * 64 / 8, TEMP ) ) {
             std::memset( TEMP, 0, sizeof( TEMP ) );

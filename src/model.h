@@ -42,7 +42,7 @@ struct model {
 
             bool              m_loaded = false;
             DATA::mapBankInfo m_info{ };
-            status            m_status;
+            status            m_status = STATUS_UNTOUCHED;
 
             u8           m_mapImageRes    = 4;
             u8           m_mapImageShiftX = 4;
@@ -137,7 +137,7 @@ struct model {
         std::map<u16, mapBankContainer> m_mapBanks;
 
         u8                         m_tileSetMode = DATA::TILEMODE_DEFAULT;
-        status                     m_tileStatus, m_trainerStatus;
+        status                     m_tileStatus = STATUS_UNTOUCHED, m_trainerStatus = STATUS_UNTOUCHED;
         std::vector<Glib::ustring> m_mapBankStrList; // block set names
         std::map<u8, blockSetInfo> m_blockSets;
         std::set<u8>               m_blockSetNames;
@@ -202,8 +202,9 @@ struct model {
             return m_fsrootPath + "/PICS/SPRITES/item.icon.rawb";
         }
 
-        inline std::string trainerSpritePath( ) const {
-            return m_fsrootPath + "/PICS/SPRITES/TRAINER/";
+        inline std::string trainerSpritePath( u8 p_trainerIdx ) const {
+            return m_fsrootPath + "/PICS/SPRITES/TRAINER/"
+                   + std::to_string( p_trainerIdx / m_fsInfo.m_fileSplit ) + "/";
         }
 
         inline std::string trainerDataPath( u8 p_difficulty = 1 ) const {

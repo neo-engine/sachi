@@ -106,7 +106,7 @@ namespace UI::TRE {
                             _model.selectedTrainer( ).m_battleBG,
                             _model.selectedTrainer( ).m_battlePlat1,
                             _model.selectedTrainer( ).m_battlePlat2 );
-            _battleBG->setSprite( _model.m_fsdata.trainerSpritePath( ),
+            _battleBG->setSprite( _model.m_fsdata.trainerSpritePath( _model.selectedTrainer( ).m_trainerBG ),
                                   _model.selectedTrainer( ).m_trainerBG );
         }
     }

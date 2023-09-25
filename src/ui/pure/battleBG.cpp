@@ -114,7 +114,7 @@ namespace UI {
 
         if( _sIdx != p_sId ) {
             _spriteE.set_value( p_sId );
-            _spriteI.load( p_spritePath + std::to_string( p_sId ) + ".raw" );
+            _spriteI.load2( p_spritePath + std::to_string( p_sId ) + ".raw" );
             _sIdx = p_sId;
         }
 
