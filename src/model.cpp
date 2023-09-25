@@ -75,6 +75,9 @@ model model::readFromPath( const std::string& p_path ) {
     // load all tilesets and blocksets
     if( res.readTileSets( ) ) { return res; }
 
+    // load trainer data
+    if( res.readTrainers( ) ) { return res; }
+
     res.m_good = true;
     return res;
 }
@@ -571,6 +574,35 @@ void model::buildPalette( DATA::palette p_out[ DAYTIMES * 16 ], s8 p_ts1, s8 p_t
         std::memcpy( &p_out[ 16 * dt + 14 ], &m_fsdata.m_blockSets[ ts1 ].m_pals[ 8 * dt + 6 ],
                      sizeof( DATA::palette ) * 2 );
     }
+}
+
+bool model::readTrainers( ) {
+    bool error{ false };
+
+    m_fsdata.m_trainer.clear( );
+
+    for( int i = 8;; ++i ) {
+        fsdata::trainerDataInfo tinfo{ };
+        for( u8 diff = 0; diff < 3; ++diff ) {
+
+            FILE* f = DATA::openSplit( m_fsdata.trainerDataPath( diff ).c_str( ), i, ".trnr.data" );
+            if( !f ) {
+                tinfo.exists( diff ) = false;
+                continue;
+            }
+            tinfo.exists( diff ) = true;
+            fread( &tinfo.m_trainer[ diff ], sizeof( DATA::trainerData ), 1, f );
+            fclose( f );
+        }
+        if( tinfo.exists( ) ) {
+            m_fsdata.m_trainer.push_back( tinfo );
+        } else {
+            message_log( "load trainer data", std::to_string( i ) + " trainer" );
+            break;
+        }
+    }
+
+    return error;
 }
 
 u16 tintColor( u16 p_color, u16 p_tint, u8 p_tintFactor = 20 ) {

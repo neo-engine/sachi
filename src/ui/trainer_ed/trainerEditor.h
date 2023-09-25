@@ -12,9 +12,9 @@ namespace UI {
     class root;
 
     namespace TRE {
-        // class trainerInfo;
-        // class trainerItems;
-        // class trainerTeamEditor;
+        class trainerInfo;
+        class trainerItems;
+        class trainerTeam;
     }; // namespace TRE
 
     /*
@@ -44,9 +44,9 @@ namespace UI {
 
         std::shared_ptr<switchButton> _diffSelector;
 
-        // std::shared_ptr<TRE::trainerInfo>       _trainerInfo;
-        // std::shared_ptr<TRE::trainerItems>      _trainerItems;
-        // std::shared_ptr<TRE::trainerTeamEditor> _trainerTeams;
+        std::shared_ptr<TRE::trainerInfo>  _trainerInfo;
+        std::shared_ptr<TRE::trainerItems> _trainerItems;
+        std::shared_ptr<TRE::trainerTeam>  _trainerTeam;
 
       public:
         trainerEditor( model& p_model, root& p_root );

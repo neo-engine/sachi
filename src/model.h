@@ -113,6 +113,26 @@ struct model {
             u8                m_stringListItem = 0;
         };
 
+        struct trainerDataInfo {
+            DATA::trainerData m_trainer[ 3 ] = { };
+            bool              m_active[ 3 ]  = { };
+
+            inline bool exists( u8 p_difficulty = 1 ) const {
+                return m_active[ p_difficulty ];
+            }
+
+            inline bool& exists( u8 p_difficulty = 1 ) {
+                return m_active[ p_difficulty ];
+            }
+            inline const auto& data( u8 p_difficulty = 1 ) const {
+                return m_trainer[ p_difficulty ];
+            }
+
+            inline auto& data( u8 p_difficulty = 1 ) {
+                return m_trainer[ p_difficulty ];
+            }
+        };
+
         std::string                     m_fsrootPath;
         std::map<u16, mapBankContainer> m_mapBanks;
 
@@ -122,7 +142,7 @@ struct model {
         std::map<u8, blockSetInfo> m_blockSets;
         std::set<u8>               m_blockSetNames;
 
-        std::vector<DATA::battleTrainer> m_trainer;
+        std::vector<trainerDataInfo> m_trainer;
 
         DATA::fsdataInfo m_fsInfo;
 
@@ -180,6 +200,14 @@ struct model {
 
         inline std::string itemSpritePath( ) const {
             return m_fsrootPath + "/PICS/SPRITES/item.icon.rawb";
+        }
+
+        inline std::string trainerSpritePath( ) const {
+            return m_fsrootPath + "/PICS/SPRITES/TRAINER/";
+        }
+
+        inline std::string trainerDataPath( u8 p_difficulty = 1 ) const {
+            return m_fsrootPath + "/DATA/TRNR_DATA/" + std::to_string( p_difficulty ) + "/";
         }
 
         inline size_t trainerCount( ) const {
@@ -314,7 +342,8 @@ struct model {
         u16  m_tseTileSetWidth    = 16;
         bool m_tseTileOverlay     = true;
 
-        u16 m_treId = 0;
+        u16 m_treId  = 0;
+        u8  m_treDif = 1;
     };
 
     struct stringCache {
@@ -431,13 +460,28 @@ struct model {
     inline void selectBank( int p_newSelection ) {
         m_settings.m_selectedBank = p_newSelection;
     }
-
-    inline auto selectedTrainer( ) const {
+    inline auto selectedTrainerId( ) const {
         return m_settings.m_treId;
     }
 
     inline void selectTrainer( int p_newSelection ) {
         m_settings.m_treId = p_newSelection;
+    }
+
+    inline auto selectedTrainerDifficulty( ) const {
+        return m_settings.m_treDif;
+    }
+
+    inline void selectTrainerDifficulty( u8 p_newSelection ) {
+        m_settings.m_treDif = p_newSelection;
+    }
+
+    inline const auto& selectedTrainer( ) const {
+        return m_fsdata.m_trainer[ selectedTrainerId( ) ].data( selectedTrainerDifficulty( ) );
+    }
+
+    inline auto& selectedTrainer( ) {
+        return m_fsdata.m_trainer[ selectedTrainerId( ) ].data( selectedTrainerDifficulty( ) );
     }
 
     void recomputeDNS( u8 p_tsIdx, bool p_override = true );
@@ -478,6 +522,10 @@ struct model {
      * @brief: Writes all tile / block / palette sets to disk.
      */
     bool writeTileSets( );
+
+    bool readTrainers( );
+
+    bool writeTrainers( );
 
     /*
      * @brief: Reads blocks for tile set p_bsId from file p_path.
