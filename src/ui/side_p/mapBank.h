@@ -75,6 +75,7 @@ namespace UI {
                 _loadDiveMapButton.hide( );
             } else {
                 _entryBox.show( );
+                _loadMapButton.show( );
                 if( _model.existsBank( _bankName ) && _model.bank( _bankName ).getDiveStatus( ) ) {
                     _loadDiveMapButton.show( );
                 } else {

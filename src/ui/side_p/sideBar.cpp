@@ -136,12 +136,14 @@ namespace UI {
         }
         if( _addMapBank ) { _addMapBank->collapse( p_collapse ); }
         if( _editTileSet ) { _editTileSet->collapse( p_collapse ); }
+        if( _editTrainer ) { _editTrainer->collapse( p_collapse ); }
         if( p_collapse ) {
             auto icon = Gtk::Image( );
             icon.set_from_icon_name( "view-fullscreen-symbolic" );
             _collapseMapBanksButton->set_child( icon );
             _mapBankBarLabel.hide( );
             _sbTileSetBarLabel.hide( );
+            _sbTrainerBarLabel.hide( );
         } else {
             auto icon = Gtk::Image( );
             icon.set_from_icon_name( "view-restore-symbolic" );
@@ -155,6 +157,7 @@ namespace UI {
             _collapseMapBanksButton->set_child( hbox );
             _mapBankBarLabel.show( );
             _sbTileSetBarLabel.show( );
+            _sbTrainerBarLabel.show( );
         }
         _mapBankBarCollapsed = p_collapse;
     }
