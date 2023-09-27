@@ -114,8 +114,8 @@ struct model {
         };
 
         struct trainerDataInfo {
-            DATA::trainerData m_trainer[ 3 ] = { };
-            bool              m_active[ 3 ]  = { };
+            DATA::trainerData m_trainer[ 3 ] = { DATA::trainerData{ } };
+            bool              m_active[ 3 ]  = { false };
 
             inline bool exists( u8 p_difficulty = 1 ) const {
                 return m_active[ p_difficulty ];
@@ -136,8 +136,8 @@ struct model {
         std::string                     m_fsrootPath;
         std::map<u16, mapBankContainer> m_mapBanks;
 
-        u8                         m_tileSetMode = DATA::TILEMODE_DEFAULT;
-        status                     m_tileStatus = STATUS_UNTOUCHED, m_trainerStatus = STATUS_UNTOUCHED;
+        u8     m_tileSetMode = DATA::TILEMODE_DEFAULT;
+        status m_tileStatus = STATUS_UNTOUCHED, m_trainerStatus = STATUS_UNTOUCHED;
         std::vector<Glib::ustring> m_mapBankStrList; // block set names
         std::map<u8, blockSetInfo> m_blockSets;
         std::set<u8>               m_blockSetNames;
@@ -216,7 +216,7 @@ struct model {
         }
 
         inline void createTrainer( u16 p_trainerId ) {
-            if( p_trainerId > trainerCount( ) ) { m_trainer.resize( p_trainerId + 1 ); }
+            if( p_trainerId >= trainerCount( ) ) { m_trainer.resize( p_trainerId + 1 ); }
         }
 
         inline std::string owSpritePath( u16 p_spriteIdx, u8 p_forme = 0, bool p_shiny = false,
@@ -477,23 +477,28 @@ struct model {
         m_settings.m_treDif = p_newSelection;
     }
 
-
     inline const auto& selectedTrainerInfo( ) const {
-        return m_fsdata.m_trainer[ selectedTrainerId( ) ];
+        if( selectedTrainerId( ) < m_fsdata.m_trainer.size( ) ) {
+            return m_fsdata.m_trainer[ selectedTrainerId( ) ];
+        } else {
+            static const auto _default = fsdata::trainerDataInfo{ };
+            return _default;
+        }
     }
 
     inline auto& selectedTrainerInfo( ) {
+        if( selectedTrainerId( ) >= m_fsdata.m_trainer.size( ) ) {
+            m_fsdata.createTrainer( selectedTrainerId( ) );
+        }
         return m_fsdata.m_trainer[ selectedTrainerId( ) ];
     }
 
-
-
     inline const auto& selectedTrainer( ) const {
-        return m_fsdata.m_trainer[ selectedTrainerId( ) ].data( selectedTrainerDifficulty( ) );
+        return selectedTrainerInfo( ).data( selectedTrainerDifficulty( ) );
     }
 
     inline auto& selectedTrainer( ) {
-        return m_fsdata.m_trainer[ selectedTrainerId( ) ].data( selectedTrainerDifficulty( ) );
+        return selectedTrainerInfo( ).data( selectedTrainerDifficulty( ) );
     }
 
     void recomputeDNS( u8 p_tsIdx, bool p_override = true );
