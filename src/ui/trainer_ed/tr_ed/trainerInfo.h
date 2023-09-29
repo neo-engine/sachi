@@ -9,6 +9,7 @@
 #include "../../../model.h"
 #include "../../pure/battleBG.h"
 #include "../../pure/dropDown.h"
+#include "../../pure/switchButton.h"
 
 namespace UI {
     class root;
@@ -36,6 +37,8 @@ namespace UI::TRE {
         // - AI level (editable)
         std::shared_ptr<Gtk::Adjustment> _ai;
         Gtk::SpinButton                  _aiE;
+        // - Double battler?
+        std::shared_ptr<switchButton> _doubleBattle;
         // - msg1/2/3 (fixed based on tid)
         Gtk::Label _msg1;
         Gtk::Label _msg2;

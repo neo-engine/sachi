@@ -31,7 +31,8 @@ namespace UI::TRE {
 
         // trainer class / name
         auto tclassbox = Gtk::CenterBox( );
-        auto tclassl   = Gtk::Label( "Trainer Class" ); // TODO: replace with combo box
+        tclassbox.set_margin_top( MARGIN );
+        auto tclassl = Gtk::Label( "Trainer Class" ); // TODO: replace with combo box
         tclassbox.set_start_widget( tclassl );
         _tclassChooser = std::make_shared<stringCacheDropDown>( );
         if( _tclassChooser ) {
@@ -48,7 +49,8 @@ namespace UI::TRE {
 
         // money earned
         auto tmoneybox = Gtk::CenterBox( );
-        auto tmoneyl   = Gtk::Label( "Money Yield" );
+        tmoneybox.set_margin_top( MARGIN );
+        auto tmoneyl = Gtk::Label( "Money Yield" );
         tmoneybox.set_start_widget( tmoneyl );
         tmoneybox.set_end_widget( _moneyE );
         leftBox.append( tmoneybox );
@@ -63,7 +65,8 @@ namespace UI::TRE {
 
         // AI level
         auto taibox = Gtk::CenterBox( );
-        auto tail   = Gtk::Label( "AI Level" );
+        taibox.set_margin_top( MARGIN );
+        auto tail = Gtk::Label( "AI Level" );
         taibox.set_start_widget( tail );
         taibox.set_end_widget( _aiE );
         leftBox.append( taibox );
@@ -75,6 +78,24 @@ namespace UI::TRE {
             _rootWindow.redrawPanel( );
             redraw( );
         } );
+
+        // double battle
+        auto dbbox = Gtk::CenterBox( );
+        auto dbl   = Gtk::Label( "Is Double Battle?" );
+        dbbox.set_margin_top( MARGIN );
+        dbbox.set_start_widget( dbl );
+        leftBox.append( dbbox );
+        _doubleBattle = std::make_shared<switchButton>( std::vector<std::string>{ "_No", "_Yes" } );
+        if( _doubleBattle ) {
+            dbbox.set_end_widget( *_doubleBattle );
+            ( (Gtk::Widget&) ( *_doubleBattle ) ).set_margin( 0 );
+            _doubleBattle->connect( [ this ]( u8 p_newChoice ) {
+                _model.markTrainersChanged( );
+                _rootWindow.redrawPanel( );
+                _model.selectedTrainer( ).m_forceDoubleBattle = p_newChoice;
+                redraw( );
+            } );
+        }
 
         // messages
 
@@ -181,6 +202,10 @@ namespace UI::TRE {
             _battleBG->setSprite(
                 _model.m_fsdata.trainerSpritePath( _model.selectedTrainer( ).m_trainerBG ),
                 _model.selectedTrainer( ).m_trainerBG );
+        }
+
+        if( _doubleBattle ) {
+            _doubleBattle->choose( _model.selectedTrainer( ).m_forceDoubleBattle );
         }
 
         _lock = false;

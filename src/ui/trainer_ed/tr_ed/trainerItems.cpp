@@ -22,12 +22,6 @@ namespace UI::TRE {
         for( int i = 0; i < 5; ++i ) {
             _items[ i ] = std::make_shared<itemSelector>( _model, Gtk::Orientation::VERTICAL );
             if( _items[ i ] ) {
-                if( i ) {
-                    Gtk::Separator s{ };
-                    mainBox.append( s );
-                    s.set_margin_start( MARGIN );
-                    s.set_margin_end( MARGIN );
-                }
                 mainBox.append( *_items[ i ] );
                 _items[ i ]->connect( [ this, i ]( u16 p_item ) {
                     _model.selectedTrainer( ).m_items[ i ] = p_item;

@@ -24,7 +24,7 @@ namespace UI {
       public:
       protected:
         Gtk::Image                   _image;
-        u16                          _scale = 1;
+        double                       _scale = 1;
         std::shared_ptr<Gdk::Pixbuf> _data;
 
         u16 _cropx = 0, _cropy = 0;
@@ -42,7 +42,7 @@ namespace UI {
 
         virtual inline u16 getHeight( ) const = 0;
 
-        inline void setScale( u16 p_scale = 1 ) {
+        inline void setScale( double p_scale = 1 ) {
             if( p_scale ) { _scale = p_scale; }
         }
 
@@ -58,11 +58,11 @@ namespace UI {
             p_naturalBaseline = -1;
 
             if( p_orientation == Gtk::Orientation::HORIZONTAL ) {
-                p_minimum = getWidth( ) * _scale;
-                p_natural = getWidth( ) * _scale;
+                p_minimum = int( getWidth( ) * _scale );
+                p_natural = int( getWidth( ) * _scale );
             } else {
-                p_minimum = getHeight( ) * _scale;
-                p_natural = getHeight( ) * _scale;
+                p_minimum = int( getHeight( ) * _scale );
+                p_natural = int( getHeight( ) * _scale );
             }
         }
 
@@ -75,8 +75,8 @@ namespace UI {
             Gtk::Allocation allo;
             allo.set_x( 0 );
             allo.set_y( 0 );
-            auto width  = _scale * getWidth( );
-            auto height = _scale * getHeight( );
+            auto width  = int( _scale * getWidth( ) );
+            auto height = int( _scale * getHeight( ) );
             allo.set_width( width );
             allo.set_height( height );
             _image.size_allocate( allo, p_baseline );
@@ -167,7 +167,7 @@ namespace UI {
         }
 
         inline void load2( const std::string& p_path, u16 p_cx = 0, u16 p_cy = 0, u16 p_cw = 0,
-                          u16 p_ch = 0 ) {
+                           u16 p_ch = 0 ) {
             if( t_type == imageType::IT_BG_IMAGE ) {
                 auto btm = DATA::bitmap::fromBGImage( p_path.c_str( ) );
                 if( p_ch && p_cw ) {

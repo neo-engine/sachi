@@ -5,6 +5,8 @@
 #include <gtkmm/frame.h>
 
 #include "../../../model.h"
+#include "../../pure/pokeSwitchButton.h"
+#include "../../pure/trainerPoke.h"
 
 namespace UI {
     class root;
@@ -18,10 +20,15 @@ namespace UI::TRE {
         model& _model;
         root&  _rootWindow;
 
+        u8 _selectedTeamMember = 0;
+
         Gtk::Box _mainBox{ Gtk::Orientation::HORIZONTAL };
 
         // switchbox with 6 elements that displays sprites of pkmn/held items; clicking
+        std::shared_ptr<pokeSwitchButton> _teamPreview;
+
         // entry selects and make editable a single pkmn
+        std::shared_ptr<trainerPoke> _selectedPoke;
 
       public:
         trainerTeam( model& p_model, root& p_root );

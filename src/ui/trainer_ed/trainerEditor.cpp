@@ -57,11 +57,11 @@ namespace UI {
         _trainerInfo = std::make_shared<TRE::trainerInfo>( p_model, p_root );
         if( _trainerInfo ) { _contentMainBox.append( *_trainerInfo ); }
 
-        _trainerItems = std::make_shared<TRE::trainerItems>( p_model, p_root );
-        if( _trainerItems ) { _contentMainBox.append( *_trainerItems ); }
-
         _trainerTeam = std::make_shared<TRE::trainerTeam>( p_model, p_root );
         if( _trainerTeam ) { _contentMainBox.append( *_trainerTeam ); }
+
+        _trainerItems = std::make_shared<TRE::trainerItems>( p_model, p_root );
+        if( _trainerItems ) { _contentMainBox.append( *_trainerItems ); }
 
         setDifficulty( DIFF_NORMAL );
     }
