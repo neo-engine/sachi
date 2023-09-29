@@ -13,20 +13,23 @@
 
 enum status { STATUS_UNTOUCHED, STATUS_NEW, STATUS_EDITED_UNSAVED, STATUS_SAVED };
 
-constexpr u16 OTLENGTH            = 8;
-constexpr u16 SPECIES_NAMELENGTH  = 30;
-constexpr u16 PKMN_NAMELENGTH     = 15;
-constexpr u16 FORME_NAMELENGTH    = 30;
-constexpr u16 ITEM_NAMELENGTH     = 20;
-constexpr u16 ITEM_DSCRLENGTH     = 200;
-constexpr u16 MOVE_NAMELENGTH     = 20;
-constexpr u16 MOVE_DSCRLENGTH     = 200;
-constexpr u16 ABILITY_NAMELENGTH  = 20;
-constexpr u16 TCLASS_NAMELENGTH   = 30;
-constexpr u16 ABILITY_DSCRLENGTH  = 200;
-constexpr u16 LOCATION_NAMELENGTH = 25;
-constexpr u16 BGM_NAMELENGTH      = 25;
-constexpr u16 DEXENTRY_NAMELENGTH = 200;
+constexpr u16 OTLENGTH              = 8;
+constexpr u16 SPECIES_NAMELENGTH    = 30;
+constexpr u16 PKMN_NAMELENGTH       = 15;
+constexpr u16 FORME_NAMELENGTH      = 30;
+constexpr u16 ITEM_NAMELENGTH       = 20;
+constexpr u16 ITEM_DSCRLENGTH       = 200;
+constexpr u16 MOVE_NAMELENGTH       = 20;
+constexpr u16 MOVE_DSCRLENGTH       = 200;
+constexpr u16 ABILITY_NAMELENGTH    = 20;
+constexpr u16 TCLASS_NAMELENGTH     = 30;
+constexpr u16 ABILITY_DSCRLENGTH    = 200;
+constexpr u16 LOCATION_NAMELENGTH   = 25;
+constexpr u16 BGM_NAMELENGTH        = 25;
+constexpr u16 DEXENTRY_NAMELENGTH   = 200;
+constexpr u16 TRAINER_NAMELENGTH    = 16;
+constexpr u16 TRAINER_MESSAGELENGTH = 200;
+constexpr u16 TRAINER_CLASSLENGTH   = 30;
 
 constexpr u16 UISTRING_LEN    = 250;
 constexpr u16 MAPSTRING_LEN   = 800;
@@ -118,12 +121,10 @@ struct model {
             bool              m_active[ 3 ]  = { false };
 
             inline bool exists( u8 p_difficulty = 1 ) const {
+                if( p_difficulty == 1 ) { return true; }
                 return m_active[ p_difficulty ];
             }
 
-            inline bool& exists( u8 p_difficulty = 1 ) {
-                return m_active[ p_difficulty ];
-            }
             inline const auto& data( u8 p_difficulty = 1 ) const {
                 return m_trainer[ p_difficulty ];
             }
@@ -168,6 +169,18 @@ struct model {
 
         inline std::string uiStringPath( ) const {
             return m_fsrootPath + "/STRN/UIS/uis";
+        }
+
+        inline std::string trainerClassPath( ) const {
+            return m_fsrootPath + "/DATA/TRNR_NAME/trnrname";
+        }
+
+        inline std::string trainerNamePath( ) const {
+            return m_fsrootPath + "/STRN/TRN/name";
+        }
+
+        inline std::string trainerMessagePath( u8 p_message ) const {
+            return m_fsrootPath + "/STRN/TRN/msg" + std::to_string( p_message + 1 );
         }
 
         inline std::string mapLocationPath( ) const {
@@ -364,6 +377,9 @@ struct model {
     stringCache m_itemNameCache;
     stringCache m_moveNameCache;
     stringCache m_abilityNameCache;
+    stringCache m_trainerClassCache;
+    stringCache m_trainerNameCache;
+    stringCache m_trainerMessageCache[ 3 ];
 
     /*
      * @brief: sets the ow status of the current map and correspondingly adds/removes
@@ -373,12 +389,17 @@ struct model {
     bool setCurrentBankOWStatus( u8 p_owStatus );
 
     inline void invalidateCaches( ) {
-        m_needsRefresh              = true;
-        m_pkmnNameCache.m_valid     = false;
-        m_locationNameCache.m_valid = false;
-        m_itemNameCache.m_valid     = false;
-        m_moveNameCache.m_valid     = false;
-        m_abilityNameCache.m_valid  = false;
+        m_needsRefresh                     = true;
+        m_pkmnNameCache.m_valid            = false;
+        m_locationNameCache.m_valid        = false;
+        m_itemNameCache.m_valid            = false;
+        m_moveNameCache.m_valid            = false;
+        m_abilityNameCache.m_valid         = false;
+        m_trainerNameCache.m_valid         = false;
+        m_trainerMessageCache[ 0 ].m_valid = false;
+        m_trainerMessageCache[ 1 ].m_valid = false;
+        m_trainerMessageCache[ 2 ].m_valid = false;
+        m_trainerClassCache.m_valid        = false;
     }
 
     inline u16 maxItem( ) const {
@@ -401,6 +422,9 @@ struct model {
         itemNames( );
         moveNames( );
         abilityNames( );
+        trainerNames( );
+        for( u8 i = 0; i < 3; ++i ) { trainerMessage( i ); }
+        trainerClasses( );
 
         m_needsRefresh = false;
     }
@@ -426,6 +450,12 @@ struct model {
     const stringCache& moveNames( );
 
     const stringCache& abilityNames( );
+
+    const stringCache& trainerNames( );
+
+    const stringCache& trainerMessage( u8 p_messageId );
+
+    const stringCache& trainerClasses( );
 
     std::string getMapString( u16 p_stringId, u8 p_language = 0 );
 

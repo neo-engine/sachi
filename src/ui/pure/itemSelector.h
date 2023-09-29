@@ -41,7 +41,7 @@ namespace UI {
                       Gtk::Orientation p_orientation = Gtk::Orientation::HORIZONTAL );
 
         /*
-         * @brief: reload list of item names from fs and correspondinly update the widget
+         * @brief: reload list of item names from fs and correspondingly update the widget
          */
         inline void refreshModel( ) {
             if( _itemChooser ) { _itemChooser->refreshModel( _model.itemNames( ) ); }

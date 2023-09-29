@@ -101,6 +101,8 @@ namespace UI {
     }
 
     void trainerEditor::enableDifficulty( bool p_enabled ) {
-        _model.selectedTrainerInfo( ).exists( _model.selectedTrainerDifficulty( ) ) = p_enabled;
+        auto diff = _model.selectedTrainerDifficulty( );
+        if( diff == 1 ) { return; }
+        _model.selectedTrainerInfo( ).m_active[ diff ] = p_enabled;
     }
 } // namespace UI

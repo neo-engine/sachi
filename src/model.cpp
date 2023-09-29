@@ -587,14 +587,14 @@ bool model::readTrainers( ) {
 
             FILE* f = DATA::openSplit( m_fsdata.trainerDataPath( diff ).c_str( ), i, ".trnr.data" );
             if( !f ) {
-                tinfo.exists( diff ) = false;
+                tinfo.m_active[ diff ] = false;
                 continue;
             }
-            tinfo.exists( diff ) = true;
+            tinfo.m_active[ diff ] = true;
             fread( &tinfo.m_trainer[ diff ], sizeof( DATA::trainerData ), 1, f );
             fclose( f );
         }
-        if( tinfo.exists( ) ) {
+        if( tinfo.m_active[ 1 ] ) {
             m_fsdata.m_trainer.push_back( tinfo );
         } else {
             message_log( "load trainer data", std::to_string( i ) + " trainer" );
@@ -1123,6 +1123,85 @@ const model::stringCache& model::abilityNames( ) {
     m_abilityNameCache.m_valid = true;
     fclose( f );
     return m_abilityNameCache;
+}
+
+const model::stringCache& model::trainerNames( ) {
+    if( m_trainerNameCache.m_valid ) { return m_trainerNameCache; }
+
+    m_trainerNameCache.m_lastRefresh++;
+    m_trainerNameCache.m_strings.clear( );
+
+    auto  path = m_fsdata.trainerNamePath( ) + ".0.strb";
+    FILE* f    = fopen( path.c_str( ), "rb" );
+
+    if( !f ) {
+        m_trainerNameCache.m_valid = false;
+        return m_trainerNameCache;
+    }
+
+    char tmp[ TRAINER_NAMELENGTH + 10 ];
+    for( u16 i{ 0 };; ++i ) {
+        memset( tmp, 0, sizeof( tmp ) );
+        if( !fread( tmp, TRAINER_NAMELENGTH, 1, f ) ) { break; }
+        m_trainerNameCache.m_strings.push_back( parseMapString( std::string{ tmp } ) );
+    }
+
+    m_trainerNameCache.m_valid = true;
+    fclose( f );
+    return m_trainerNameCache;
+}
+
+const model::stringCache& model::trainerMessage( u8 p_message ) {
+    if( m_trainerMessageCache[ p_message ].m_valid ) { return m_trainerMessageCache[ p_message ]; }
+
+    m_trainerMessageCache[ p_message ].m_lastRefresh++;
+    m_trainerMessageCache[ p_message ].m_strings.clear( );
+
+    auto  path = m_fsdata.trainerMessagePath( p_message ) + ".0.strb";
+    FILE* f    = fopen( path.c_str( ), "rb" );
+
+    if( !f ) {
+        m_trainerMessageCache[ p_message ].m_valid = false;
+        return m_trainerMessageCache[ p_message ];
+    }
+
+    char tmp[ TRAINER_MESSAGELENGTH + 10 ];
+    for( u16 i{ 0 };; ++i ) {
+        memset( tmp, 0, sizeof( tmp ) );
+        if( !fread( tmp, TRAINER_MESSAGELENGTH, 1, f ) ) { break; }
+        m_trainerMessageCache[ p_message ].m_strings.push_back(
+            parseMapString( std::string{ tmp } ) );
+    }
+
+    m_trainerMessageCache[ p_message ].m_valid = true;
+    fclose( f );
+    return m_trainerMessageCache[ p_message ];
+}
+
+const model::stringCache& model::trainerClasses( ) {
+    if( m_trainerClassCache.m_valid ) { return m_trainerClassCache; }
+
+    m_trainerClassCache.m_lastRefresh++;
+    m_trainerClassCache.m_strings.clear( );
+
+    auto  path = m_fsdata.trainerClassPath( ) + ".0.strb";
+    FILE* f    = fopen( path.c_str( ), "rb" );
+
+    if( !f ) {
+        m_trainerClassCache.m_valid = false;
+        return m_trainerClassCache;
+    }
+
+    char tmp[ TRAINER_CLASSLENGTH + 10 ];
+    for( u16 i{ 0 };; ++i ) {
+        memset( tmp, 0, sizeof( tmp ) );
+        if( !fread( tmp, TRAINER_CLASSLENGTH, 1, f ) ) { break; }
+        m_trainerClassCache.m_strings.push_back( parseMapString( std::string{ tmp } ) );
+    }
+
+    m_trainerClassCache.m_valid = true;
+    fclose( f );
+    return m_trainerClassCache;
 }
 
 void model::recomputeBankPic( ) {
