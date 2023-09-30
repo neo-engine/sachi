@@ -7,7 +7,7 @@ MAPSTRING_LEN		?= 800
 PKMNPHRS_LEN		?= 150
 BADGENAME_LEN		?=  50
 
-VERSION				?= \"0.30\"
+VERSION				?= \"0.40\"
 
 
 SRCDIR := src

@@ -616,9 +616,19 @@ bool model::writeTrainers( ) {
     }
 
     for( u16 i = 0; i < m_fsdata.m_trainer.size( ); ++i ) {
-        const auto& tinfo = m_fsdata.m_trainer[ i ];
+        auto& tinfo = m_fsdata.m_trainer[ i ];
         for( u8 diff = 0; diff < 3; ++diff ) {
-            if( !tinfo.m_active[ diff ] ) { continue; }
+            if( diff != 1 && !tinfo.m_active[ diff ] ) { continue; }
+
+            tinfo.m_trainer[ diff ].m_numPokemon = 0;
+            for( ; tinfo.m_trainer[ diff ].m_numPokemon < 6;
+                 ++tinfo.m_trainer[ diff ].m_numPokemon ) {
+                if( !tinfo.m_trainer[ diff ]
+                         .m_pokemon[ tinfo.m_trainer[ diff ].m_numPokemon ]
+                         .m_speciesId ) {
+                    break;
+                }
+            }
 
             FILE* f = DATA::openSplit( m_fsdata.trainerDataPath( diff ).c_str( ), i, ".trnr.data",
                                        99 * m_fsdata.m_fsInfo.m_fileSplit, "wb" );
