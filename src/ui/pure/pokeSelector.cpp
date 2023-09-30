@@ -31,8 +31,9 @@ namespace UI {
             ( (Gtk::Widget&) *_pkmnChooser ).set_hexpand( );
             textBox.append( *_pkmnChooser );
         }
-        _gender = std::make_shared<switchButton>( std::vector<std::string>{ "(m)", "(f)", "(n)" } );
-        if( _gender ) {
+        _gender = std::make_shared<switchButton>( std::vector<std::string>{ "(m)", "(f)", "(n)" },
+                                                  0, true );
+        if( _gender && _enhanced ) {
             ( (Gtk::Widget&) *_gender ).set_margin( 0 );
             textBox.append( *_gender );
         }

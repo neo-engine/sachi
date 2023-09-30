@@ -584,7 +584,6 @@ bool model::readTrainers( ) {
     for( int i = 0;; ++i ) {
         fsdata::trainerDataInfo tinfo{ };
         for( u8 diff = 0; diff < 3; ++diff ) {
-
             FILE* f = DATA::openSplit( m_fsdata.trainerDataPath( diff ).c_str( ), i, ".trnr.data" );
             if( !f ) {
                 tinfo.m_active[ diff ] = false;
@@ -602,6 +601,37 @@ bool model::readTrainers( ) {
         }
     }
 
+    return error;
+}
+
+bool model::writeTrainers( ) {
+    bool error{ false };
+
+    // remove old files
+    for( u8 diff = 0; diff < 3; ++diff ) {
+        std::error_code ec;
+        auto            p = fs::path( m_fsdata.trainerDataPath( diff ) );
+        fs::remove_all( p, ec );
+        fs::create_directories( p, ec );
+    }
+
+    for( u16 i = 0; i < m_fsdata.m_trainer.size( ); ++i ) {
+        const auto& tinfo = m_fsdata.m_trainer[ i ];
+        for( u8 diff = 0; diff < 3; ++diff ) {
+            if( !tinfo.m_active[ diff ] ) { continue; }
+
+            FILE* f = DATA::openSplit( m_fsdata.trainerDataPath( diff ).c_str( ), i, ".trnr.data",
+                                       99 * m_fsdata.m_fsInfo.m_fileSplit, "wb" );
+            if( !f ) {
+                error = true;
+                continue;
+            }
+            fwrite( &tinfo.m_trainer[ diff ], sizeof( DATA::trainerData ), 1, f );
+            fclose( f );
+        }
+    }
+
+    if( !error ) { markTrainersChanged( STATUS_SAVED ); }
     return error;
 }
 
@@ -937,6 +967,7 @@ bool model::writeFsRoot( ) {
     }
 
     if( tileStatus( ) == STATUS_EDITED_UNSAVED ) { error |= writeTileSets( ); }
+    if( trainerStatus( ) == STATUS_EDITED_UNSAVED ) { error |= writeTrainers( ); }
     error |= writeFsInfo( );
     return error;
 }

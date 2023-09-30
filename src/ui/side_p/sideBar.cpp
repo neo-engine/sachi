@@ -186,6 +186,15 @@ namespace UI {
                 _editTileSet->unselect( );
             }
         }
+        if( _editTrainer ) {
+            _editTrainer->redraw( );
+            _editTrainer->setSelectedMap( _model.selectedTrainerId( ), 0 );
+            if( _context == CONTEXT_TRAINER_EDITOR ) {
+                _editTrainer->select( );
+            } else {
+                _editTrainer->unselect( );
+            }
+        }
     }
 
     void sideBar::reinit( ) {

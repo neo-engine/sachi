@@ -39,7 +39,15 @@ namespace UI {
         // ability + moves
         std::shared_ptr<numberedStringCacheDropDown>              _ability;
         std::vector<std::shared_ptr<numberedStringCacheDropDown>> _moves;
+
+        std::vector<std::shared_ptr<Gtk::Adjustment>> _iv;
+        std::vector<Gtk::SpinButton>                  _ivE;
+
+        std::vector<std::shared_ptr<Gtk::Adjustment>> _ev;
+        std::vector<Gtk::SpinButton>                  _evE;
         // iv/ev/nature
+        std::shared_ptr<dropDown>                  _natureDropDown;
+        std::vector<std::shared_ptr<switchButton>> _natureToggles;
 
       public:
         trainerPoke( model& p_model );

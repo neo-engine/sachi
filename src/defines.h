@@ -77,6 +77,8 @@ const std::string EXTRA_CSS
       ".encounter-sweet-scent { color: black; background-color: #f2bdf1; }\n"
       ".encounter-radar { color: black; background-color: #e5fcc5; }\n"
       ".encounter-swarm { color: black; background-color: #f0cdc5; }\n"
+      ".compress { padding-left: 4px; padding-right: 4px; }\n"
+      ".no-padding { padding: 0px; }\n"
       "";
 
 enum context : u8 {

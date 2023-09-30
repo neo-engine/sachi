@@ -81,7 +81,7 @@ namespace UI::TRE {
 
         // double battle
         auto dbbox = Gtk::CenterBox( );
-        auto dbl   = Gtk::Label( "Is Double Battle?" );
+        auto dbl   = Gtk::Label( "Force Double Battle?" );
         dbbox.set_margin_top( MARGIN );
         dbbox.set_start_widget( dbl );
         leftBox.append( dbbox );

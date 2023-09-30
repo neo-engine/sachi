@@ -1,12 +1,16 @@
 #include "switchButton.h"
 
 namespace UI {
-    switchButton::switchButton( const std::vector<std::string>& p_choices, u8 p_defaultChoice ) {
+    switchButton::switchButton( const std::vector<std::string>& p_choices, u8 p_defaultChoice,
+                                bool p_compress ) {
         _currentSelection = p_defaultChoice;
-        _buttonBox.set_margin( MARGIN );
-
+        if( !p_compress ) { _buttonBox.set_margin( MARGIN ); }
         for( const auto& i : p_choices ) {
             _toggles.push_back( std::make_shared<Gtk::ToggleButton>( i, true ) );
+            if( p_compress ) {
+                _toggles.back( )->get_style_context( )->remove_class( "text-button" );
+                _toggles.back( )->get_style_context( )->add_class( "compress" );
+            }
         }
 
         _buttonBox.get_style_context( )->add_class( "linked" );

@@ -21,7 +21,8 @@ namespace UI {
         std::vector<std::shared_ptr<Gtk::ToggleButton>> _toggles;
 
       public:
-        switchButton( const std::vector<std::string>& p_choices, u8 p_defaultChoice = 0 );
+        switchButton( const std::vector<std::string>& p_choices, u8 p_defaultChoice = 0,
+                      bool p_compress = false );
 
         void connect( const std::function<void( u8 )>& p_choiceChangedCallback );
 

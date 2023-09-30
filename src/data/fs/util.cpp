@@ -85,6 +85,9 @@ namespace DATA {
                       p_ext );
         }
 
+        fs::path path{ TMP_BUFFER };
+        fs::create_directories( path.parent_path( ) );
+
         return fopen( TMP_BUFFER, p_mode );
     }
 
@@ -327,24 +330,25 @@ namespace DATA {
 
     u8 getMedicineEffect( char* p_str ) {
         if( !strcmp( p_str, "heal hp" ) )
-            return 1; // arg0: amount (0 for percentage); arg1: percentage healed; arg3: 1 if works
-                      // on fainted pkmn
+            return 1; // arg0: amount (0 for percentage); arg1: percentage healed; arg3: 1 if
+                      // works on fainted pkmn
         if( !strcmp( p_str, "heal hp and status" ) )
-            return 2; // heals all status and heals hp extra arg0: amount (0 for percentage); arg1:
-                      // percentage healed; arg2: 1 if works on fainted pkmn
+            return 2; // heals all status and heals hp extra arg0: amount (0 for percentage);
+                      // arg1: percentage healed; arg2: 1 if works on fainted pkmn
         if( !strcmp( p_str, "heal hp bitter" ) )
-            return 3; // heals hp but is bitter, arg0: amount (0 for percentage); arg1: percentage
-                      // healed; arg3: 1 if works on fainted pkmn
+            return 3; // heals hp but is bitter, arg0: amount (0 for percentage); arg1:
+                      // percentage healed; arg3: 1 if works on fainted pkmn
         if( !strcmp( p_str, "heal status" ) )
             return 4; // arg0 (from 0): all, poison, burn, ice, sleep, paralyze,
         if( !strcmp( p_str, "heal status bitter" ) )
             return 5; // arg0 (from 0): all, poison, burn, ice, sleep, paralyze,
         if( !strcmp( p_str, "heal pp" ) )
-            return 6; // arg0: amount (0 for percentage); arg1: percentage healed; arg3: number of
-                      // moves
+            return 6; // arg0: amount (0 for percentage); arg1: percentage healed; arg3: number
+                      // of moves
         if( !strcmp( p_str, "sacred ash" ) ) return 7;
         if( !strcmp( p_str, "ev up" ) )
-            return 8; // arg0: stat (0: hp; atk, def, satk, sdef, spd); arg1: amount, arg2: limit
+            return 8; // arg0: stat (0: hp; atk, def, satk, sdef, spd); arg1: amount, arg2:
+                      // limit
         if( !strcmp( p_str, "level up" ) ) return 9; // arg0: amount, arg1: limit
         if( !strcmp( p_str, "pp up" ) )
             return 10; // arg0: amount; arg1: limit; arg2: numer of moves
@@ -352,8 +356,8 @@ namespace DATA {
             return 11; // arg0: stat (0: hp; atk, def, satk, sdef, spd)
         if( !strcmp( p_str, "ability capsule" ) ) return 12;
         if( !strcmp( p_str, "iv up" ) )
-            return 13; // arg0: stat (0: hp; atk, def, satk, sdef, spd); arg1: amount, arg2: target
-                       // value
+            return 13; // arg0: stat (0: hp; atk, def, satk, sdef, spd); arg1: amount, arg2:
+                       // target value
         if( !strcmp( p_str, "exp up" ) ) return 14;      // arg0: amount
         if( !strcmp( p_str, "nature mint" ) ) return 15; // arg0: new nature
 
