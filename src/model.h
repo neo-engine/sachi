@@ -281,7 +281,9 @@ struct model {
                                           std::string p_type  = "frnt" ) const {
             auto res = m_fsrootPath + "/PICS/SPRITES/" + p_type + "/";
             res += std::to_string( p_speciesId / m_fsInfo.m_fileSplit ) + "/";
-            res += std::to_string( p_speciesId ) + "_" + std::to_string( p_forme );
+            if( p_forme ) {
+                res += std::to_string( p_speciesId ) + "_" + std::to_string( p_forme );
+            }
 
             if( p_female ) { res += "f"; }
             if( p_shiny ) { res += "s"; }
@@ -312,6 +314,7 @@ struct model {
         inline std::string moveNamePath( ) const {
             return m_fsrootPath + "/DATA/MOVE_NAME/movename";
         }
+
         inline std::string abilityNamePath( ) const {
             return m_fsrootPath + "/DATA/ABTY_NAME/abtyname";
         }

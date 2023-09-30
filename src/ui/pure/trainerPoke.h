@@ -4,16 +4,16 @@
 
 #include <gtkmm/adjustment.h>
 #include <gtkmm/box.h>
-#include <gtkmm/button.h>
-#include <gtkmm/centerbox.h>
-#include <gtkmm/frame.h>
-#include <gtkmm/label.h>
 #include <gtkmm/spinbutton.h>
 
 #include "../../data/fs.h"
 #include "../../defines.h"
 #include "../../model.h"
+#include "dropDown.h"
 #include "fsImage.h"
+#include "itemSelector.h"
+#include "pokeSelector.h"
+#include "switchButton.h"
 
 namespace UI {
     /*
@@ -28,14 +28,18 @@ namespace UI {
         DATA::trainerPokemon _data;
 
         Gtk::Box                         _mainBox;
-        Gtk::Label                       _nameLabel;
         std::shared_ptr<Gtk::Adjustment> _level;
         Gtk::SpinButton                  _levelE;
 
         // poke selector + forme + gender + shiny
+        std::shared_ptr<pokeSelector> _pkmn;
+        std::shared_ptr<switchButton> _shiny;
         // held item
+        std::shared_ptr<itemSelector> _item;
         // ability + moves
-        // iv/ev/nature/level
+        std::shared_ptr<numberedStringCacheDropDown>              _ability;
+        std::vector<std::shared_ptr<numberedStringCacheDropDown>> _moves;
+        // iv/ev/nature
 
       public:
         trainerPoke( model& p_model );

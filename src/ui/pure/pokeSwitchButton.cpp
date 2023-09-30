@@ -29,13 +29,15 @@ namespace UI {
     void pokeSwitchButton::updateChoices( const std::vector<pkmnDscr>& p_choices ) {
         for( u64 i = 0; i < p_choices.size( ); ++i ) {
             if( _pkmnImages[ i ] ) {
-                if( !p_choices[ i ].second ) {
-                    _pkmnImages[ i ]->load( std::string( "@" )
-                                            + std::to_string( p_choices[ i ].first ) + "@"
-                                            + _model.m_fsdata.pkmnSpritePath( ) );
+                if( !( p_choices[ i ].second & 31 ) ) {
+                    _pkmnImages[ i ]->load(
+                        std::string( "@" ) + std::to_string( p_choices[ i ].first ) + "@"
+                        + _model.m_fsdata.pkmnSpritePath( ( p_choices[ i ].second >> 6 ) & 1,
+                                                          ( p_choices[ i ].second >> 5 ) & 1 ) );
                 } else {
                     _pkmnImages[ i ]->load( _model.m_fsdata.pkmnFormePath(
-                        p_choices[ i ].first, p_choices[ i ].second ) );
+                        p_choices[ i ].first, p_choices[ i ].second & 31,
+                        ( p_choices[ i ].second >> 6 ) & 1, ( p_choices[ i ].second >> 5 ) & 1 ) );
                 }
             }
         }

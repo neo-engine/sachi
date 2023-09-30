@@ -25,7 +25,7 @@ namespace UI::TRE {
         if( _teamPreview ) {
             mainBox.append( *_teamPreview );
             _teamPreview->connect( [ this ]( u8 p_newSelection ) {
-                _selectedTeamMember = _selectedTeamMember;
+                _selectedTeamMember = p_newSelection;
                 redraw( );
             } );
         }
@@ -48,7 +48,8 @@ namespace UI::TRE {
         if( _teamPreview ) {
             std::vector<std::pair<u16, u8>> team;
             for( u8 i = 0; i < 6; ++i ) {
-                team.push_back( { pkmn[ i ].m_speciesId, pkmn[ i ].m_forme & 31 } );
+                team.push_back( { pkmn[ i ].m_speciesId,
+                                  pkmn[ i ].m_forme | ( ( !!pkmn[ i ].m_shiny ) << 5 ) } );
             }
             _teamPreview->updateChoices( team );
         }

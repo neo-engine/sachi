@@ -14,6 +14,7 @@
 #include "dropDown.h"
 #include "fsImage.h"
 #include "multiButton.h"
+#include "switchButton.h"
 
 namespace UI {
     /*
@@ -31,6 +32,8 @@ namespace UI {
         bool _lock        = false;
         bool _disableIdx  = false;
         bool _disableFIdx = false;
+        bool _enhanced    = false;
+        bool _shiny       = false;
 
         u8 _maxFormes;
 
@@ -41,8 +44,10 @@ namespace UI {
 
         std::shared_ptr<fsImage<imageType::IT_SPRITE_PKMN>> _pkmnImage;
 
+        std::shared_ptr<switchButton> _gender;
+
       public:
-        pokeSelector( model& p_model );
+        pokeSelector( model& p_model, bool p_enhanced = false );
 
         /*
          * @brief: reload list of pkmn names from fs and correspondinly update the widget
@@ -54,8 +59,18 @@ namespace UI {
 
         void setData( pkmnDscr p_data );
 
+        inline void setShiny( bool p_value ) {
+            _shiny = p_value;
+            setData( getData( ) );
+        }
+
         virtual inline pkmnDscr getData( ) const {
-            return { u16( _pkmnIdx.get_value( ) ), u8( _pkmnForme.get_value( ) ) };
+            if( !_enhanced ) {
+                return { u16( _pkmnIdx.get_value( ) ), u8( u8( _pkmnForme.get_value( ) ) ) };
+            } else {
+                return { u16( _pkmnIdx.get_value( ) ),
+                         u8( u8( _pkmnForme.get_value( ) ) | ( _gender->currentChoice( ) << 6 ) ) };
+            }
         }
 
         virtual inline void connect( const std::function<void( pkmnDscr )>& p_callback ) {
@@ -79,6 +94,14 @@ namespace UI {
             if( _pkmnChooser ) {
                 _pkmnChooser->connect( [ this, p_callback ]( u64 p_newChoice ) {
                     setData( { p_newChoice, 0 } );
+                    p_callback( getData( ) );
+                } );
+            }
+            if( _gender ) {
+                _gender->connect( [ this, p_callback ]( u8 p_newChoice ) {
+                    auto [ i, f ] = getData( );
+                    f             = ( f & 31 ) | ( ( p_newChoice & 3 ) << 6 );
+                    setData( { i, f } );
                     p_callback( getData( ) );
                 } );
             }
