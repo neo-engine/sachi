@@ -104,5 +104,11 @@ namespace UI {
         auto diff = _model.selectedTrainerDifficulty( );
         if( diff == 1 ) { return; }
         _model.selectedTrainerInfo( ).m_active[ diff ] = p_enabled;
+
+        // check if data is blank and copy over normal difficulty data
+        if( p_enabled && !_model.selectedTrainer( ).m_pokemon[ 0 ].m_speciesId ) {
+            _model.selectedTrainerInfo( ).m_trainer[ diff ]
+                = _model.selectedTrainerInfo( ).m_trainer[ 1 ];
+        }
     }
 } // namespace UI
