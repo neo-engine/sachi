@@ -515,7 +515,8 @@ namespace DATA {
         u8 m_surfBattlePlat1;
         u8 m_surfBattlePlat2;
 
-        u32 : 32;
+        u32 m_hideOnOWMap : 1;
+        u32 : 31;
 
         u16 m_locationIds[ 4 ][ 4 ]; // (y, x), 8x8 blocks each
 
@@ -617,8 +618,8 @@ namespace DATA {
 
         constexpr mapBankInfo( u8 p_sizeX = 0, u8 p_sizeY = 0, u8 p_mapMode = MAPMODE_DEFAULT,
                                bool p_isOWMap = false )
-            : m_sizeX{ p_sizeX }, m_sizeY{ p_sizeY }, m_mapMode{ p_mapMode }, m_isOWMap{
-                                                                                  p_isOWMap } {
+            : m_sizeX{ p_sizeX }, m_sizeY{ p_sizeY }, m_mapMode{ p_mapMode },
+              m_isOWMap{ p_isOWMap } {
         }
     };
 

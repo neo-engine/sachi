@@ -72,6 +72,33 @@ namespace UI::MED {
         s1.set_margin_end( MARGIN );
         sboxv1.append( s1 );
 
+        auto shbox1b = Gtk::CenterBox{ };
+        shbox1b.set_hexpand( true );
+        auto shbox1bl = Gtk::Label{ "Hide Location on OW Map" };
+        shbox1b.set_start_widget( shbox1bl );
+        shbox1b.set_margin( MARGIN );
+
+        _showOnOWMap
+            = std::make_shared<switchButton>( std::vector<std::string>{ "_No", "_Yes" }, 0 );
+
+        if( _showOnOWMap ) {
+            shbox1b.set_end_widget( *_showOnOWMap );
+            ( (Gtk::Widget&) *_showOnOWMap ).set_margin( 0 );
+            _showOnOWMap->connect( [ this ]( u32 p_newChoice ) {
+                if( _model.selectedBank( ) == -1 ) { return; }
+                _model.mapData( ).m_hideOnOWMap = p_newChoice;
+                _model.markSelectedBankChanged( );
+                _rootWindow.redrawPanel( );
+                redraw( );
+            } );
+        }
+
+        sboxv1.append( shbox1b );
+        Gtk::Separator s1b{ };
+        s1b.set_margin_end( MARGIN );
+        sboxv1.append( s1b );
+        sboxv1.append( s1b );
+
         auto shbox2 = Gtk::CenterBox{ };
         shbox2.set_hexpand( true );
         auto shbox2l = Gtk::Label{ "Map Weather" };
@@ -167,6 +194,7 @@ namespace UI::MED {
         if( !v ) { v = 1; }
         if( _mapMode ) { _mapMode->choose( v ); }
         if( _mapWeather ) { _mapWeather->choose( _model.mapData( ).m_weather ); }
+        if( _showOnOWMap ) { _showOnOWMap->choose( _model.mapData( ).m_hideOnOWMap ); }
 
         if( _battleBG ) {
             _battleBG->set( _model.m_fsdata.battleBGPath( ), _model.m_fsdata.battlePlatPath( ),

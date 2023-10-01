@@ -8,6 +8,7 @@
 #include "../../pure/battleBG.h"
 #include "../../pure/dropDown.h"
 #include "../../pure/multiButton.h"
+#include "../../pure/switchButton.h"
 
 namespace UI {
     class root;
@@ -23,8 +24,9 @@ namespace UI::MED {
 
         Gtk::Box _mainBox{ Gtk::Orientation::VERTICAL };
 
-        std::shared_ptr<multiButton> _mapMode;
-        std::shared_ptr<dropDown>    _mapWeather;
+        std::shared_ptr<multiButton>  _mapMode;
+        std::shared_ptr<dropDown>     _mapWeather;
+        std::shared_ptr<switchButton> _showOnOWMap;
 
         std::shared_ptr<battleBG> _battleBG, _surfBG;
 

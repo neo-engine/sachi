@@ -1343,18 +1343,21 @@ void model::recomputeBankLocationOverlay( ) {
 #define locs( y, x )                                     \
     bnk.m_bank.m_mapData[ ( y ) / divs ][ ( x ) / divs ] \
         .m_locationIds[ ( y ) % divs ][ ( x ) % divs ]
+#define hide( y, x ) bnk.m_bank.m_mapData[ ( y ) / divs ][ ( x ) / divs ].m_hideOnOWMap
 
     for( u16 y = 0; y < divs * bnk.getSizeY( ); ++y ) {
         for( u16 x = 0; x < divs * bnk.getSizeX( ); ++x ) {
-            if( !locs( y, x ) ) { continue; }
+            if( !locs( y, x ) || hide( y, x ) ) { continue; }
             u8 border = 0;
 
-            if( !y || locs( y, x ) != locs( y - 1, x ) ) { border |= 1; }
-            if( !x || locs( y, x ) != locs( y, x - 1 ) ) { border |= 2; }
-            if( y + 1 >= divs * bnk.getSizeY( ) || locs( y, x ) != locs( y + 1, x ) ) {
+            if( !y || locs( y, x ) != locs( y - 1, x ) || hide( y - 1, x ) ) { border |= 1; }
+            if( !x || locs( y, x ) != locs( y, x - 1 ) || hide( y, x - 1 ) ) { border |= 2; }
+            if( y + 1 >= divs * bnk.getSizeY( ) || locs( y, x ) != locs( y + 1, x )
+                || hide( y + 1, x ) ) {
                 border |= 4;
             }
-            if( x + 1 >= divs * bnk.getSizeX( ) || locs( y, x ) != locs( y, x + 1 ) ) {
+            if( x + 1 >= divs * bnk.getSizeX( ) || locs( y, x ) != locs( y, x + 1 )
+                || hide( y, x + 1 ) ) {
                 border |= 8;
             }
 
@@ -1378,6 +1381,7 @@ void model::recomputeBankLocationOverlay( ) {
         }
     }
 #undef locs
+#undef hide
 
     for( u8 y{ 0 }; y < 192; ++y ) {
         for( u16 x{ 0 }; x < 256; ++x ) { bnk.m_owMap( x, y ).round( 32 ); }
