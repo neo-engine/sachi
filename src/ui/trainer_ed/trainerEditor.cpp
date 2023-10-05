@@ -111,4 +111,24 @@ namespace UI {
                 = _model.selectedTrainerInfo( ).m_trainer[ 1 ];
         }
     }
+
+    void trainerEditor::copyAction( ) {
+        if( _trainerTeam ) { _trainerTeam->copyAction( ); }
+    }
+
+    void trainerEditor::pasteAction( ) {
+        if( _trainerTeam ) { _trainerTeam->pasteAction( ); }
+    }
+
+    void trainerEditor::deleteAction( ) {
+        if( _trainerTeam ) { _trainerTeam->deleteAction( ); }
+    }
+
+    void trainerEditor::selectnewAction( ) {
+        if( _trainerTeam ) { _trainerTeam->selectnewAction( ); }
+    }
+
+    void trainerEditor::performAction( u8 p_actionId ) {
+        if( _trainerTeam ) { _trainerTeam->performAction( p_actionId ); }
+    }
 } // namespace UI

@@ -37,6 +37,11 @@ constexpr u16 BADGENAME_LEN   = 50;
 constexpr u16 ACHIEVEMENT_LEN = 100;
 constexpr u16 PKMNPHRS_LEN    = 150;
 
+constexpr u16 LEARN_TM      = 200;
+constexpr u16 LEARN_TUTOR   = 201;
+constexpr u16 LEARN_EGG     = 202;
+constexpr u16 LEARNSET_SIZE = 2 * 400;
+
 struct model {
     struct fsdata {
         struct mapBankContainer {
@@ -147,12 +152,38 @@ struct model {
 
         DATA::fsdataInfo m_fsInfo;
 
+        DATA::pkmnData getPkmnData( const u16 p_pkmnId, const u8 p_forme = 0 );
+        bool           getPkmnData( const u16 p_pkmnId, DATA::pkmnData* p_out );
+        bool           getPkmnData( const u16 p_pkmnId, const u8 p_forme, DATA::pkmnData* p_out );
+
+        bool getLearnset( u16 p_pkmnId, u8 p_forme, u16* p_out );
+        void getLearnMoves( u16 p_pkmnId, u8 p_forme, u16 p_fromLevel, u16 p_toLevel, u16 p_num,
+                            u16* p_res );
+        bool canLearn( u16 p_pkmnId, u8 p_forme, u16 p_moveId, u16 p_maxLevel, u16 p_minLevel = 0 );
+        bool canLearn( const u16* p_learnset, u16 p_moveId, u16 p_maxLevel, u16 p_minLevel = 0 );
+        const u16* getLearnset( u16 p_pkmnId, u8 p_forme );
+
         inline std::string fsinfoPath( ) const {
             return m_fsrootPath + "/fsinfo";
         }
 
         inline std::string mapPath( ) const {
             return m_fsrootPath + "/MAPS/";
+        }
+
+        inline std::string pkmnDataPath( ) const {
+            return m_fsrootPath + "/DATA/pkmn.datab";
+        }
+
+        inline std::string formeDataPath( ) const {
+            return m_fsrootPath + "/DATA/pkmnf.datab";
+        }
+        inline std::string learnsetPath( ) const {
+            return m_fsrootPath + "/DATA/pkmn.learnset.datab";
+        }
+
+        inline std::string formeLearnsetPath( ) const {
+            return m_fsrootPath + "/DATA/pkmnf.learnset.datab";
         }
 
         inline std::string owMapPicturePath( ) const {

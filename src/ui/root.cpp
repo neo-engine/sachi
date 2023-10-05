@@ -494,16 +494,26 @@ namespace UI {
         } );
         _specialCacheAction          = _specialActions->add_action( "copy", [ this ]( ) {
             if( _bankEditor ) { _bankEditor->copyAction( ); }
+            if( _trainerBankEditor ) { _trainerBankEditor->copyAction( ); }
         } );
         _specialPasteAction          = _specialActions->add_action( "paste", [ this ]( ) {
             if( _bankEditor ) { _bankEditor->pasteAction( ); }
+            if( _trainerBankEditor ) { _trainerBankEditor->pasteAction( ); }
         } );
         _specialDeleteAction         = _specialActions->add_action( "delete", [ this ]( ) {
             if( _bankEditor ) { _bankEditor->deleteAction( ); }
+            if( _trainerBankEditor ) { _trainerBankEditor->deleteAction( ); }
         } );
         _specialSelectnewAction      = _specialActions->add_action( "selectnew", [ this ]( ) {
             if( _bankEditor ) { _bankEditor->selectnewAction( ); }
+            if( _trainerBankEditor ) { _trainerBankEditor->selectnewAction( ); }
         } );
+        for( u8 i = 0; i < MAX_SPECIAL_ACTIONS; ++i ) {
+            _specialAction[ i ] = _specialActions->add_action(
+                std::string( "action" ) + std::to_string( i ), [ i, this ]( ) {
+                    if( _trainerBankEditor ) { _trainerBankEditor->performAction( i ); }
+                } );
+        }
 
         insert_action_group( "load", _loadActions );
         insert_action_group( "save", _saveActions );
@@ -624,6 +634,8 @@ namespace UI {
         _specialDeleteAction->set_enabled( false );
         _specialSelectnewAction->set_enabled( false );
 
+        for( u8 i = 0; i < MAX_SPECIAL_ACTIONS; ++i ) { _specialAction[ i ]->set_enabled( false ); }
+
         _loadMapLabel.hide( );
         if( _tileSetEditor ) { _tileSetEditor->hide( ); }
         if( _trainerBankEditor ) { _trainerBankEditor->hide( ); }
@@ -680,7 +692,12 @@ namespace UI {
             _mainBox.show( );
             if( _trainerBankEditor ) { _trainerBankEditor->show( ); }
 
+            _specialCacheAction->set_enabled( true );
+            _specialPasteAction->set_enabled( true );
+            _specialDeleteAction->set_enabled( true );
+            _specialSelectnewAction->set_enabled( true );
             _saveFsrootAction->set_enabled( true );
+            for( u8 i = 0; i < 10; ++i ) { _specialAction[ i ]->set_enabled( true ); }
             break;
 
         default:

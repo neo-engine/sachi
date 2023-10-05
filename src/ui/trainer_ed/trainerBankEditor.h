@@ -3,6 +3,7 @@
 
 #include <gtkmm/notebook.h>
 
+#include "../../defines.h"
 #include "../../model.h"
 #include "trainerEditor.h"
 // #include "trainerBankSettings.h"
@@ -44,6 +45,26 @@ namespace UI {
         inline void redraw( ) {
             if( _trainerEditor ) { _trainerEditor->redraw( ); }
             // if( _trainerBankSettings ) { _trainerBankSettings->redraw( ); }
+        }
+
+        inline void copyAction( ) {
+            if( _trainerEditor ) { _trainerEditor->copyAction( ); }
+        }
+
+        inline void pasteAction( ) {
+            if( _trainerEditor ) { _trainerEditor->pasteAction( ); }
+        }
+
+        inline void deleteAction( ) {
+            if( _trainerEditor ) { _trainerEditor->deleteAction( ); }
+        }
+
+        inline void selectnewAction( ) {
+            if( _trainerEditor ) { _trainerEditor->selectnewAction( ); }
+        }
+
+        inline void performAction( u8 p_actionId ) {
+            if( _trainerEditor ) { _trainerEditor->performAction( p_actionId ); }
         }
     };
 } // namespace UI

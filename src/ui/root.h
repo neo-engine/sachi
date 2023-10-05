@@ -17,6 +17,8 @@
 
 namespace UI {
     class root : public Gtk::Window {
+        static constexpr u8 MAX_SPECIAL_ACTIONS = 10;
+
         std::shared_ptr<Gio::SimpleActionGroup> _loadActions;
         std::shared_ptr<Gio::SimpleAction>      _loadFsrootAction;
         std::shared_ptr<Gio::SimpleAction>      _loadReloadmapAction;
@@ -45,6 +47,7 @@ namespace UI {
         std::shared_ptr<Gio::SimpleAction>      _specialPasteAction;
         std::shared_ptr<Gio::SimpleAction>      _specialDeleteAction;
         std::shared_ptr<Gio::SimpleAction>      _specialSelectnewAction;
+        std::shared_ptr<Gio::SimpleAction>      _specialAction[ MAX_SPECIAL_ACTIONS ];
 
         context _context;
         model   _model;

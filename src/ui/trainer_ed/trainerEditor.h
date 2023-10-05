@@ -60,5 +60,11 @@ namespace UI {
         void enableDifficulty( bool p_enabled );
 
         void setDifficulty( difficulty p_newDiffculty );
+
+        void copyAction( );
+        void pasteAction( );
+        void deleteAction( );
+        void selectnewAction( );
+        void performAction( u8 p_actionId );
     };
 } // namespace UI

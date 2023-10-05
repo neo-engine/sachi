@@ -1387,3 +1387,111 @@ void model::recomputeBankLocationOverlay( ) {
         for( u16 x{ 0 }; x < 256; ++x ) { bnk.m_owMap( x, y ).round( 32 ); }
     }
 }
+
+DATA::pkmnData model::fsdata::getPkmnData( const u16 p_pkmnId, const u8 p_forme ) {
+    DATA::pkmnData res;
+    if( getPkmnData( p_pkmnId, p_forme, &res ) ) { return res; }
+    getPkmnData( 0, &res );
+    return res;
+}
+bool model::fsdata::getPkmnData( const u16 p_pkmnId, DATA::pkmnData* p_out ) {
+    return getPkmnData( p_pkmnId, 0, p_out );
+}
+bool model::fsdata::getPkmnData( const u16 p_pkmnId, const u8 p_forme, DATA::pkmnData* p_out ) {
+    static FILE* bankfile  = nullptr;
+    static FILE* bankfilef = nullptr;
+    auto         id        = -1;
+    if( false /* p_forme && ( id = formeIdx( p_pkmnId, p_forme ) ) != -1 */ ) {
+        if( !DATA::checkOrOpen( bankfilef, formeDataPath( ).c_str( ) ) ) { return false; }
+        if( std::fseek( bankfilef, id * sizeof( DATA::pkmnData ), SEEK_SET ) ) { return false; }
+        fread( p_out, sizeof( DATA::pkmnData ), 1, bankfilef );
+    } else {
+        if( !DATA::checkOrOpen( bankfile, pkmnDataPath( ).c_str( ) ) ) { return false; }
+        if( std::fseek( bankfile, p_pkmnId * sizeof( DATA::pkmnData ), SEEK_SET ) ) {
+            return false;
+        }
+        fread( p_out, sizeof( DATA::pkmnData ), 1, bankfile );
+    }
+    return true;
+}
+
+u16  LEARNSET_BUFFER[ LEARNSET_SIZE + 10 ];
+void model::fsdata::getLearnMoves( u16 p_pkmnId, u8 p_forme, u16 p_fromLevel, u16 p_toLevel,
+                                   u16 p_amount, u16* p_result ) {
+    auto learnset = getLearnset( p_pkmnId, p_forme );
+    if( !learnset ) { return; }
+    u16 ptr = 0;
+
+    for( u8 i = 0; i < p_amount; ++i ) p_result[ i ] = 0;
+    if( p_fromLevel > p_toLevel ) std::swap( p_fromLevel, p_toLevel );
+
+    std::vector<u16> reses;
+    for( u16 i = 0; i <= p_toLevel; ++i ) {
+        while( i == learnset[ ptr ] ) {
+            if( i >= p_fromLevel ) {
+                reses.push_back( learnset[ ++ptr ] );
+            } else {
+                ++ptr;
+            }
+            ptr++;
+        }
+    }
+    auto I = reses.rbegin( );
+    for( u16 i = 0; i < p_amount && I != reses.rend( ); ++i, ++I ) {
+        for( u16 z = 0; z < i; ++z )
+            if( *I == p_result[ z ] ) {
+                --i;
+                goto N;
+            }
+        p_result[ i ] = *I;
+    N:;
+    }
+    return;
+}
+
+bool model::fsdata::canLearn( const u16* p_learnset, u16 p_moveId, u16 p_maxLevel,
+                              u16 p_minLevel ) {
+    if( !p_learnset ) { return false; }
+
+    u16 ptr = 0;
+    for( u16 i = 0; i <= p_maxLevel; ++i ) {
+        while( i == p_learnset[ ptr ] ) {
+            if( p_moveId == p_learnset[ ++ptr ] && i >= p_minLevel ) { return true; }
+            ptr++;
+        }
+    }
+    return false;
+}
+
+bool model::fsdata::canLearn( u16 p_pkmnId, u8 p_forme, u16 p_moveId, u16 p_maxLevel,
+                              u16 p_minLevel ) {
+    return canLearn( getLearnset( p_pkmnId, p_forme ), p_moveId, p_maxLevel, p_minLevel );
+}
+
+bool model::fsdata::getLearnset( u16 p_pkmnId, u8 p_forme, u16* p_out ) {
+    static FILE* bankfile  = nullptr;
+    static FILE* bankfilef = nullptr;
+    auto         id        = -1;
+    if( false /* p_forme && ( id = formeIdx( p_pkmnId, p_forme ) ) != -1*/ ) {
+        return false;
+        /*
+        if( !DATA::checkOrOpen( bankfilef, formeLearnsetPath( ).c_str( ) ) ) { return false; }
+        if( std::fseek( bankfilef, id * LEARNSET_SIZE * sizeof( u16 ), SEEK_SET ) ) {
+            return false;
+        }
+        fread( p_out, sizeof( u16 ), LEARNSET_SIZE, bankfilef );
+        */
+    } else {
+        if( !DATA::checkOrOpen( bankfile, learnsetPath( ).c_str( ) ) ) { return false; }
+        if( std::fseek( bankfile, p_pkmnId * LEARNSET_SIZE * sizeof( u16 ), SEEK_SET ) ) {
+            return false;
+        }
+        fread( p_out, sizeof( u16 ), LEARNSET_SIZE, bankfile );
+    }
+    return true;
+}
+
+const u16* model::fsdata::getLearnset( u16 p_pkmnId, u8 p_forme ) {
+    if( getLearnset( p_pkmnId, p_forme, LEARNSET_BUFFER ) ) { return LEARNSET_BUFFER; }
+    return nullptr;
+}

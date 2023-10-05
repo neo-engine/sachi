@@ -77,5 +77,10 @@ int main( int p_argc, char* p_argv[] ) {
     app->set_accel_for_action( "special.delete", "<Primary>x" );
     app->set_accel_for_action( "special.selectnew", "<Primary>n" );
 
+    for( u8 i = 0; i < 10; ++i ) {
+        app->set_accel_for_action( std::string( "special.action" ) + std::to_string( i ),
+                                   "<Primary>" + std::to_string( i ) );
+    }
+
     return app->run( p_argc, p_argv );
 }
