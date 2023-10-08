@@ -133,7 +133,7 @@ namespace UI {
             n1ibox.append( nl2 );
             n1ibox.set_margin_start( MARGIN );
 
-            auto pm = std::make_shared<switchButton>( std::vector<std::string>{ "+", "0", "-" }, 1,
+            auto pm = std::make_shared<switchButton>( std::vector<std::string>{ "▲", "0", "▼" }, 1,
                                                       true );
             if( pm && i ) { n1ibox.append( *pm ); }
             _natureToggles.push_back( pm );

@@ -28,11 +28,9 @@ namespace UI {
         u8 _sIdx  = 255;
 
         Gtk::Box                         _mainBox;
-        Gtk::Label                       _nameLabel;
+        Gtk::Label                       _nameLabel, _p3l;
         std::shared_ptr<Gtk::Adjustment> _bg, _p1, _p2, _sprite;
         Gtk::SpinButton                  _bgE, _p1E, _p2E, _spriteE;
-
-        Gtk::CenterBox _spriteEBox;
 
         fsImage<imageType::IT_BG_IMAGE>          _bgI;
         fsImage<imageType::IT_SPRITE_PLATFORM>   _p1I, _p2I;

@@ -79,6 +79,7 @@ const std::string EXTRA_CSS
       ".encounter-swarm { color: black; background-color: #f0cdc5; }\n"
       ".compress { padding-left: 4px; padding-right: 4px; }\n"
       ".no-padding { padding: 0px; }\n"
+      "button.up, button.down { padding: 0px; }\n"
       "";
 
 enum context : u8 {

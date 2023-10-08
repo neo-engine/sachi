@@ -1,4 +1,5 @@
 #include <gtkmm/centerbox.h>
+#include <gtkmm/grid.h>
 #include <gtkmm/image.h>
 #include <gtkmm/overlay.h>
 #include <gtkmm/scrolledwindow.h>
@@ -14,9 +15,9 @@ namespace UI {
 
         _mainBox  = Gtk::Box{ Gtk::Orientation::VERTICAL };
         auto box1 = Gtk::Box{ Gtk::Orientation::HORIZONTAL };
-        auto box2 = Gtk::CenterBox{ };
-        auto box3 = Gtk::CenterBox{ };
-        auto box4 = Gtk::CenterBox{ };
+        auto grid = Gtk::Grid{ };
+        grid.set_expand( );
+        grid.set_halign( Gtk::Align::CENTER );
 
         Gtk::Box sw{ };
 
@@ -45,43 +46,49 @@ namespace UI {
 
         _mainBox.append( box1 );
         _mainBox.append( sw );
-        _mainBox.append( box2 );
-        _mainBox.append( box3 );
-        _mainBox.append( box4 );
-        _mainBox.append( _spriteEBox );
+        _mainBox.append( grid );
 
         Gtk::Label title{ p_name };
         box1.append( title );
         box1.set_halign( Gtk::Align::CENTER );
 
-        auto bgl = Gtk::Label{ "Background" };
-        box2.set_start_widget( bgl );
-        box2.set_end_widget( _bgE );
+        auto bgl = Gtk::Label{ "BG" };
+        bgl.set_margin_start( MARGIN );
+        bgl.set_margin_end( MARGIN );
+        grid.attach( bgl, 3, 1 );
+        grid.attach( _bgE, 4, 1 );
         _bgE.set_width_chars( 2 );
         _bgE.set_max_width_chars( 2 );
         _bgE.set_numeric( true );
 
-        auto p1l = Gtk::Label{ "Player Platform" };
-        box3.set_start_widget( p1l );
-        box3.set_end_widget( _p1E );
+        auto p1l = Gtk::Label{ "Play. Plat" };
+        p1l.set_margin_end( MARGIN );
+        grid.attach( p1l, 1, 1 );
+        grid.attach( _p1E, 2, 1 );
         _p1E.set_width_chars( 2 );
         _p1E.set_max_width_chars( 2 );
         _p1E.set_numeric( true );
 
-        auto p2l = Gtk::Label{ "Opponent Platform" };
-        box4.set_start_widget( p2l );
-        box4.set_end_widget( _p2E );
+        auto p2l = Gtk::Label{ "Opp. Plat" };
+        p2l.set_margin_end( MARGIN );
+        grid.attach( p2l, 1, 2 );
+        grid.attach( _p2E, 2, 2 );
+        _p2E.set_margin_top( MARGIN );
         _p2E.set_width_chars( 2 );
         _p2E.set_max_width_chars( 2 );
         _p2E.set_numeric( true );
 
-        auto p3l = Gtk::Label{ "Opponent Sprite" };
-        _spriteEBox.set_start_widget( p3l );
-        _spriteEBox.set_end_widget( _spriteE );
+        _p3l = Gtk::Label{ "Opp. Spr." };
+        _p3l.set_margin_start( MARGIN );
+        _p3l.set_margin_end( MARGIN );
+        grid.attach( _p3l, 3, 2 );
+        grid.attach( _spriteE, 4, 2 );
         _spriteE.set_width_chars( 3 );
+        _spriteE.set_margin_top( MARGIN );
         _spriteE.set_max_width_chars( 3 );
         _spriteE.set_numeric( true );
-        _spriteEBox.hide( );
+        _p3l.hide( );
+        _spriteE.hide( );
     }
 
     void battleBG::set( const std::string& p_bgPath, const std::string& p_platPath, u8 p_bg,
@@ -110,7 +117,8 @@ namespace UI {
     void battleBG::setSprite( const std::string& p_spritePath, u8 p_sId ) {
         _lock = true;
         _spriteI.show( );
-        _spriteEBox.show( );
+        _spriteE.show( );
+        _p3l.show( );
 
         if( _sIdx != p_sId ) {
             _spriteE.set_value( p_sId );
