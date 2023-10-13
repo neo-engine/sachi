@@ -392,6 +392,10 @@ struct model {
 
         u16 m_treId  = 0;
         u8  m_treDif = 1;
+
+        u16 m_pkmnDataEId = 1;
+        u16 m_itemDataEId = 1;
+        u16 m_moveDataEId = 1;
     };
 
     struct stringCache {

@@ -831,6 +831,90 @@ namespace UI {
         redraw( );
     }
 
+    void root::editPkmnData( u16 p_dataId ) {
+        if( _context == CONTEXT_NONE ) {
+            message_log( "editPkmnData", "No FSROOT loaded. Won't load any PKMN data." );
+            return;
+        }
+
+        message_log( "editPkmnData",
+                     "Loading PKMN data editor for " + std::to_string( p_dataId ) + ".",
+                     LOGLEVEL_STATUS );
+
+        if( _model.selectedBank( ) != -1 ) {
+            onUnloadMap( _model.selectedBank( ), _model.selectedMapY( ), _model.selectedMapX( ) );
+        }
+        _model.selectBank( -1 );
+        _headerBar->setTitle( "", "PKMN " + std::to_string( p_dataId ),
+                              _model.m_fsdata.m_fsrootPath, false );
+
+        // check if pkmn data exists
+        // if( _model.m_fsdata.trainerCount( ) <= p_dataId ) {
+        //     _model.m_fsdata.createTrainer( p_dataId );
+        // }
+
+        _model.m_settings.m_pkmnDataEId = p_dataId;
+
+        switchContext( CONTEXT_PKMN_DATA_EDITOR );
+        redraw( );
+    }
+
+    void root::editItemData( u16 p_dataId ) {
+        if( _context == CONTEXT_NONE ) {
+            message_log( "editItemData", "No FSROOT loaded. Won't load any item data." );
+            return;
+        }
+
+        message_log( "editItemData",
+                     "Loading item data editor for " + std::to_string( p_dataId ) + ".",
+                     LOGLEVEL_STATUS );
+
+        if( _model.selectedBank( ) != -1 ) {
+            onUnloadMap( _model.selectedBank( ), _model.selectedMapY( ), _model.selectedMapX( ) );
+        }
+        _model.selectBank( -1 );
+        _headerBar->setTitle( "", "Item " + std::to_string( p_dataId ),
+                              _model.m_fsdata.m_fsrootPath, false );
+
+        // check if pkmn data exists
+        // if( _model.m_fsdata.trainerCount( ) <= p_dataId ) {
+        //     _model.m_fsdata.createTrainer( p_dataId );
+        // }
+
+        _model.m_settings.m_itemDataEId = p_dataId;
+
+        switchContext( CONTEXT_ITEM_DATA_EDITOR );
+        redraw( );
+    }
+
+    void root::editMoveData( u16 p_dataId ) {
+        if( _context == CONTEXT_NONE ) {
+            message_log( "editMoveData", "No FSROOT loaded. Won't load any move data." );
+            return;
+        }
+
+        message_log( "editMoveData",
+                     "Loading move data editor for " + std::to_string( p_dataId ) + ".",
+                     LOGLEVEL_STATUS );
+
+        if( _model.selectedBank( ) != -1 ) {
+            onUnloadMap( _model.selectedBank( ), _model.selectedMapY( ), _model.selectedMapX( ) );
+        }
+        _model.selectBank( -1 );
+        _headerBar->setTitle( "", "Move " + std::to_string( p_dataId ),
+                              _model.m_fsdata.m_fsrootPath, false );
+
+        // check if pkmn data exists
+        // if( _model.m_fsdata.trainerCount( ) <= p_dataId ) {
+        //     _model.m_fsdata.createTrainer( p_dataId );
+        // }
+
+        _model.m_settings.m_moveDataEId = p_dataId;
+
+        switchContext( CONTEXT_MOVE_DATA_EDITOR );
+        redraw( );
+    }
+
     void root::editTileSets( u8 p_ts1, u8 p_ts2 ) {
         if( _context == CONTEXT_NONE ) {
             message_log( "editTileSets", "No FSROOT loaded. Won't load any tile sets." );

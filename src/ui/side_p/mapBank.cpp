@@ -133,8 +133,8 @@ namespace UI {
         setSizeY( MAX_TILESET_NAME );
     }
 
-    editTrainer::editTrainer( model& p_model ) : mapBank( p_model, "view-list-ordered-symbolic" ) {
-        _nameLabel.set_markup( "<span size=\"x-large\" weight=\"bold\">TR</span>" );
+    editTrainer::editTrainer( model& p_model, std::string p_name ) : mapBank( p_model, "view-list-ordered-symbolic" ) {
+        _nameLabel.set_markup( "<span size=\"x-large\" weight=\"bold\">" + p_name + "</span>" );
         _loadMapButton.set_label( "Edit" );
         _loadDiveMapButton.hide( );
 

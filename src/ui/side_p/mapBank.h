@@ -232,7 +232,7 @@ namespace UI {
     class editTrainer : public mapBank {
         // mapy: trainer idx, mapx: unused
       public:
-        editTrainer( model& p_model );
+        editTrainer( model& p_model, std::string p_name = "TR" );
 
         inline ~editTrainer( ) override {
         }

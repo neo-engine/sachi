@@ -28,14 +28,16 @@ namespace UI {
 
         //////////////////////////////////////////////////////////////////////////////////
         //
-        // side bar -> trainer editor
+        // side bar -> data editor
         //
         //////////////////////////////////////////////////////////////////////////////////
 
-        Gtk::Label _sbTrainerBarLabel;
-        Gtk::Box   _sbTrainerBox;
-        s16        _sbTrainerSel1 = 0;
+        Gtk::Label _sbDataBarLabel;
+        Gtk::Box   _sbDataBox;
 
+        std::shared_ptr<editTrainer> _editPkmnData;
+        std::shared_ptr<editTrainer> _editItemData;
+        std::shared_ptr<editTrainer> _editMoveData;
         std::shared_ptr<editTrainer> _editTrainer;
 
         //////////////////////////////////////////////////////////////////////////////////
@@ -46,7 +48,6 @@ namespace UI {
 
         Gtk::Label _sbTileSetBarLabel;
         Gtk::Box   _sbTileSetBox;
-        s16        _sbTileSetSel1 = 0, _sbTileSetSel2 = 1;
 
         std::shared_ptr<editTileSet> _editTileSet;
 

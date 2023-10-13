@@ -146,6 +146,12 @@ namespace UI {
 
         void editTrainer( u16 p_trainerId );
 
+        void editPkmnData( u16 p_dataId );
+
+        void editMoveData( u16 p_dataId );
+
+        void editItemData( u16 p_dataId );
+
         /*
          * @brief: Handler for the "Open FSROOT" button.
          */

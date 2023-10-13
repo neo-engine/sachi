@@ -8,14 +8,13 @@
 namespace UI {
     sideBar::sideBar( model& p_model, root& p_root ) : _model( p_model ), _rootWindow( p_root ) {
         // main box
-        _lMainBox = Gtk::Box( Gtk::Orientation::VERTICAL, MARGIN );
+        _lMainBox = Gtk::Box( Gtk::Orientation::VERTICAL );
 
         _collapseMapBanksButton
             = createButton( "view-restore-symbolic", "_Collapse Sidebar",
                             [ & ]( ) { this->collapse( !_mapBankBarCollapsed ); } );
 
-        _collapseMapBanksButton->set_expand( true );
-        _collapseMapBanksButton->set_margin( MARGIN );
+        _collapseMapBanksButton->set_margin( 0 );
         _collapseMapBanksButton->set_has_frame( false );
 
         {
@@ -25,71 +24,6 @@ namespace UI {
             sideBarBarCollapseBox.set_halign( Gtk::Align::CENTER );
             _collapseMapBanksButton->set_expand( false );
             _lMainBox.append( sideBarBarCollapseBox );
-        }
-        {
-            // trainer
-            auto lFrame = Gtk::Frame( );
-            lFrame.set_margin( MARGIN );
-            lFrame.set_margin_top( 0 );
-            _lMainBox.append( lFrame );
-
-            auto sbTrainerBarLabelBox   = Gtk::Box( Gtk::Orientation::HORIZONTAL );
-            auto sbTrainerBarLabelImage = Gtk::Image( );
-            sbTrainerBarLabelImage.set_from_icon_name( "system-switch-user-symbolic" );
-            sbTrainerBarLabelImage.set_margin( MARGIN );
-            _sbTrainerBarLabel = Gtk::Label( "Trainers" );
-            sbTrainerBarLabelBox.append( sbTrainerBarLabelImage );
-            sbTrainerBarLabelBox.append( _sbTrainerBarLabel );
-
-            lFrame.set_label_widget( sbTrainerBarLabelBox );
-            lFrame.set_label_align( Gtk::Align::CENTER );
-
-            _sbTrainerBox = Gtk::Box( Gtk::Orientation::VERTICAL, MARGIN );
-            lFrame.set_child( _sbTrainerBox );
-            _sbTrainerBox.set_margin( MARGIN );
-            _sbTrainerBox.set_vexpand( false );
-
-            _editTrainer = std::make_shared<editTrainer>( p_model );
-            if( _editTrainer ) {
-                _editTrainer->connect(
-                    [ this ]( u16 p_ts1 ) { _rootWindow.editTrainer( p_ts1 ); } );
-                _sbTrainerBox.append( *_editTrainer );
-            }
-
-            _sbTrainerSel1 = 0;
-        }
-        {
-            // tile set
-            auto lFrame = Gtk::Frame( );
-            lFrame.set_margin( MARGIN );
-            lFrame.set_margin_top( 0 );
-            _lMainBox.append( lFrame );
-
-            auto sbTileSetBarLabelBox   = Gtk::Box( Gtk::Orientation::HORIZONTAL );
-            auto sbTileSetBarLabelImage = Gtk::Image( );
-            sbTileSetBarLabelImage.set_from_icon_name( "applications-graphics-symbolic" );
-            sbTileSetBarLabelImage.set_margin( MARGIN );
-            _sbTileSetBarLabel = Gtk::Label( "Tile Sets" );
-            sbTileSetBarLabelBox.append( sbTileSetBarLabelImage );
-            sbTileSetBarLabelBox.append( _sbTileSetBarLabel );
-
-            lFrame.set_label_widget( sbTileSetBarLabelBox );
-            lFrame.set_label_align( Gtk::Align::CENTER );
-
-            _sbTileSetBox = Gtk::Box( Gtk::Orientation::VERTICAL, MARGIN );
-            lFrame.set_child( _sbTileSetBox );
-            _sbTileSetBox.set_margin( MARGIN );
-            _sbTileSetBox.set_vexpand( false );
-
-            _editTileSet = std::make_shared<editTileSet>( p_model );
-            if( _editTileSet ) {
-                _editTileSet->connect(
-                    [ this ]( u8 p_ts1, u8 p_ts2 ) { _rootWindow.editTileSets( p_ts1, p_ts2 ); } );
-                _sbTileSetBox.append( *_editTileSet );
-            }
-
-            _sbTileSetSel1 = 0;
-            _sbTileSetSel2 = 1;
         }
         {
             // map banks
@@ -128,6 +62,83 @@ namespace UI {
 
             _mapBanks.clear( );
         }
+        {
+            // tile set
+            auto lFrame = Gtk::Frame( );
+            lFrame.set_margin( MARGIN );
+            _lMainBox.append( lFrame );
+
+            auto sbTileSetBarLabelBox   = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+            auto sbTileSetBarLabelImage = Gtk::Image( );
+            sbTileSetBarLabelImage.set_from_icon_name( "applications-graphics-symbolic" );
+            sbTileSetBarLabelImage.set_margin( MARGIN );
+            _sbTileSetBarLabel = Gtk::Label( "Tile Sets" );
+            sbTileSetBarLabelBox.append( sbTileSetBarLabelImage );
+            sbTileSetBarLabelBox.append( _sbTileSetBarLabel );
+
+            lFrame.set_label_widget( sbTileSetBarLabelBox );
+            lFrame.set_label_align( Gtk::Align::CENTER );
+
+            _sbTileSetBox = Gtk::Box( Gtk::Orientation::VERTICAL, MARGIN );
+            lFrame.set_child( _sbTileSetBox );
+            _sbTileSetBox.set_margin( MARGIN );
+            _sbTileSetBox.set_vexpand( false );
+
+            _editTileSet = std::make_shared<editTileSet>( p_model );
+            if( _editTileSet ) {
+                _editTileSet->connect(
+                    [ this ]( u8 p_ts1, u8 p_ts2 ) { _rootWindow.editTileSets( p_ts1, p_ts2 ); } );
+                _sbTileSetBox.append( *_editTileSet );
+            }
+        }
+        {
+            // data
+            auto lFrame = Gtk::Frame( );
+            lFrame.set_margin( MARGIN );
+            lFrame.set_margin_top( 0 );
+            _lMainBox.append( lFrame );
+
+            auto sbDataBarLabelBox   = Gtk::Box( Gtk::Orientation::HORIZONTAL );
+            auto sbDataBarLabelImage = Gtk::Image( );
+            sbDataBarLabelImage.set_from_icon_name( "drive-multidisk-symbolic" );
+            sbDataBarLabelImage.set_margin( MARGIN );
+            _sbDataBarLabel = Gtk::Label( "Data" );
+            sbDataBarLabelBox.append( sbDataBarLabelImage );
+            sbDataBarLabelBox.append( _sbDataBarLabel );
+
+            lFrame.set_label_widget( sbDataBarLabelBox );
+            lFrame.set_label_align( Gtk::Align::CENTER );
+
+            _sbDataBox = Gtk::Box( Gtk::Orientation::VERTICAL, MARGIN );
+            lFrame.set_child( _sbDataBox );
+            _sbDataBox.set_margin( MARGIN );
+            _sbDataBox.set_vexpand( false );
+
+            _editTrainer = std::make_shared<editTrainer>( p_model, "TR" );
+            if( _editTrainer ) {
+                _editTrainer->connect(
+                    [ this ]( u16 p_ts1 ) { _rootWindow.editTrainer( p_ts1 ); } );
+                _sbDataBox.append( *_editTrainer );
+            }
+            _editPkmnData = std::make_shared<editTrainer>( p_model, "PK" );
+            if( _editPkmnData ) {
+                _editPkmnData->connect(
+                    [ this ]( u16 p_ts1 ) { _rootWindow.editPkmnData( p_ts1 ); } );
+                _sbDataBox.append( *_editPkmnData );
+            }
+            _editItemData = std::make_shared<editTrainer>( p_model, "IT" );
+            if( _editItemData ) {
+                _editItemData->connect(
+                    [ this ]( u16 p_ts1 ) { _rootWindow.editItemData( p_ts1 ); } );
+                _sbDataBox.append( *_editItemData );
+            }
+            _editMoveData = std::make_shared<editTrainer>( p_model, "MV" );
+            if( _editMoveData ) {
+                _editMoveData->connect(
+                    [ this ]( u16 p_ts1 ) { _rootWindow.editMoveData( p_ts1 ); } );
+                _sbDataBox.append( *_editMoveData );
+            }
+        }
     }
 
     void sideBar::collapse( bool p_collapse ) {
@@ -137,13 +148,16 @@ namespace UI {
         if( _addMapBank ) { _addMapBank->collapse( p_collapse ); }
         if( _editTileSet ) { _editTileSet->collapse( p_collapse ); }
         if( _editTrainer ) { _editTrainer->collapse( p_collapse ); }
+        if( _editPkmnData ) { _editPkmnData->collapse( p_collapse ); }
+        if( _editItemData ) { _editItemData->collapse( p_collapse ); }
+        if( _editMoveData ) { _editMoveData->collapse( p_collapse ); }
         if( p_collapse ) {
             auto icon = Gtk::Image( );
             icon.set_from_icon_name( "view-fullscreen-symbolic" );
             _collapseMapBanksButton->set_child( icon );
             _mapBankBarLabel.hide( );
             _sbTileSetBarLabel.hide( );
-            _sbTrainerBarLabel.hide( );
+            _sbDataBarLabel.hide( );
         } else {
             auto icon = Gtk::Image( );
             icon.set_from_icon_name( "view-restore-symbolic" );
@@ -157,7 +171,7 @@ namespace UI {
             _collapseMapBanksButton->set_child( hbox );
             _mapBankBarLabel.show( );
             _sbTileSetBarLabel.show( );
-            _sbTrainerBarLabel.show( );
+            _sbDataBarLabel.show( );
         }
         _mapBankBarCollapsed = p_collapse;
     }

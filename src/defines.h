@@ -88,4 +88,7 @@ enum context : u8 {
     CONTEXT_MAP_EDITOR,     // map bank loaded and map visible
     CONTEXT_TILE_EDITOR,    // tile set editor loaded
     CONTEXT_TRAINER_EDITOR, // trainer editor loaded
+    CONTEXT_PKMN_DATA_EDITOR,
+    CONTEXT_ITEM_DATA_EDITOR,
+    CONTEXT_MOVE_DATA_EDITOR,
 };
