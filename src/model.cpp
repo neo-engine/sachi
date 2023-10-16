@@ -1004,8 +1004,8 @@ bool model::writeMapBank( u16 p_bank ) {
 
         // write ow wild poke map picture
         info.m_wpMap.dumpToFile(
-            ( m_fsdata.wpMapPicturePath( ) + std::to_string( p_bank ) + ".wp.raw" ).c_str( ), 191,
-            1 );
+            ( m_fsdata.wpMapPicturePath( ) + std::to_string( p_bank ) + ".wp.raw" ).c_str( ), 230,
+            7 );
     }
 
     if( !info.isCombined( ) ) {
