@@ -898,7 +898,7 @@ bool model::writeMapBank( u16 p_bank ) {
 
     error = !DATA::writeMapBank( f, &info.m_info, &info.m_bank );
 
-    if( info.m_info.m_isOWMap ) {
+    if( info.m_info.m_isOWMap && p_bank < DIVE_MAP ) {
         // write location file
         auto owpath = fs::path( m_fsdata.mapLocationPath( ) )
                       / fs::path( std::to_string( p_bank ) + ".loc.data" );
@@ -940,6 +940,9 @@ bool model::writeMapBank( u16 p_bank ) {
         u8* tmppkmn    = new u8[ ( maxPkmn( ) + 1 ) * ( 1 + meta_pkmn[ 0 ] * meta_pkmn[ 1 ] ) ];
         std::memset( tmppkmn, 0, sizeof( tmppkmn ) );
 
+        bool bnkloaded = false;
+        if( info.getDiveStatus( ) ) { bnkloaded = checkOrLoadBank( DIVE_MAP + p_bank, false ); }
+
         // one byte per map tile
         // compute for each pkmn where it can be caught in this ow
         for( u8 y{ 0 }; y < meta_pkmn[ 1 ]; ++y ) {
@@ -948,16 +951,28 @@ bool model::writeMapBank( u16 p_bank ) {
 
                 for( u8 i{ 0 }; i < DATA::MAX_PKMN_PER_SLICE; ++i ) {
                     auto pdata = info.m_bank.m_mapData[ y ][ x ].m_pokemon[ i ];
-
-                    if( !pdata.m_speciesId ) { continue; }
-
-                    tmppkmn[ pdata.m_speciesId
-                                 * ( 1 + u16( meta_pkmn[ 0 ] ) * u16( meta_pkmn[ 1 ] ) )
-                             + pos ]
-                        |= pdata.m_daytime;
-                    tmppkmn[ pdata.m_speciesId
-                             * ( 1 + u16( meta_pkmn[ 0 ] ) * u16( meta_pkmn[ 1 ] ) ) ]
-                        = 1;
+                    if( pdata.m_speciesId ) {
+                        tmppkmn[ pdata.m_speciesId
+                                     * ( 1 + u16( meta_pkmn[ 0 ] ) * u16( meta_pkmn[ 1 ] ) )
+                                 + pos ]
+                            |= pdata.m_daytime;
+                        tmppkmn[ pdata.m_speciesId
+                                 * ( 1 + u16( meta_pkmn[ 0 ] ) * u16( meta_pkmn[ 1 ] ) ) ]
+                            |= pdata.m_daytime;
+                    }
+                    if( info.getDiveStatus( ) && bnkloaded ) {
+                        const auto& pdata2
+                            = bank( DIVE_MAP + p_bank ).m_bank.m_mapData[ y ][ x ].m_pokemon[ i ];
+                        if( pdata2.m_speciesId ) {
+                            tmppkmn[ pdata2.m_speciesId
+                                         * ( 1 + u16( meta_pkmn[ 0 ] ) * u16( meta_pkmn[ 1 ] ) )
+                                     + pos ]
+                                |= ( pdata2.m_daytime << 4 );
+                            tmppkmn[ pdata2.m_speciesId
+                                     * ( 1 + u16( meta_pkmn[ 0 ] ) * u16( meta_pkmn[ 1 ] ) ) ]
+                                |= ( pdata2.m_daytime << 4 );
+                        }
+                    }
                 }
             }
         }
@@ -969,14 +984,20 @@ bool model::writeMapBank( u16 p_bank ) {
         fwrite( tmppkmn, sizeof( u8 ), ( maxPkmn( ) + 1 ) * ( meta_pkmn[ 0 ] * meta_pkmn[ 1 ] + 1 ),
                 wpf );
 
-        /*
         for( u16 i{ 0 }; i <= maxPkmn( ); ++i ) {
             if( tmppkmn[ i * ( 1 + meta_pkmn[ 0 ] * meta_pkmn[ 1 ] ) ] ) {
                 message_log( "writeMapBank", "PKMN " + std::to_string( i ) + " can be caught.",
                              LOGLEVEL_STATUS );
+
+                for( u8 y{ 0 }; y < meta_pkmn[ 1 ]; ++y ) {
+                    for( u8 x{ 0 }; x < meta_pkmn[ 0 ]; ++x ) {
+                        printf( "%hhu ", tmppkmn[ i * ( 1 + meta_pkmn[ 0 ] * meta_pkmn[ 1 ] )
+                                                  + y * meta_pkmn[ 0 ] + x + 1 ] );
+                    }
+                    printf( "\n" );
+                }
             }
         }
-        */
 
         delete[] tmppkmn;
         fclose( wpf );
