@@ -52,10 +52,13 @@ struct model {
             DATA::mapBankInfo m_info{ };
             status            m_status = STATUS_UNTOUCHED;
 
-            u8           m_mapImageRes    = 4;
-            u8           m_mapImageShiftX = 4;
-            u8           m_mapImageShiftY = 36;
+            u8           m_mapImageRes       = 4;
+            u8           m_mapImageShiftX    = 4;
+            u8           m_mapImageShiftY    = 36;
+            u8           m_wildPokeMapShiftX = 0;
+            u8           m_wildPokeMapShiftY = 0;
             DATA::bitmap m_owMap{ 0, 0 };
+            DATA::bitmap m_wpMap{ 0, 0 };
 
             inline status getStatus( ) const {
                 return m_status;
@@ -190,8 +193,16 @@ struct model {
             return m_fsrootPath + "/PICS/NAV_APP/map";
         }
 
+        inline std::string wpMapPicturePath( ) const {
+            return m_fsrootPath + "/PICS/DEX/map";
+        }
+
         inline std::string navBorderPath( ) const {
             return m_fsrootPath + "/PICS/Border.raw";
+        }
+
+        inline std::string dexBorderPath( ) const {
+            return m_fsrootPath + "/PICS/DEX/dextop2.raw";
         }
 
         inline std::string mapStringPath( ) const {
@@ -858,6 +869,8 @@ struct model {
     }
 
     DATA::pixel colorForLocation( u16 p_loc );
+
+    void recomputeDexWPPic( );
 
     void recomputeBankPic( );
 

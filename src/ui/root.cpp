@@ -546,7 +546,7 @@ namespace UI {
     }
 
     root::root( ) {
-        set_default_size( 800, 600 );
+        set_default_size( 850, 550 );
 
         auto provider = Gtk::CssProvider::create( );
         provider->load_from_data( EXTRA_CSS );

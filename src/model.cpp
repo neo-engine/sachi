@@ -389,7 +389,7 @@ bool model::checkOrLoadBank( int p_bank, bool p_forceRead ) {
         }
 
         if( selb.m_info.m_isOWMap ) {
-            // write location file
+            // read location file
             auto owpath = fs::path( m_fsdata.mapLocationPath( ) )
                           / fs::path( std::to_string( p_bank ) + ".loc.data" );
             fs::create_directories( owpath.parent_path( ) );
@@ -404,9 +404,26 @@ bool model::checkOrLoadBank( int p_bank, bool p_forceRead ) {
                 fclose( owf );
             }
 
-            // write ow map picture
+            // read ow map picture
             selb.m_owMap = DATA::bitmap::fromBGImage(
                 ( m_fsdata.owMapPicturePath( ) + std::to_string( p_bank ) + ".raw" ).c_str( ) );
+
+            // read wild poke data
+            auto wppath = fs::path( m_fsdata.mapLocationPath( ) )
+                          / fs::path( std::to_string( p_bank ) + ".wpoke.data" );
+            fs::create_directories( wppath.parent_path( ) );
+            owf = fopen( wppath.c_str( ), "rb" );
+
+            if( owf ) {
+                u8 meta[ 5 ] = { };
+                fread( meta, sizeof( u8 ), 5, owf );
+                selb.m_wildPokeMapShiftX = meta[ 3 ];
+                selb.m_wildPokeMapShiftY = meta[ 4 ];
+                fclose( owf );
+            }
+
+            selb.m_wpMap = DATA::bitmap::fromBGImage(
+                ( m_fsdata.wpMapPicturePath( ) + std::to_string( p_bank ) + ".wp.raw" ).c_str( ) );
         }
 
         selb.m_loaded = true;
@@ -917,6 +934,57 @@ bool model::writeMapBank( u16 p_bank ) {
         // write ow map picture
         info.m_owMap.dumpToFile(
             ( m_fsdata.owMapPicturePath( ) + std::to_string( p_bank ) + ".raw" ).c_str( ), 191, 1 );
+
+        u8 meta_pkmn[] = { u8( info.getSizeX( ) ), u8( info.getSizeY( ) ), u8( info.m_mapImageRes ),
+                           u8( info.m_wildPokeMapShiftX ), u8( info.m_wildPokeMapShiftY ) };
+        u8* tmppkmn    = new u8[ ( maxPkmn( ) + 1 ) * ( 1 + meta_pkmn[ 0 ] * meta_pkmn[ 1 ] ) ];
+        std::memset( tmppkmn, 0, sizeof( tmppkmn ) );
+
+        // one byte per map tile
+        // compute for each pkmn where it can be caught in this ow
+        for( u8 y{ 0 }; y < meta_pkmn[ 1 ]; ++y ) {
+            for( u8 x{ 0 }; x < meta_pkmn[ 0 ]; ++x ) {
+                size_t pos = y * meta_pkmn[ 0 ] + x + 1;
+
+                for( u8 i{ 0 }; i < DATA::MAX_PKMN_PER_SLICE; ++i ) {
+                    auto pdata = info.m_bank.m_mapData[ y ][ x ].m_pokemon[ i ];
+
+                    if( !pdata.m_speciesId ) { continue; }
+
+                    tmppkmn[ pdata.m_speciesId
+                                 * ( 1 + u16( meta_pkmn[ 0 ] ) * u16( meta_pkmn[ 1 ] ) )
+                             + pos ]
+                        |= pdata.m_daytime;
+                    tmppkmn[ pdata.m_speciesId
+                             * ( 1 + u16( meta_pkmn[ 0 ] ) * u16( meta_pkmn[ 1 ] ) ) ]
+                        = 1;
+                }
+            }
+        }
+        auto wppath = fs::path( m_fsdata.mapLocationPath( ) )
+                      / fs::path( std::to_string( p_bank ) + ".wpoke.data" );
+        fs::create_directories( wppath.parent_path( ) );
+        FILE* wpf = fopen( wppath.c_str( ), "wb" );
+        fwrite( &meta_pkmn, sizeof( u8 ), 5, wpf );
+        fwrite( tmppkmn, sizeof( u8 ), ( maxPkmn( ) + 1 ) * ( meta_pkmn[ 0 ] * meta_pkmn[ 1 ] + 1 ),
+                wpf );
+
+        /*
+        for( u16 i{ 0 }; i <= maxPkmn( ); ++i ) {
+            if( tmppkmn[ i * ( 1 + meta_pkmn[ 0 ] * meta_pkmn[ 1 ] ) ] ) {
+                message_log( "writeMapBank", "PKMN " + std::to_string( i ) + " can be caught.",
+                             LOGLEVEL_STATUS );
+            }
+        }
+        */
+
+        delete[] tmppkmn;
+        fclose( wpf );
+
+        // write ow wild poke map picture
+        info.m_wpMap.dumpToFile(
+            ( m_fsdata.wpMapPicturePath( ) + std::to_string( p_bank ) + ".wp.raw" ).c_str( ), 191,
+            1 );
     }
 
     if( !info.isCombined( ) ) {
@@ -1243,6 +1311,48 @@ const model::stringCache& model::trainerClasses( ) {
     m_trainerClassCache.m_valid = true;
     fclose( f );
     return m_trainerClassCache;
+}
+
+void model::recomputeDexWPPic( ) {
+    auto& bnk   = bank( );
+    auto  scale = DATA::SIZE * DATA::BLOCK_SIZE / ( 2 * bnk.m_mapImageRes );
+
+    auto btm = DATA::bitmap{ 256, 192 };
+
+    // render each map slice of the current bank
+    for( u8 y{ 0 }; y <= bnk.getSizeY( ); ++y ) {
+        for( u8 x{ 0 }; x <= bnk.getSizeX( ); ++x ) {
+            auto tmp = DATA::bitmap{ DATA::SIZE * DATA::BLOCK_SIZE, DATA::SIZE * DATA::BLOCK_SIZE };
+            DATA::renderMapSlice( &computedSlice( selectedBank( ), y, x ), &tmp, 0, 0, 1, 0 );
+
+            // scale down
+
+            for( u8 by{ 0 }; by < DATA::SIZE * DATA::BLOCK_SIZE / scale; ++by ) {
+                for( u8 bx{ 0 }; bx < DATA::SIZE * DATA::BLOCK_SIZE / scale; ++bx ) {
+                    DATA::pixel res = tmp( bx * scale, by * scale );
+                    for( u8 y2{ 0 }; y2 < scale; ++y2 ) {
+                        for( u8 x2{ 0 }; x2 < scale; ++x2 ) {
+                            res ^= tmp( bx * scale + x2, by * scale + y2 );
+                        }
+                    }
+                    res.round( 16 );
+                    btm( bnk.m_wildPokeMapShiftX + x * 2 * bnk.m_mapImageRes + bx,
+                         bnk.m_wildPokeMapShiftY + y * 2 * bnk.m_mapImageRes + by )
+                        = res;
+                }
+            }
+        }
+    }
+
+    auto bgcol = btm( bnk.m_wildPokeMapShiftX, bnk.m_wildPokeMapShiftY );
+
+    for( u8 y{ 0 }; y < 192; ++y ) {
+        for( u16 x{ 0 }; x < 256; ++x ) {
+            if( btm( x, y ) == DATA::pixel{ 0, 0, 0 } ) { btm( x, y ) = bgcol; }
+        }
+    }
+
+    bnk.m_wpMap = std::move( btm );
 }
 
 void model::recomputeBankPic( ) {
