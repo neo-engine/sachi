@@ -39,6 +39,7 @@ namespace UI::MED {
         bool _disableSI2E   = false;
         bool _disableWSI    = false;
         bool _disableBTI    = false;
+        bool _disableRF     = false;
         bool _disableAF     = false;
         bool _disableDF     = false;
         bool _disableTI     = false;
@@ -57,10 +58,10 @@ namespace UI::MED {
         std::shared_ptr<dropDown>    _eventType, _messageType1, _warpType, _itemType, _scriptType1,
             _scriptType2, _messageType2, _owPkmnShininess, _hmType;
         std::shared_ptr<multiButton>     _eventTrigger, _npcMove, _npcMsgMove, _trainerMove;
-        std::shared_ptr<Gtk::Adjustment> _selectedEventA, _aFlagA, _dFlagA, _messageIdx1A,
+        std::shared_ptr<Gtk::Adjustment> _selectedEventA, _rFlagA, _aFlagA, _dFlagA, _messageIdx1A,
             _messageIdx2A, _warpScriptIdxA, _scriptIdx1A, _scriptIdx2A, _flyLocationIdxA,
             _berryTreeIdxA, _trainerIdxA, _trainerSightA, _owPkmnLevelA;
-        Gtk::SpinButton _selectedEventE, _aFlagE, _dFlagE, _messageIdx1E, _messageIdx2E,
+        Gtk::SpinButton _selectedEventE, _rFlagE, _aFlagE, _dFlagE, _messageIdx1E, _messageIdx2E,
             _warpScriptIdxE, _scriptIdx1E, _scriptIdx2E, _berryTreeIdxE, _trainerIdxE,
             _trainerSightE, _owPkmnLevelE;
         std::shared_ptr<numberedStringCacheDropDown> _flyLocation, _triggerMove;

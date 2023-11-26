@@ -533,6 +533,7 @@ namespace DATA {
             u8  m_posX;
             u8  m_posY;
             u8  m_posZ;
+            u8  m_route = 0;
             u16 m_activateFlag;
             u16 m_deactivateFlag;
             u8  m_type;

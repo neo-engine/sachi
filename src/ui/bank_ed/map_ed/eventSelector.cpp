@@ -40,6 +40,7 @@ namespace UI::MED {
         : _model{ p_model }, _parent{ p_parent }, _rootWindow{ p_root },
           _selectedEventA{ Gtk::Adjustment::create( 0.0, 0.0, DATA::MAX_EVENTS_PER_SLICE - 1.0, 1.0,
                                                     1.0, 0.0 ) },
+          _rFlagA{ Gtk::Adjustment::create( 0.0, 0.0, 255, 1.0, 1.0, 0.0 ) },
           _aFlagA{ Gtk::Adjustment::create( 0.0, 0.0, 16 * DATA::MAX_FLAG, 1.0, 1.0, 0.0 ) },
           _dFlagA{ Gtk::Adjustment::create( 0.0, 0.0, 16 * DATA::MAX_FLAG, 1.0, 1.0, 0.0 ) },
           _messageIdx1A{ Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) },
@@ -52,12 +53,12 @@ namespace UI::MED {
           _trainerIdxA{ Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) },
           _trainerSightA{ Gtk::Adjustment::create( 0.0, 0.0, 31, 1.0, 1.0, 0.0 ) },
           _owPkmnLevelA{ Gtk::Adjustment::create( 0.0, 1, 100, 1.0, 1.0, 0.0 ) },
-          _selectedEventE{ _selectedEventA }, _aFlagE{ _aFlagA }, _dFlagE{ _dFlagA },
-          _messageIdx1E{ _messageIdx1A }, _messageIdx2E{ _messageIdx2A },
+          _selectedEventE{ _selectedEventA }, _rFlagE{ _rFlagA }, _aFlagE{ _aFlagA },
+          _dFlagE{ _dFlagA }, _messageIdx1E{ _messageIdx1A }, _messageIdx2E{ _messageIdx2A },
           _warpScriptIdxE{ _warpScriptIdxA }, _scriptIdx1E{ _scriptIdx1A },
           _scriptIdx2E{ _scriptIdx2A }, _berryTreeIdxE{ _berryTreeIdxA },
-          _trainerIdxE{ _trainerIdxA }, _trainerSightE{ _trainerSightA }, _owPkmnLevelE{
-                                                                              _owPkmnLevelA } {
+          _trainerIdxE{ _trainerIdxA }, _trainerSightE{ _trainerSightA },
+          _owPkmnLevelE{ _owPkmnLevelA } {
         _mainFrame = Gtk::Frame{ "Event Data" };
 
         Gtk::Box mainBox{ Gtk::Orientation::VERTICAL };
@@ -137,14 +138,38 @@ namespace UI::MED {
 
         Gtk::Grid g1{ };
         ea.set_child( g1 );
+
+        Gtk::Label rfL{ "Limited to S-Route" };
+        g1.attach( rfL, 0, 0 );
+        rfL.set_margin_end( MARGIN );
+        rfL.set_margin_start( MARGIN );
+        rfL.set_hexpand( );
+        rfL.set_halign( Gtk::Align::START );
+        _rFlagE.set_margin_end( MARGIN );
+        g1.attach( _rFlagE, 1, 0 );
+
+        _rFlagE.signal_value_changed( ).connect( [ this ]( ) {
+            if( _disableRedraw || _model.mapEvent( ).m_route == _rFlagE.get_value_as_int( ) ) {
+                return;
+            }
+            _disableRF = true;
+            _rFlagE.update( );
+            _model.mapEvent( ).m_route = _rFlagE.get_value_as_int( );
+            _model.markSelectedBankChanged( );
+            _rootWindow.redrawPanel( );
+            _parent.redrawMap( false );
+            redraw( );
+            _disableRF = false;
+        } );
+
         Gtk::Label afL{ "Activation Flag" };
-        g1.attach( afL, 0, 0 );
+        g1.attach( afL, 0, 1 );
         afL.set_margin_end( MARGIN );
         afL.set_margin_start( MARGIN );
         afL.set_hexpand( );
         afL.set_halign( Gtk::Align::START );
         _aFlagE.set_margin_end( MARGIN );
-        g1.attach( _aFlagE, 1, 0 );
+        g1.attach( _aFlagE, 1, 1 );
 
         _aFlagE.signal_value_changed( ).connect( [ this ]( ) {
             if( _disableRedraw
@@ -162,13 +187,13 @@ namespace UI::MED {
         } );
 
         Gtk::Label dfL{ "Deactivation Flag" };
-        g1.attach( dfL, 0, 1 );
+        g1.attach( dfL, 0, 2 );
         dfL.set_margin_end( MARGIN );
         dfL.set_margin_start( MARGIN );
         dfL.set_hexpand( );
         dfL.set_halign( Gtk::Align::START );
         _dFlagE.set_margin_end( MARGIN );
-        g1.attach( _dFlagE, 1, 1 );
+        g1.attach( _dFlagE, 1, 2 );
 
         _dFlagE.signal_value_changed( ).connect( [ this ]( ) {
             if( _disableRedraw
@@ -190,7 +215,7 @@ namespace UI::MED {
             []( u32 p_state, u8 p_choice ) { return p_state ^ ( 1 << p_choice ); }, 0,
             Gtk::Orientation::VERTICAL );
         if( _eventTrigger ) {
-            g1.attach( *_eventTrigger, 0, 2, 2 );
+            g1.attach( *_eventTrigger, 0, 3, 2 );
             _eventTrigger->connect( [ this ]( u32 p_newChoice ) {
                 if( _disableRedraw ) { return; }
                 auto& evt     = _model.mapEvent( );
@@ -1233,6 +1258,7 @@ namespace UI::MED {
         }
 
         if( _eventPosition ) { _eventPosition->setPosition( _model.mapEventPosition( ) ); }
+        if( !_disableRF ) { _rFlagE.set_value( evt.m_route ); }
         if( !_disableAF ) { _aFlagE.set_value( evt.m_activateFlag ); }
         if( !_disableDF ) { _dFlagE.set_value( evt.m_deactivateFlag ); }
 
