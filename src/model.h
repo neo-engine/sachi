@@ -284,11 +284,11 @@ struct model {
 
                 char buf[ 100 ];
                 if( !forme ) {
-                    snprintf( buf, 99, "%02d/%hu%s%s", species / m_fsInfo.m_fileSplit, species,
-                              shiny ? "s" : "", female ? "f" : "" );
+                    snprintf( buf, 99, "%d/%hu%s%s", species / m_fsInfo.m_fileSplit, species,
+                              female ? "f" : "", shiny ? "s" : "" );
                 } else {
-                    snprintf( buf, 99, "%02d/%hu%s%s_%hhu", species / m_fsInfo.m_fileSplit, species,
-                              shiny ? "s" : "", female ? "f" : "", forme );
+                    snprintf( buf, 99, "%d/%hu_%hhu%s%s", species / m_fsInfo.m_fileSplit, species,
+                              forme, female ? "f" : "", shiny ? "s" : "" );
                 }
                 return m_fsrootPath + "/PICS/SPRITES/NPCP/" + std::string( buf ) + ".rsd";
             } else if( p_spriteIdx < 250 ) {

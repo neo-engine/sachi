@@ -1125,6 +1125,7 @@ namespace UI::MED {
                 _pkmn->refreshModel( );
                 _pkmn->setData( { evt.m_data.m_owPkmn.m_speciesId,
                                   evt.m_data.m_owPkmn.m_forme & ~( 1 << 6 | 1 << 7 ) } );
+                _pkmn->setShiny( ( _model.mapEvent( ).m_data.m_owPkmn.m_shiny & 0x3f ) == 2 );
             }
             if( !_disablePL ) {
                 _owPkmnLevelE.set_value( _model.mapEvent( ).m_data.m_owPkmn.m_level );

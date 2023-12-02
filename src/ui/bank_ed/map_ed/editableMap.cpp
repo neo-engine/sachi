@@ -1,8 +1,8 @@
 #include <queue>
-#include "editableMap.h"
 #include "../../../defines.h"
 #include "../../pure/mapSlice.h"
 #include "../../root.h"
+#include "editableMap.h"
 
 namespace UI::MED {
     editableMap::editableMap( model& p_model, root& p_root, mapEditor& p_parent )
@@ -471,12 +471,11 @@ namespace UI::MED {
                     auto itm = std::make_shared<fsImage<imageType::IT_SPRITE_ANIMATED>>( );
                     itm->set_can_target( false );
 
-                    itm->load(
-                        _model.m_fsdata.owSpritePath(
-                            1000 + evt.m_data.m_owPkmn.m_speciesId,
-                            evt.m_data.m_owPkmn.m_forme & ~( 1 << 6 | 1 << 7 ),
-                            _model.mapEvent( ).m_data.m_owPkmn.m_shiny & ~( 1 << 6 | 1 << 7 ) ),
-                        0 );
+                    itm->load( _model.m_fsdata.owSpritePath(
+                                   DATA::PKMN_SPRITE + evt.m_data.m_owPkmn.m_speciesId,
+                                   evt.m_data.m_owPkmn.m_forme & ~( 1 << 6 | 1 << 7 ),
+                                   ( evt.m_data.m_owPkmn.m_shiny & 0x3f ) == 2 ),
+                               0 );
 
                     if( itm->getWidth( ) < 64 ) {
                         itm->set_margin_top( ty - 16 * _model.m_settings.m_blockScale );
