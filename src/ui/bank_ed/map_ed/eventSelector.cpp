@@ -53,12 +53,13 @@ namespace UI::MED {
           _trainerIdxA{ Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) },
           _trainerSightA{ Gtk::Adjustment::create( 0.0, 0.0, 31, 1.0, 1.0, 0.0 ) },
           _owPkmnLevelA{ Gtk::Adjustment::create( 0.0, 1, 100, 1.0, 1.0, 0.0 ) },
+          _hmOnDestroyIdxA{ Gtk::Adjustment::create( 0.0, 0.0, (u16) -1, 1.0, 1.0, 0.0 ) },
           _selectedEventE{ _selectedEventA }, _rFlagE{ _rFlagA }, _aFlagE{ _aFlagA },
           _dFlagE{ _dFlagA }, _messageIdx1E{ _messageIdx1A }, _messageIdx2E{ _messageIdx2A },
           _warpScriptIdxE{ _warpScriptIdxA }, _scriptIdx1E{ _scriptIdx1A },
           _scriptIdx2E{ _scriptIdx2A }, _berryTreeIdxE{ _berryTreeIdxA },
           _trainerIdxE{ _trainerIdxA }, _trainerSightE{ _trainerSightA },
-          _owPkmnLevelE{ _owPkmnLevelA } {
+          _owPkmnLevelE{ _owPkmnLevelA }, _hmOnDestroyIdxE{ _hmOnDestroyIdxA } {
         _mainFrame = Gtk::Frame{ "Event Data" };
 
         Gtk::Box mainBox{ Gtk::Orientation::VERTICAL };
@@ -875,6 +876,34 @@ namespace UI::MED {
                 } );
             }
 
+            Gtk::Grid  g2{ };
+            Gtk::Label tsl{ "On Destroy S-Idx" };
+            g2.attach( tsl, 0, 0 );
+            tsl.set_margin_end( MARGIN );
+            tsl.set_halign( Gtk::Align::START );
+            tsl.set_hexpand( );
+
+            g2.attach( _hmOnDestroyIdxE, 1, 0 );
+            _hmOnDestroyIdxE.set_margin_top( MARGIN );
+            _hmOnDestroyIdxE.set_margin_bottom( MARGIN );
+            _hmOnDestroyIdxE.signal_value_changed( ).connect( [ this ]( ) {
+                if( _disableRedraw
+                    || _model.mapEvent( ).m_data.m_hmObject.m_scriptIdOnDestroy
+                           == _hmOnDestroyIdxE.get_value_as_int( ) ) {
+                    return;
+                }
+                _disableSI2E = true;
+                _hmOnDestroyIdxE.update( );
+                _model.mapEvent( ).m_data.m_hmObject.m_scriptIdOnDestroy
+                    = _hmOnDestroyIdxE.get_value_as_int( );
+                _model.markSelectedBankChanged( );
+                _rootWindow.redrawPanel( );
+                redraw( );
+                _disableSI2E = false;
+            } );
+
+            fbox.append( g2 );
+
             fbox.set_hexpand( false );
             _detailFrames.push_back( std::move( frame ) );
         }
@@ -1217,6 +1246,9 @@ namespace UI::MED {
                     break;
                 default: _hmType->choose( 0 ); break;
                 }
+            }
+            if( !_disableSI2E ) {
+                _hmOnDestroyIdxE.set_value( evt.m_data.m_hmObject.m_scriptIdOnDestroy );
             }
             break;
         }

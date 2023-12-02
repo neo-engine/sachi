@@ -60,10 +60,10 @@ namespace UI::MED {
         std::shared_ptr<multiButton>     _eventTrigger, _npcMove, _npcMsgMove, _trainerMove;
         std::shared_ptr<Gtk::Adjustment> _selectedEventA, _rFlagA, _aFlagA, _dFlagA, _messageIdx1A,
             _messageIdx2A, _warpScriptIdxA, _scriptIdx1A, _scriptIdx2A, _flyLocationIdxA,
-            _berryTreeIdxA, _trainerIdxA, _trainerSightA, _owPkmnLevelA;
+            _berryTreeIdxA, _trainerIdxA, _trainerSightA, _owPkmnLevelA, _hmOnDestroyIdxA;
         Gtk::SpinButton _selectedEventE, _rFlagE, _aFlagE, _dFlagE, _messageIdx1E, _messageIdx2E,
             _warpScriptIdxE, _scriptIdx1E, _scriptIdx2E, _berryTreeIdxE, _trainerIdxE,
-            _trainerSightE, _owPkmnLevelE;
+            _trainerSightE, _owPkmnLevelE, _hmOnDestroyIdxE;
         std::shared_ptr<numberedStringCacheDropDown> _flyLocation, _triggerMove;
         std::shared_ptr<itemSelector>                _item;
         std::shared_ptr<pokeSelector>                _pkmn;

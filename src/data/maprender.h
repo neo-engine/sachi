@@ -586,6 +586,8 @@ namespace DATA {
                 } m_generic;
                 struct {
                     u8 m_hmType;
+                    u16 m_scriptIdOnDestroy; // id of script that is called when object is
+                                             // destroyed
                 } m_hmObject;
                 struct {
                     u8 m_treeIdx; // internal id of this berry tree
