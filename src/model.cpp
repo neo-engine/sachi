@@ -752,7 +752,7 @@ void model::recomputeDNS( u8 p_tsIdx, bool p_override ) {
     for( u8 i{ 0 }; i < 8; ++i ) {
         for( u8 j{ 0 }; j < 16; ++j ) {
             u16 color = bs.m_pals[ i ].m_pal[ j ];
-            for( u8 k{ 1 }; k < 5; ++k ) {
+            for( u8 k{ 2 }; k < 5; ++k ) {
                 if( bs.m_pals[ i + 8 * k ].m_pal[ j ] && !p_override ) {
                     // don't overwrite existing pals
                     continue;
