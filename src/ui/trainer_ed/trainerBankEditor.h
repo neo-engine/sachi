@@ -48,22 +48,27 @@ namespace UI {
         }
 
         inline void copyAction( ) {
+            if( _model.selectedBank( ) != -1 ) { return; }
             if( _trainerEditor ) { _trainerEditor->copyAction( ); }
         }
 
         inline void pasteAction( ) {
+            if( _model.selectedBank( ) != -1 ) { return; }
             if( _trainerEditor ) { _trainerEditor->pasteAction( ); }
         }
 
         inline void deleteAction( ) {
+            if( _model.selectedBank( ) != -1 ) { return; }
             if( _trainerEditor ) { _trainerEditor->deleteAction( ); }
         }
 
         inline void selectnewAction( ) {
+            if( _model.selectedBank( ) != -1 ) { return; }
             if( _trainerEditor ) { _trainerEditor->selectnewAction( ); }
         }
 
         inline void performAction( u8 p_actionId ) {
+            if( _model.selectedBank( ) != -1 ) { return; }
             if( _trainerEditor ) { _trainerEditor->performAction( p_actionId ); }
         }
     };

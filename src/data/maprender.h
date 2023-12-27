@@ -474,11 +474,14 @@ namespace DATA {
         LAST_VISITED,
         SLIDING_DOOR,
         FLY,
-        SCRIPT
+        SCRIPT,
+        SLIDE_DOWN,
+        SLIDE_UP,
     };
     const std::vector<std::string> WARP_TYPE_NAMES{
-        "Default",      "Cave Entry",   "Door",  "Teleport", "(Emerge Water)",
-        "Last Visited", "Sliding Door", "(Fly)", "Script" };
+        "Default",        "Cave Entry",       "Door",          "Teleport",
+        "(Emerge Water)", "Last Visited",     "Sliding Door",  "(Fly)",
+        "Script",         "Escalator (Down)", "Escalator (Up)" };
 
     enum style : u8 {
         MSG_NORMAL          = 0,
@@ -585,7 +588,7 @@ namespace DATA {
                     u16 m_triggerMove; // used only when event triggered by a pkmn move
                 } m_generic;
                 struct {
-                    u8 m_hmType;
+                    u8  m_hmType;
                     u16 m_scriptIdOnDestroy; // id of script that is called when object is
                                              // destroyed
                 } m_hmObject;
