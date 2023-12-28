@@ -160,9 +160,9 @@ namespace DATA {
         for( size_t y = 0; y < m_height; ++y )
             for( size_t x = 0; x < m_width; ++x ) {
                 unsigned short conv_color
-                    = ( conv( operator( )( x* SCALE, y* SCALE ).m_red ) )
-                      | ( conv( operator( )( x* SCALE, y* SCALE ).m_green ) << 5 )
-                      | ( conv( operator( )( x* SCALE, y* SCALE ).m_blue ) << 10 ) | ( 1 << 15 );
+                    = ( conv( operator( )( x * SCALE, y * SCALE ).m_red ) )
+                      | ( conv( operator( )( x * SCALE, y * SCALE ).m_green ) << 5 )
+                      | ( conv( operator( )( x * SCALE, y * SCALE ).m_blue ) << 10 ) | ( 1 << 15 );
 
                 if( !palidx.count( conv_color ) ) {
                     // Check if the new color is very close to an existing color
@@ -256,8 +256,24 @@ namespace DATA {
     }
 
     bitmap bitmap::fromAnimatedSprite( const char* p_path, u8 p_frame ) {
-        FILE* f = fopen( p_path, "rb" );
+        FILE* f;
+        if( p_path[ 0 ] == '@' ) {
+            // sprite bank, need to seek correct position first
+            u16  idx = 0;
+            char buffer[ 100 ];
+            sscanf( p_path, "@%hu@%90s", &idx, buffer );
+            f = fopen( buffer, "rb" );
+            if( f ) {
+                u32 header;
+                fread( &header, 1, sizeof( u32 ), f );
+                fseek( f, 4 + idx * header, SEEK_SET );
+            }
+        } else {
+            f = fopen( p_path, "rb" );
+        }
         if( !f ) {
+            fprintf( stderr, "Bitmap file %s not found.\n", p_path );
+
             std::memset( TEMP, 0, sizeof( TEMP ) );
             std::memset( TEMP_PAL, 0, sizeof( TEMP_PAL ) );
             return bitmap{ 32, 32 };

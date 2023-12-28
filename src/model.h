@@ -292,6 +292,7 @@ struct model {
                 }
                 return m_fsrootPath + "/PICS/SPRITES/NPCP/" + std::string( buf ) + ".rsd";
             } else if( p_spriteIdx < 250 ) {
+                // player sprite
                 return m_fsrootPath + "/PICS/SPRITES/OW/" + std::to_string( p_spriteIdx ) + ".rsd";
             }
             if( p_spriteIdx == 250 ) {
@@ -304,9 +305,8 @@ struct model {
                 p_spriteIdx &= 255;
             }
 
-            return m_fsrootPath + "/PICS/SPRITES/NPC/"
-                   + std::to_string( p_spriteIdx / m_fsInfo.m_fileSplit ) + "/"
-                   + std::to_string( p_spriteIdx ) + ".rsd";
+            return std::string( "@" ) + std::to_string( p_spriteIdx ) + "@" + m_fsrootPath
+                   + "/PICS/SPRITES/npc.rsdb";
         }
 
         inline std::string pkmnSpritePath( bool p_female = false, bool p_shiny = false,

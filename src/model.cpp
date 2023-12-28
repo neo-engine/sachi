@@ -1036,6 +1036,7 @@ bool model::writeMapBank( u16 p_bank ) {
         fwrite( tmppkmn, sizeof( u8 ), ( maxPkmn( ) + 1 ) * ( meta_pkmn[ 0 ] * meta_pkmn[ 1 ] + 1 ),
                 wpf );
 
+        /*
         for( auto i{ 0 }; i <= maxPkmn( ); ++i ) {
             if( tmppkmn[ i * ( 1 + meta_pkmn[ 0 ] * meta_pkmn[ 1 ] ) ] ) {
                 message_log( "writeMapBank", "PKMN " + std::to_string( i ) + " can be caught.",
@@ -1050,6 +1051,7 @@ bool model::writeMapBank( u16 p_bank ) {
                 }
             }
         }
+        */
 
         fclose( wpf );
         delete[] tmppkmn;
