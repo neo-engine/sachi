@@ -36,10 +36,10 @@ namespace UI {
         std::string text  = "";
         std::string style = "";
 
-        auto styles = std::vector<std::string>{ "mark-warp",    "mark-flypos", "mark-script",
-                                                "mark-message", "mark-sight",  "mark-movement",
-                                                "mark-berry" };
-        auto names  = std::vector<std::string>{ "W", "F", "S", "T", "", "", "B" };
+        auto styles = std::vector<std::string>{ "mark-warp",    "mark-flypos",   "mark-script",
+                                                "mark-message", "mark-sight",    "mark-movement",
+                                                "mark-berry",   "mark-sight-red" };
+        auto names  = std::vector<std::string>{ "W", "F", "S", "T", "", "", "B", "" };
 
         for( auto m : _marks[ p_pos ] ) {
             if( style == "" ) { style = styles[ u8( m ) ]; }

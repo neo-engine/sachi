@@ -32,6 +32,7 @@ namespace UI {
             MARK_SIGHT,
             MARK_MOVEMENT,
             MARK_BERRY,
+            MARK_SIGHT_RED, // used for unfinished trainers
         };
 
       private:

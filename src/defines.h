@@ -64,6 +64,7 @@ const std::string EXTRA_CSS
       ".mark-script { color: black; background-color: #fc79bd; }\n"
       ".mark-message { color: black; background-color: #fc797b; }\n"
       ".mark-sight { color: black; background-color: #79bdfc; }\n"
+      ".mark-sight-red { color: black; background-color: #fcb879; }\n"
       ".mark-movement { color: black; background-color: #bdfc79; }\n"
       ".mark-berry { color: black; background-color: #f0cdc5; }\n"
       ".encounter-grass { color: black; background-color: #1bf579; }\n"

@@ -263,6 +263,9 @@ namespace UI::MED {
                     _centerMapOverlay.add_overlay( *itm );
                     _eventWidgets.push_back( std::move( itm ) );
 
+                    auto mark = mapSlice::MARK_SIGHT;
+                    if( !evt.m_data.m_trainer.m_trainerId ) { mark = mapSlice::MARK_SIGHT_RED; }
+
                     // add movement
                     s8 sx = evt.m_posX;
                     s8 sy = evt.m_posY;
@@ -273,7 +276,7 @@ namespace UI::MED {
                                 sx = evt.m_posX + 0;
                                 sy = evt.m_posY - 1 * st;
                                 if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
-                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_SIGHT );
+                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mark );
                                 }
                             }
                         }
@@ -282,7 +285,7 @@ namespace UI::MED {
                                 sx = evt.m_posX + 0;
                                 sy = evt.m_posY + 1 * st;
                                 if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
-                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_SIGHT );
+                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mark );
                                 }
                             }
                         }
@@ -291,7 +294,7 @@ namespace UI::MED {
                                 sx = evt.m_posX - 1 * st;
                                 sy = evt.m_posY + 0;
                                 if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
-                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_SIGHT );
+                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mark );
                                 }
                             }
                         }
@@ -300,7 +303,7 @@ namespace UI::MED {
                                 sx = evt.m_posX + 1 * st;
                                 sy = evt.m_posY + 0;
                                 if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
-                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_SIGHT );
+                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mark );
                                 }
                             }
                         }
@@ -314,16 +317,14 @@ namespace UI::MED {
                                     sx = evt.m_posX + ssx;
                                     sy = evt.m_posY - 1 * st;
                                     if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
-                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy,
-                                                                       mapSlice::MARK_SIGHT );
+                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy, mark );
                                     }
                                 }
                                 for( u8 st{ 2 }; st <= evt.m_data.m_trainer.m_sight + 1; ++st ) {
                                     sx = evt.m_posX + ssx;
                                     sy = evt.m_posY + 1 * st;
                                     if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
-                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy,
-                                                                       mapSlice::MARK_SIGHT );
+                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy, mark );
                                     }
                                 }
                             }
@@ -332,16 +333,14 @@ namespace UI::MED {
                                     sx = evt.m_posX - 1 * st;
                                     sy = evt.m_posY + ssy;
                                     if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
-                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy,
-                                                                       mapSlice::MARK_SIGHT );
+                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy, mark );
                                     }
                                 }
                                 for( u8 st{ 2 }; st <= evt.m_data.m_trainer.m_sight + 1; ++st ) {
                                     sx = evt.m_posX + 1 * st;
                                     sy = evt.m_posY + ssy;
                                     if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
-                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy,
-                                                                       mapSlice::MARK_SIGHT );
+                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy, mark );
                                     }
                                 }
                             }
@@ -365,16 +364,14 @@ namespace UI::MED {
                                     sx = evt.m_posX + ssx;
                                     sy = evt.m_posY - 1 * st;
                                     if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
-                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy,
-                                                                       mapSlice::MARK_SIGHT );
+                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy, mark );
                                     }
                                 }
                                 for( u8 st{ 1 }; st <= evt.m_data.m_trainer.m_sight; ++st ) {
                                     sx = evt.m_posX + ssx;
                                     sy = evt.m_posY + 1 * st;
                                     if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
-                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy,
-                                                                       mapSlice::MARK_SIGHT );
+                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy, mark );
                                     }
                                 }
                             }
@@ -393,7 +390,7 @@ namespace UI::MED {
                                 sx = evt.m_posX - 1 * st;
                                 sy = evt.m_posY + 0;
                                 if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
-                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_SIGHT );
+                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mark );
                                 }
                             }
                             // pos right
@@ -406,7 +403,7 @@ namespace UI::MED {
                                 sx = evt.m_posX + 1 * st;
                                 sy = evt.m_posY + 0;
                                 if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
-                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_SIGHT );
+                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mark );
                                 }
                             }
                             break;
@@ -417,16 +414,14 @@ namespace UI::MED {
                                     sx = evt.m_posX - 1 * st;
                                     sy = evt.m_posY + ssy;
                                     if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
-                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy,
-                                                                       mapSlice::MARK_SIGHT );
+                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy, mark );
                                     }
                                 }
                                 for( u8 st{ 1 }; st <= evt.m_data.m_trainer.m_sight; ++st ) {
                                     sx = evt.m_posX + 1 * st;
                                     sy = evt.m_posY + ssy;
                                     if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
-                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy,
-                                                                       mapSlice::MARK_SIGHT );
+                                        _currentMap[ 1 ][ 1 ].addMark( sx, sy, mark );
                                     }
                                 }
                             }
@@ -445,7 +440,7 @@ namespace UI::MED {
                                 sx = evt.m_posX + 0;
                                 sy = evt.m_posY - 1 * st;
                                 if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
-                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_SIGHT );
+                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mark );
                                 }
                             }
                             // pos down
@@ -458,7 +453,7 @@ namespace UI::MED {
                                 sx = evt.m_posX + 0;
                                 sy = evt.m_posY + 1 * st;
                                 if( sx >= 0 && sy >= 0 && sx < DATA::SIZE && sy < DATA::SIZE ) {
-                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_SIGHT );
+                                    _currentMap[ 1 ][ 1 ].addMark( sx, sy, mark );
                                 }
                             }
                             break;
@@ -512,6 +507,12 @@ namespace UI::MED {
                     itm->setScale( _model.m_settings.m_blockScale );
 
                     if( evt.m_activateFlag || evt.m_deactivateFlag ) { itm->set_opacity( 0.5 ); }
+
+                    if( !evt.m_data.m_npc.m_scriptId ) {
+                        s8 sx = evt.m_posX;
+                        s8 sy = evt.m_posY;
+                        _currentMap[ 1 ][ 1 ].addMark( sx, sy, mapSlice::MARK_SIGHT_RED );
+                    }
 
                     _centerMapOverlay.add_overlay( *itm );
                     _eventWidgets.push_back( std::move( itm ) );
