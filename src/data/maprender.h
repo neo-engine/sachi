@@ -311,21 +311,32 @@ namespace DATA {
         WALK_CONT_UP_DOWN       = 22,
         WALK_AROUND_SQUARE      = 23, // randomly walks around in a 3x3 square
         WALK_CONT_FOLLOW_OBJECT = 24, // walks along the edge of an object, touching w/ right hand
-
+        KECLEON_FIGHT           = 25, // hidden kecleon that will fight once silph scope is used
+        KECLEON_FLEE            = 26, // hidden kecleon that will flee once silph scope is used
+        NINJA_ASH               = 27, // ninja hidden in ash
+        NINJA_TREE              = 28, // ninja hidden behind tree
+        NINJA_ROCK              = 29, // ninja hidden behind rock
     };
-    const std::vector<std::string> MOVE_MODE_NAMES{ "Look Up",
-                                                    "Look Down",
-                                                    "Look Right",
-                                                    "Look Left",
-                                                    "Walk Left-Right",
-                                                    "Walk Up-Down",
-                                                    "Walk Circle",
-                                                    "Walk Around Left-Right",
-                                                    "Walk Around Up-Down",
-                                                    "Walk Non-Stop Left-Right",
-                                                    "Walk Non-Stop Up-Down",
-                                                    "Walk Around Square",
-                                                    "Walk Follow Edge" };
+    const std::vector<std::string> MOVE_MODE_NAMES{
+        "Look Up",
+        "Look Down",
+        "Look Right",
+        "Look Left",
+        "Walk Left-Right",
+        "Walk Up-Down",
+        "Walk Circle",
+        "Walk Around Left-Right",
+        "Walk Around Up-Down",
+        "Walk Non-Stop Left-Right",
+        "Walk Non-Stop Up-Down",
+        "Walk Around Square",
+        "Walk Follow Edge",
+        "Kecleon (fight)",
+        "Kecleon (flee)",
+        "Ninja (Ash)",
+        "Ninja (Tree)",
+        "Ninja (Rock)",
+    };
 
     constexpr u8 getFrame( direction p_direction ) {
         switch( p_direction ) {
